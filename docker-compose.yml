@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  app:
+    container_name: ultmt-stats
+    restart: always
+    build: .
+    ports:
+      - "9000:9000"
+    links:
+      - mongo
+  mongo:
+    image: mongo
