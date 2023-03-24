@@ -1,0 +1,44 @@
+name: Docker CI
+
+on:
+  push:
+    branches-ignore:
+      - dev
+      - e2e
+      - main
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: Test
+
+    steps:
+      - name: Check Out Repo 
+        uses: actions/checkout@v3
+
+      - name: Create env
+        run: |
+          cd tests
+          mkdir config
+          cd config
+          touch .env
+          cd ..
+      
+      - name: Run Docker CI container
+        run: docker compose -f docker-compose.dev.yml up -d --build
+        
+      - name: Add dependencies
+        run: yarn install
+
+      - name: Run tests
+        run: yarn test
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+
+      - name: Stop containers
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down
