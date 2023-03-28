@@ -2,6 +2,7 @@ import { Schema, model, SchemaTypes } from 'mongoose'
 import IGame from '../types/game'
 
 const schema = new Schema<IGame>({
+    startTime: Date,
     goalsLeader: {
         type: {
             player: {

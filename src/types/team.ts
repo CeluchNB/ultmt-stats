@@ -1,9 +1,15 @@
 import { Types } from 'mongoose'
 
-interface ITeam {
+export interface EmbeddedTeam {
+    _id: Types.ObjectId
     place: string
     name: string
     teamName: string
+    seasonStart: Date
+    seasonEnd: Date
+}
+
+interface ITeam extends EmbeddedTeam {
     wins: number
     losses: number
     goalsFor: number
@@ -15,8 +21,6 @@ interface ITeam {
     defensePoints: number
     turnovers: number
     turnoversForced: number
-    seasonStart: Date
-    seasonEnd: Date
     players: Types.ObjectId[]
     games: Types.ObjectId[]
     continuationId: Types.ObjectId

@@ -7,7 +7,7 @@ export interface EmbeddedPlayer {
     username: string
 }
 
-interface IPlayer extends EmbeddedPlayer {
+export interface PlayerData {
     goals: number
     assists: number
     blocks: number
@@ -22,6 +22,9 @@ interface IPlayer extends EmbeddedPlayer {
     pointsPlayed: number
     wins: number
     losses: number
+}
+
+interface IPlayer extends EmbeddedPlayer, PlayerData {
     games: Types.ObjectId[]
     teams: Types.ObjectId[]
 }
