@@ -9,7 +9,7 @@ export interface EmbeddedTeam {
     seasonEnd: Date
 }
 
-interface ITeam extends EmbeddedTeam {
+export interface TeamData {
     wins: number
     losses: number
     goalsFor: number
@@ -21,9 +21,11 @@ interface ITeam extends EmbeddedTeam {
     defensePoints: number
     turnovers: number
     turnoversForced: number
+}
+
+interface ITeam extends EmbeddedTeam, TeamData {
     players: Types.ObjectId[]
     games: Types.ObjectId[]
-    continuationId: Types.ObjectId
 }
 
 export default ITeam

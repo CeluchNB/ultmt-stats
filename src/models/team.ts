@@ -20,7 +20,6 @@ const schema = new Schema<ITeam>({
     seasonEnd: { type: Date, required: false },
     players: [SchemaTypes.ObjectId],
     games: [SchemaTypes.ObjectId],
-    continuationId: SchemaTypes.ObjectId,
 })
 
 const Team = model<ITeam>('Team', schema)

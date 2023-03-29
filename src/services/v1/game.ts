@@ -1,8 +1,9 @@
-import AtomicStat from "../../models/atomic-stat"
-import Game from "../../models/game"
-import { GameInput } from "../../types/game"
-import Team from "../../models/team"
-import Player from "../../models/player"
+import AtomicStat from '../../models/atomic-stat'
+import Game from '../../models/game'
+import { GameInput } from '../../types/game'
+import Team from '../../models/team'
+import Player from '../../models/player'
+import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
 
 export const createGame = async (gameInput: GameInput) => {
@@ -15,17 +16,23 @@ export const createGame = async (gameInput: GameInput) => {
     // create teams if not exists
     let teamOne = await Team.findById(gameInput.teamOne._id)
     if (!teamOne) {
-        teamOne = await Team.create({ ...gameInput.teamOne, continuationId: new Types.ObjectId() })
+        teamOne = await Team.create({ ...gameInput.teamOne })
     }
 
     
     let teamTwo = await Team.findById(gameInput.teamTwo._id)
-    if (!teamTwo && gameInput.teamTwo._id) {
-        teamTwo = await Team.create({ ...gameInput.teamTwo, continuationId: new Types.ObjectId() })
+    if (!teamTwo && gameInput.teamTwo?._id) {
+        teamTwo = await Team.create({ ...gameInput.teamTwo })
     }
 
     // create game
-    const game = await Game.create({ startTime: gameInput.startTime, teamOneId: teamOne._id, teamTwoId: teamTwo ? teamTwo._id : undefined })
+    const game = await Game.create({
+        _id: gameInput._id,
+        startTime: gameInput.startTime,
+        teamOneId: teamOne._id,
+        teamTwoId: teamTwo?._id,
+    })
+
     teamOne.games.push(game._id)
     teamTwo?.games.push(game._id)
     await teamOne.save()
@@ -33,22 +40,21 @@ export const createGame = async (gameInput: GameInput) => {
 
     // create players if not exists
     for (const p of gameInput.teamOnePlayers) {
-        let player = await Player.findById(p._id)
-        if (!player) {
-            player = await Player.create({ ...p })
-        }
-        player.games.push(game._id)
-        await player.save()
-        await AtomicStat.create({ playerId: player._id, teamId: teamOne._id, gameId: game._id })
+        await createAtomicStats(p, game._id, teamOne._id)
     }
 
     for (const p of gameInput.teamTwoPlayers) {
-        let player = await Player.findById(p._id)
-        if (!player) {
-            player = await Player.create({ ...p })
-        }
-        player.games.push(game._id)
-        await player.save()
-        await AtomicStat.create({ playerId: player._id, teamId: teamOne._id, gameId: game._id })
+        if (!teamTwo) break
+        await createAtomicStats(p, game._id, teamTwo._id)
     }
+}
+
+const createAtomicStats = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
+    let playerRecord = await Player.findById(player._id)
+    if (!playerRecord) {
+        playerRecord = await Player.create({ ...player })
+    }
+    playerRecord.games.push(gameId)
+    await playerRecord.save()
+    await AtomicStat.create({ playerId: playerRecord._id, teamId, gameId })
 }

@@ -1,10 +1,19 @@
 import { Types } from 'mongoose'
-import { EmbeddedPlayer } from './player'
-import { EmbeddedTeam } from './team'
+import { EmbeddedPlayer, PlayerData } from './player'
+import { EmbeddedTeam, TeamData } from './team'
 
 interface Leader {
     player: EmbeddedPlayer
     total: number
+}
+
+type IdentifiedPlayerData = PlayerData & { _id: Types.ObjectId }
+type IdentifiedTeamData = TeamData & { _id: Types.ObjectId }
+export interface IPoint {
+    _id: Types.ObjectId
+    players: IdentifiedPlayerData[]
+    teamOne: IdentifiedTeamData
+    teamTwo: IdentifiedTeamData
 }
 
 interface IGame {
@@ -18,6 +27,7 @@ interface IGame {
     pointsPlayedLeader: Leader
     teamOneId: Types.ObjectId
     teamTwoId: Types.ObjectId
+    points: IPoint[]
 }
 
 export interface GameInput {
