@@ -135,14 +135,14 @@ describe('test create game', () => {
             teamTwoId: new Types.ObjectId(),
         })
         
-        await createGame({
+        await expect(createGame({
             _id: _id.toHexString(),
             startTime,
             teamOne,
             teamTwo: {},
             teamOnePlayers: [],
             teamTwoPlayers: [],
-        })
+        })).rejects.toThrowError()
 
         const games = await Game.find({})
         expect(games.length).toBe(1)
@@ -150,7 +150,4 @@ describe('test create game', () => {
         const teams = await Team.find({})
         expect(teams.length).toBe(0)
     })
-
-    
-
 })

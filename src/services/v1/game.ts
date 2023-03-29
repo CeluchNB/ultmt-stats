@@ -2,15 +2,17 @@ import AtomicStat from '../../models/atomic-stat'
 import Game from '../../models/game'
 import { GameInput } from '../../types/game'
 import Team from '../../models/team'
+import * as Constants from '../../utils/constants'
 import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
+import { ApiError } from '../../types/error'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
 
     if (prevGame) {
-        return
+        throw new ApiError(Constants.GAME_ALREADY_EXISTS, 400)
     }
 
     // create teams if not exists
