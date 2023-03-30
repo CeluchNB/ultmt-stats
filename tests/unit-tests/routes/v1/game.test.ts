@@ -40,9 +40,10 @@ describe('/POST game', () => {
                     teamTwo: {},
                     teamOnePlayers: [],
                     teamTwoPlayers: [],
-                }
-            }).expect(201)
-        
+                },
+            })
+            .expect(201)
+
         const games = await Game.find({})
         expect(games.length).toBe(1)
     })
@@ -58,9 +59,10 @@ describe('/POST game', () => {
                     teamTwo: {},
                     teamOnePlayers: [],
                     teamTwoPlayers: [],
-                }
-            }).expect(201)
-        
+                },
+            })
+            .expect(201)
+
         const response = await request(app)
             .post('/api/v1/stats/game')
             .send({
@@ -71,10 +73,10 @@ describe('/POST game', () => {
                     teamTwo: {},
                     teamOnePlayers: [],
                     teamTwoPlayers: [],
-                }
-            }).expect(400)
-        
+                },
+            })
+            .expect(400)
+
         expect(response.body.message).toBe(Constants.GAME_ALREADY_EXISTS)
     })
 })
-

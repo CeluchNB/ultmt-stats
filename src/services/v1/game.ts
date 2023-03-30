@@ -21,7 +21,6 @@ export const createGame = async (gameInput: GameInput) => {
         teamOne = await Team.create({ ...gameInput.teamOne })
     }
 
-    
     let teamTwo = await Team.findById(gameInput.teamTwo._id)
     if (!teamTwo && gameInput.teamTwo?._id) {
         teamTwo = await Team.create({ ...gameInput.teamTwo })

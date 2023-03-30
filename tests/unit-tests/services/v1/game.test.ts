@@ -42,14 +42,14 @@ describe('test create game', () => {
         _id: new Types.ObjectId(),
         firstName: 'First1',
         lastName: 'Last1',
-        username: 'firstlast1'
+        username: 'firstlast1',
     }
 
     const playerTwo = {
         _id: new Types.ObjectId(),
         firstName: 'First2',
         lastName: 'Last2',
-        username: 'firstlast1'
+        username: 'firstlast1',
     }
 
     it('with simple data', async () => {
@@ -134,15 +134,17 @@ describe('test create game', () => {
             teamOneId: new Types.ObjectId(),
             teamTwoId: new Types.ObjectId(),
         })
-        
-        await expect(createGame({
-            _id: _id.toHexString(),
-            startTime,
-            teamOne,
-            teamTwo: {},
-            teamOnePlayers: [],
-            teamTwoPlayers: [],
-        })).rejects.toThrowError()
+
+        await expect(
+            createGame({
+                _id: _id.toHexString(),
+                startTime,
+                teamOne,
+                teamTwo: {},
+                teamOnePlayers: [],
+                teamTwoPlayers: [],
+            }),
+        ).rejects.toThrowError()
 
         const games = await Game.find({})
         expect(games.length).toBe(1)

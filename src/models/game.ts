@@ -2,23 +2,25 @@ import { Schema, model, SchemaTypes } from 'mongoose'
 import IGame, { IPoint } from '../types/game'
 
 const pointSchema = new Schema<IPoint>({
-    players: [{
-        _id: { type: SchemaTypes.ObjectId, required: true },
-        goals: { type: Number, required: true, default: 0 },
-        assists: { type: Number, required: true, default: 0 },
-        blocks: { type: Number, required: true, default: 0 },
-        throwaways: { type: Number, required: true, default: 0 },
-        drops: { type: Number, required: true, default: 0 },
-        stalls: { type: Number, required: true, default: 0 },
-        touches: { type: Number, required: true, default: 0 },
-        catches: { type: Number, required: true, default: 0 },
-        completedPasses: { type: Number, required: true, default: 0 },
-        attemptedPasses: { type: Number, required: true, default: 0 },
-        callahans: { type: Number, required: true, default: 0 },
-        pointsPlayed: { type: Number, required: true, default: 0 },
-        wins: { type: Number, required: true, default: 0 },
-        losses: { type: Number, required: true, default: 0 },
-    }],
+    players: [
+        {
+            _id: { type: SchemaTypes.ObjectId, required: true },
+            goals: { type: Number, required: true, default: 0 },
+            assists: { type: Number, required: true, default: 0 },
+            blocks: { type: Number, required: true, default: 0 },
+            throwaways: { type: Number, required: true, default: 0 },
+            drops: { type: Number, required: true, default: 0 },
+            stalls: { type: Number, required: true, default: 0 },
+            touches: { type: Number, required: true, default: 0 },
+            catches: { type: Number, required: true, default: 0 },
+            completedPasses: { type: Number, required: true, default: 0 },
+            attemptedPasses: { type: Number, required: true, default: 0 },
+            callahans: { type: Number, required: true, default: 0 },
+            pointsPlayed: { type: Number, required: true, default: 0 },
+            wins: { type: Number, required: true, default: 0 },
+            losses: { type: Number, required: true, default: 0 },
+        },
+    ],
     teamOne: {
         type: {
             _id: { type: SchemaTypes.ObjectId, required: true },
@@ -34,7 +36,7 @@ const pointSchema = new Schema<IPoint>({
             turnovers: { type: Number, required: true, default: 0 },
             turnoversForced: { type: Number, required: true, default: 0 },
         },
-        required: true
+        required: true,
     },
     teamTwo: {
         type: {
@@ -51,8 +53,8 @@ const pointSchema = new Schema<IPoint>({
             turnovers: { type: Number, required: true, default: 0 },
             turnoversForced: { type: Number, required: true, default: 0 },
         },
-        required: true
-    }
+        required: true,
+    },
 })
 
 const schema = new Schema<IGame>({
@@ -65,7 +67,7 @@ const schema = new Schema<IGame>({
                 lastName: String,
                 username: String,
             },
-            total: Number
+            total: Number,
         },
         required: false,
     },
@@ -77,7 +79,7 @@ const schema = new Schema<IGame>({
                 lastName: String,
                 username: String,
             },
-            total: Number
+            total: Number,
         },
         required: false,
     },
@@ -89,7 +91,7 @@ const schema = new Schema<IGame>({
                 lastName: String,
                 username: String,
             },
-            total: Number
+            total: Number,
         },
         required: false,
     },
@@ -101,7 +103,7 @@ const schema = new Schema<IGame>({
                 lastName: String,
                 username: String,
             },
-            total: Number
+            total: Number,
         },
         required: false,
     },
@@ -113,7 +115,7 @@ const schema = new Schema<IGame>({
                 lastName: String,
                 username: String,
             },
-            total: Number
+            total: Number,
         },
         required: false,
     },
@@ -125,13 +127,13 @@ const schema = new Schema<IGame>({
                 lastName: String,
                 username: String,
             },
-            total: Number
+            total: Number,
         },
         required: false,
     },
     teamOneId: { type: SchemaTypes.ObjectId, required: true },
     teamTwoId: { type: SchemaTypes.ObjectId, required: false },
-    points: [pointSchema]
+    points: [pointSchema],
 })
 
 const Game = model<IGame>('Game', schema)

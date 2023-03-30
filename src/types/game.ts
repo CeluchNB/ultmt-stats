@@ -7,8 +7,8 @@ interface Leader {
     total: number
 }
 
-type IdentifiedPlayerData = PlayerData & { _id: Types.ObjectId }
-type IdentifiedTeamData = TeamData & { _id: Types.ObjectId }
+export type IdentifiedPlayerData = PlayerData & { _id: Types.ObjectId }
+export type IdentifiedTeamData = TeamData & { _id: Types.ObjectId }
 export interface IPoint {
     _id: Types.ObjectId
     players: IdentifiedPlayerData[]
@@ -16,15 +16,18 @@ export interface IPoint {
     teamTwo: IdentifiedTeamData
 }
 
-interface IGame {
-    _id: Types.ObjectId
-    startTime: Date
+export interface GameData {
     goalsLeader: Leader
     assistsLeader: Leader
     blocksLeader: Leader
     turnoverLeader: Leader
     plusMinusLeader: Leader
     pointsPlayedLeader: Leader
+}
+
+interface IGame extends GameData {
+    _id: Types.ObjectId
+    startTime: Date
     teamOneId: Types.ObjectId
     teamTwoId: Types.ObjectId
     points: IPoint[]

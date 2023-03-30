@@ -17,7 +17,7 @@ const schema = new Schema<IAtomicStat>({
     wins: { type: Number, required: true, default: 0 },
     losses: { type: Number, required: true, default: 0 },
     playerId: { type: SchemaTypes.ObjectId, required: true },
-    gameId: { type: SchemaTypes.ObjectId, required: true, },
+    gameId: { type: SchemaTypes.ObjectId, required: true },
     teamId: { type: SchemaTypes.ObjectId, required: true },
 })
 

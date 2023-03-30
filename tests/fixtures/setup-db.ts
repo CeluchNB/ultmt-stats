@@ -1,4 +1,4 @@
-import { connect, connection, Types } from 'mongoose'
+import { connect, connection } from 'mongoose'
 import Game from '../../src/models/game'
 import Team from '../../src/models/team'
 import Player from '../../src/models/player'
