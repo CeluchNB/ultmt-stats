@@ -1,7 +1,7 @@
 import { IngestedPoint, Action, ActionType } from '../../types/point'
 import { GameData, IdentifiedTeamData } from '../../types/game'
 import { Types } from 'mongoose'
-import { PlayerData } from '../../types/player'
+import { PlayerData, PlayerDataIndex } from '../../types/player'
 import Game from '../../models/game'
 import AtomicStat from '../../models/atomic-stat'
 import Player from '../../models/player'
@@ -169,82 +169,55 @@ const calculatePointData = (
 //     }
 // }
 
-const updateAtomicStats = (stats: Map<Types.ObjectId, Partial<PlayerData>>, action: Action) => {
+const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action) => {
     const playerOneId = action.playerOne?._id
     if (!playerOneId) {
         return
     }
 
-    if (!stats.get(playerOneId)) {
-        stats.set(playerOneId, getInitialPlayerData({}))
-    }
-    const playerOneData = stats.get(playerOneId)
     const playerTwoId = action.playerTwo?._id
-    if (playerTwoId && !stats.get(playerTwoId)) {
-        stats.set(playerTwoId, getInitialPlayerData({}))
-    }
 
     switch (action.actionType) {
         case ActionType.DROP:
-            stats.set(playerOneId, { ...playerOneData, drops: (playerOneData?.drops || 0) + 1 })
+            incrementMapValue(stats, playerOneId, ['drops'])
             break
         case ActionType.THROWAWAY:
-            stats.set(playerOneId, {
-                ...playerOneData,
-                throwaways: (playerOneData?.throwaways || 0) + 1,
-            })
+            incrementMapValue(stats, playerOneId, ['throwaways'])
             break
         case ActionType.TEAM_ONE_SCORE:
         case ActionType.TEAM_TWO_SCORE:
             // TODO: handle callahan
-            stats.set(playerOneId, {
-                ...playerOneData,
-                goals: 1,
-                touches: (playerOneData?.touches || 0) + 1,
-                catches: (playerOneData?.catches || 0) + 1,
-            })
+            incrementMapValue(stats, playerOneId, ['goals', 'touches', 'catches'])
             if (playerTwoId) {
-                const playerTwoData = stats.get(playerTwoId)
-                stats.set(playerTwoId, {
-                    ...playerTwoData,
-                    assists: 1,
-                    completedPasses: (playerTwoData?.completedPasses || 0) + 1,
-                })
+                incrementMapValue(stats, playerTwoId, ['assists', 'completedPasses'])
             }
             break
         case ActionType.CATCH:
-            stats.set(playerOneId, {
-                ...playerOneData,
-                touches: (playerOneData?.touches || 0) + 1,
-                catches: (playerOneData?.catches || 0) + 1,
-            })
+            incrementMapValue(stats, playerOneId, ['touches', 'catches'])
             if (playerTwoId) {
-                const playerTwoData = stats.get(playerTwoId)
-                stats.set(playerTwoId, {
-                    ...playerTwoData,
-                    completedPasses: (playerTwoData?.completedPasses || 0) + 1,
-                })
+                incrementMapValue(stats, playerTwoId, ['completedPasses'])
             }
             break
         case ActionType.BLOCK:
-            stats.set(playerOneId, {
-                ...playerOneData,
-                blocks: (playerOneData?.blocks || 0) + 1,
-            })
+            incrementMapValue(stats, playerOneId, ['blocks'])
             break
         case ActionType.PICKUP:
-            stats.set(playerOneId, {
-                ...playerOneData,
-                touches: (playerOneData?.touches || 0) + 1,
-            })
+            incrementMapValue(stats, playerOneId, ['touches'])
             break
         case ActionType.PULL:
-            stats.set(playerOneId, {
-                ...playerOneData,
-                pulls: 1,
-            })
+            incrementMapValue(stats, playerOneId, ['pulls'])
             break
     }
+}
+
+const incrementMapValue = (map: Map<Types.ObjectId, PlayerData>, id: Types.ObjectId, values: PlayerDataIndex[]) => {
+    const currentValue = map.get(id) || getInitialPlayerData({})
+
+    for (const value of values) {
+        currentValue[value] += 1
+    }
+
+    map.set(id, currentValue)
 }
 
 // const mediatePointLeaders = (teamOnePoint: Partial<GameData>, teamTwoPoint: Partial<GameData>): Partial<GameData> => {

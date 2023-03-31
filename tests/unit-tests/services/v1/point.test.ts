@@ -181,64 +181,65 @@ describe('test ingest point', () => {
         expect(game?.points[0].players[0].assists).toBe(1)
     })
 
-    // it('handles basic D actions', async () => {
-    //     const actions: Action[] = [
-    //         {
-    //             actionNumber: 1,
-    //             actionType: ActionType.PULL,
-    //             playerOne,
-    //             team: teamOne,
-    //         },
-    //         {
-    //             actionNumber: 2,
-    //             actionType: ActionType.TEAM_TWO_SCORE,
-    //             team: teamOne,
-    //         },
-    //     ]
+    it('handles basic D actions', async () => {
+        const actions: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.PULL,
+                playerOne,
+                team: teamOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.TEAM_TWO_SCORE,
+                team: teamOne,
+            },
+        ]
 
-    //     await ingestPoint({
-    //         pointId,
-    //         gameId,
-    //         teamOneActions: actions,
-    //         teamTwoActions: [],
-    //         pullingTeam: teamOne,
-    //         receivingTeam: teamTwo,
-    //         scoringTeam: teamOne,
-    //         teamOnePlayers: [playerOne, playerTwo, playerThree],
-    //         teamTwoPlayers: [],
-    //         teamOneScore: 1,
-    //         teamTwoScore: 0,
-    //     })
+        await ingestPoint({
+            pointId,
+            gameId,
+            teamOneActions: actions,
+            teamTwoActions: [],
+            pullingTeam: teamOne,
+            receivingTeam: teamTwo,
+            scoringTeam: teamOne,
+            teamOnePlayers: [playerOne, playerTwo, playerThree],
+            teamTwoPlayers: [],
+            teamOneScore: 1,
+            teamTwoScore: 0,
+        })
 
-    //     const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
-    //     const playerOneStat = playerOneStatQuery[0]
-    //     expect(playerOneStat?.goals).toBe(0)
-    //     expect(playerOneStat?.assists).toBe(0)
-    //     expect(playerOneStat?.pointsPlayed).toBe(0)
-    //     expect(playerOneStat?.touches).toBe(0)
-    //     expect(playerOneStat?.catches).toBe(0)
-    //     expect(playerOneStat?.pulls).toBe(1)
+        const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
+        const playerOneStat = playerOneStatQuery[0]
+        console.log('got player one stat', playerOneStat)
+        expect(playerOneStat?.goals).toBe(0)
+        expect(playerOneStat?.assists).toBe(0)
+        expect(playerOneStat?.pointsPlayed).toBe(1)
+        expect(playerOneStat?.touches).toBe(0)
+        expect(playerOneStat?.catches).toBe(0)
+        expect(playerOneStat?.pulls).toBe(1)
 
-    //     const playerOneRecord = await Player.findById(playerOne._id)
-    //     expect(playerOneRecord?.goals).toBe(0)
-    //     expect(playerOneRecord?.assists).toBe(0)
-    //     expect(playerOneRecord?.pointsPlayed).toBe(0)
-    //     expect(playerOneRecord?.touches).toBe(0)
-    //     expect(playerOneRecord?.catches).toBe(0)
-    //     expect(playerOneRecord?.pulls).toBe(1)
+        const playerOneRecord = await Player.findById(playerOne._id)
+        expect(playerOneRecord?.goals).toBe(0)
+        expect(playerOneRecord?.assists).toBe(0)
+        expect(playerOneRecord?.pointsPlayed).toBe(1)
+        expect(playerOneRecord?.touches).toBe(0)
+        expect(playerOneRecord?.catches).toBe(0)
+        expect(playerOneRecord?.pulls).toBe(1)
 
-    //     const teamRecord = await Team.findById(teamOneId)
-    //     expect(teamRecord?.holds).toBe(0)
-    //     expect(teamRecord?.turnoverFreeHolds).toBe(0)
-    //     expect(teamRecord?.turnovers).toBe(0)
-    //     expect(teamRecord?.goalsFor).toBe(0)
-    //     expect(teamRecord?.goalsAgainst).toBe(1)
-    //     expect(teamRecord?.breaks).toBe(0)
-    //     expect(teamRecord?.wins).toBe(0)
-    //     expect(teamRecord?.losses).toBe(0)
+        const teamRecord = await Team.findById(teamOneId)
+        expect(teamRecord?.holds).toBe(0)
+        expect(teamRecord?.turnoverFreeHolds).toBe(0)
+        expect(teamRecord?.turnovers).toBe(0)
+        expect(teamRecord?.goalsFor).toBe(0)
+        expect(teamRecord?.goalsAgainst).toBe(1)
+        expect(teamRecord?.breaks).toBe(0)
+        expect(teamRecord?.wins).toBe(0)
+        expect(teamRecord?.losses).toBe(0)
 
-    //     const game = await Game.findById(gameId)
-    //     expect(game?.goalsLeader).toBeUndefined()
-    //     expect(game?.assistsLeader).toBeUndefined()
-    // })
+        const game = await Game.findById(gameId)
+        expect(game?.goalsLeader).toBeUndefined()
+        expect(game?.assistsLeader).toBeUndefined()
+    })
 })

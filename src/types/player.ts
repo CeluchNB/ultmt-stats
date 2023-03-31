@@ -24,6 +24,8 @@ export interface PlayerData {
     losses: number
 }
 
+export type PlayerDataIndex = keyof PlayerData
+
 interface IPlayer extends EmbeddedPlayer, PlayerData {
     games: Types.ObjectId[]
     teams: Types.ObjectId[]
