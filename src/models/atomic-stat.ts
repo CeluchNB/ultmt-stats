@@ -11,12 +11,11 @@ const schema = new Schema<IAtomicStat>({
     touches: { type: Number, required: true, default: 0 },
     catches: { type: Number, required: true, default: 0 },
     completedPasses: { type: Number, required: true, default: 0 },
-    attemptedPasses: { type: Number, required: true, default: 0 },
     callahans: { type: Number, required: true, default: 0 },
     pointsPlayed: { type: Number, required: true, default: 0 },
     wins: { type: Number, required: true, default: 0 },
     losses: { type: Number, required: true, default: 0 },
-    playerId: { type: SchemaTypes.ObjectId, required: true },
+    playerId: { type: SchemaTypes.ObjectId, required: true, unique: true },
     gameId: { type: SchemaTypes.ObjectId, required: true },
     teamId: { type: SchemaTypes.ObjectId, required: true },
 })

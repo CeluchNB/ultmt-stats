@@ -1,12 +1,12 @@
 import { Types } from 'mongoose'
 
 export interface EmbeddedTeam {
-    _id: Types.ObjectId
+    _id?: Types.ObjectId
     place: string
     name: string
-    teamName: string
-    seasonStart: Date
-    seasonEnd: Date
+    teamName?: string
+    seasonStart?: Date
+    seasonEnd?: Date
 }
 
 export interface TeamData {

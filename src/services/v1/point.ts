@@ -1,8 +1,10 @@
 import { IngestedPoint, Action, ActionType } from '../../types/point'
-import { GameData, IdentifiedPlayerData, IdentifiedTeamData, IPoint } from '../../types/game'
+import { GameData, IdentifiedTeamData } from '../../types/game'
 import { Types } from 'mongoose'
 import { PlayerData } from '../../types/player'
 import Game from '../../models/game'
+import AtomicStat from '../../models/atomic-stat'
+import Player from '../../models/player'
 
 const getInitialTeamData = (overrides: Partial<IdentifiedTeamData>): IdentifiedTeamData => {
     return {
@@ -42,6 +44,25 @@ const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
     }
 }
 
+const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData => {
+    return {
+        goals: data1.goals + data2.goals,
+        assists: data1.assists + data2.assists,
+        touches: data1.touches + data2.touches,
+        catches: data1.catches + data2.catches,
+        callahans: data1.callahans + data2.callahans,
+        throwaways: data1.throwaways + data2.throwaways,
+        blocks: data1.blocks + data2.blocks,
+        drops: data1.drops + data2.drops,
+        stalls: data1.drops + data2.drops,
+        completedPasses: data1.completedPasses + data2.completedPasses,
+        pointsPlayed: data1.pointsPlayed + data2.pointsPlayed,
+        pulls: data1.pulls + data2.pulls,
+        wins: data1.wins + data2.wins,
+        losses: data1.losses + data2.losses,
+    }
+}
+
 export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const game = await Game.findById(inputPoint.gameId)
     if (!game) {
@@ -49,34 +70,59 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     }
 
     const { teamOneId, teamTwoId } = game
-    const {
-        point: teamOnePoint,
-        atomicStats: teamOneStats,
-        team: teamOne,
-    } = calculatePointData(inputPoint.teamOneActions, teamOneId)
-    const {
-        point: teamTwoPoint,
-        atomicStats: teamTwoStats,
-        team: teamTwo,
-    } = calculatePointData(inputPoint.teamTwoActions, teamTwoId)
+    const { atomicStats: teamOneStats } = calculatePointData(inputPoint.teamOneActions, teamOneId)
+    const { atomicStats: teamTwoStats } = calculatePointData(inputPoint.teamTwoActions, teamTwoId)
 
     for (const stats of [...teamOneStats, ...teamTwoStats]) {
         stats.pointsPlayed = 1
     }
 
-    const point: IPoint = {
-        _id: inputPoint.pointId,
-        teamOne,
-        teamTwo,
-        players: [...teamOneStats, ...teamTwoStats],
+    for (const stats of teamOneStats) {
+        const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId: inputPoint.gameId })
+        if (statQuery.length === 1) {
+            const record = statQuery[0]
+            await AtomicStat.create({
+                ...addPlayerData(record, stats),
+                gameId: inputPoint.gameId,
+                teamId: teamOneId,
+            })
+        } else {
+            await AtomicStat.create({
+                ...stats,
+                gameId: inputPoint.gameId,
+                teamId: teamOneId,
+            })
+        }
+        const player = await Player.findById(stats.playerId)
+        if (player) {
+            player.set({ ...addPlayerData(player, stats) })
+            await player.save()
+        } else {
+            await Player.create({ ...stats })
+        }
     }
 
-    // TODO: this method must take previous stats into account
-    const gameData = mediatePointLeaders(teamOnePoint, teamTwoPoint)
+    // for (const stats of teamTwoStats) {
+    //     await AtomicStat.create({
+    //         ...stats,
+    //         gameId: inputPoint.gameId,
+    //         teamId: teamTwo._id,
+    //     })
+    // }
 
-    game.set({ ...gameData })
-    game.points.push(point)
-    await game.save()
+    // const point: IPoint = {
+    //     _id: inputPoint.pointId,
+    //     teamOne,
+    //     teamTwo,
+    //     players: [...teamOneStats, ...teamTwoStats],
+    // }
+
+    // // TODO: this method must take previous stats into account
+    // const gameData = mediatePointLeaders(teamOnePoint, teamTwoPoint)
+
+    // game.set({ ...gameData })
+    // game.points.push(point)
+    // await game.save()
 }
 
 const calculatePointData = (
@@ -85,26 +131,24 @@ const calculatePointData = (
 ): {
     point: Partial<GameData>
     team: IdentifiedTeamData
-    atomicStats: IdentifiedPlayerData[]
+    atomicStats: (PlayerData & { playerId: Types.ObjectId })[]
 } => {
     const point: Partial<GameData> = {}
     const team: IdentifiedTeamData = getInitialTeamData({ _id: teamId })
     const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
 
-    let prevAction: Action | undefined = undefined
     for (const action of actions) {
-        // updatePointData(point, action)
-        updateTeamData(team, action)
         updateAtomicStats(atomicStatsMap, action)
-        prevAction = action
     }
 
-    const atomicStats: IdentifiedPlayerData[] = Array.from(atomicStatsMap).map(([key, value]) => {
-        return {
-            _id: key,
-            ...value,
-        }
-    })
+    const atomicStats: (PlayerData & { playerId: Types.ObjectId })[] = Array.from(atomicStatsMap).map(
+        ([key, value]) => {
+            return {
+                playerId: key,
+                ...value,
+            }
+        },
+    )
     return { point, team, atomicStats }
 }
 
@@ -112,18 +156,18 @@ const calculatePointData = (
 // TODO: handle everything
 // }
 
-const updateTeamData = (team: IdentifiedTeamData, action: Action) => {
-    // TODO: handle everything, going to need previous action to calculate some things
-    switch (action.actionType) {
-        case ActionType.DROP:
-        case ActionType.THROWAWAY:
-            team.turnovers += 1
-            break
-        case ActionType.BLOCK:
-            team.turnoversForced += 1
-            break
-    }
-}
+// const updateTeamData = (team: IdentifiedTeamData, action: Action) => {
+//     // TODO: handle everything, going to need previous action to calculate some things
+//     switch (action.actionType) {
+//         case ActionType.DROP:
+//         case ActionType.THROWAWAY:
+//             team.turnovers += 1
+//             break
+//         case ActionType.BLOCK:
+//             team.turnoversForced += 1
+//             break
+//     }
+// }
 
 const updateAtomicStats = (stats: Map<Types.ObjectId, Partial<PlayerData>>, action: Action) => {
     const playerOneId = action.playerOne?._id
@@ -135,13 +179,10 @@ const updateAtomicStats = (stats: Map<Types.ObjectId, Partial<PlayerData>>, acti
         stats.set(playerOneId, getInitialPlayerData({}))
     }
     const playerOneData = stats.get(playerOneId)
-    let playerTwoId = action.playerTwo?._id
-    if (playerTwoId) {
+    const playerTwoId = action.playerTwo?._id
+    if (playerTwoId && !stats.get(playerTwoId)) {
         stats.set(playerTwoId, getInitialPlayerData({}))
-    } else {
-        playerTwoId = new Types.ObjectId()
     }
-    const playerTwoData = stats.get(playerTwoId) || {}
 
     switch (action.actionType) {
         case ActionType.DROP:
@@ -159,11 +200,17 @@ const updateAtomicStats = (stats: Map<Types.ObjectId, Partial<PlayerData>>, acti
             stats.set(playerOneId, {
                 ...playerOneData,
                 goals: 1,
+                touches: (playerOneData?.touches || 0) + 1,
+                catches: (playerOneData?.catches || 0) + 1,
             })
-            stats.set(playerTwoId, {
-                ...playerTwoData,
-                assists: 1,
-            })
+            if (playerTwoId) {
+                const playerTwoData = stats.get(playerTwoId)
+                stats.set(playerTwoId, {
+                    ...playerTwoData,
+                    assists: 1,
+                    completedPasses: (playerTwoData?.completedPasses || 0) + 1,
+                })
+            }
             break
         case ActionType.CATCH:
             stats.set(playerOneId, {
@@ -171,10 +218,13 @@ const updateAtomicStats = (stats: Map<Types.ObjectId, Partial<PlayerData>>, acti
                 touches: (playerOneData?.touches || 0) + 1,
                 catches: (playerOneData?.catches || 0) + 1,
             })
-            stats.set(playerTwoId, {
-                ...playerTwoData,
-                completedPasses: (playerOneData?.completedPasses || 0) + 1,
-            })
+            if (playerTwoId) {
+                const playerTwoData = stats.get(playerTwoId)
+                stats.set(playerTwoId, {
+                    ...playerTwoData,
+                    completedPasses: (playerTwoData?.completedPasses || 0) + 1,
+                })
+            }
             break
         case ActionType.BLOCK:
             stats.set(playerOneId, {
@@ -197,6 +247,6 @@ const updateAtomicStats = (stats: Map<Types.ObjectId, Partial<PlayerData>>, acti
     }
 }
 
-const mediatePointLeaders = (teamOnePoint: Partial<GameData>, teamTwoPoint: Partial<GameData>): Partial<GameData> => {
-    return {}
-}
+// const mediatePointLeaders = (teamOnePoint: Partial<GameData>, teamTwoPoint: Partial<GameData>): Partial<GameData> => {
+//     return {}
+// }
