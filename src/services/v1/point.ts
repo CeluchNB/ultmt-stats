@@ -14,8 +14,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     }
 
     const { teamOneId, teamTwoId } = game
-    const teamOnePlayerStats = calculatePlayerData(inputPoint.teamOneActions)
-    const teamTwoPlayerStats = calculatePlayerData(inputPoint.teamTwoActions)
+    const teamOnePlayerStats = calculatePlayerData(inputPoint, 'one')
+    const teamTwoPlayerStats = calculatePlayerData(inputPoint, 'two')
 
     for (const stats of [...teamOnePlayerStats, ...teamTwoPlayerStats]) {
         stats.pointsPlayed = 1
@@ -25,11 +25,10 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
         const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId: inputPoint.gameId })
         if (statQuery.length === 1) {
             const record = statQuery[0]
-            await AtomicStat.create({
+            record.set({
                 ...addPlayerData(record, stats),
-                gameId: inputPoint.gameId,
-                teamId: teamOneId,
             })
+            await record.save()
         } else {
             await AtomicStat.create({
                 ...stats,
@@ -50,11 +49,12 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
         const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId: inputPoint.gameId })
         if (statQuery.length === 1) {
             const record = statQuery[0]
-            await AtomicStat.create({
+            record.set({
                 ...addPlayerData(record, stats),
                 gameId: inputPoint.gameId,
                 teamId: teamTwoId,
             })
+            await record.save()
         } else {
             await AtomicStat.create({
                 ...stats,
@@ -85,11 +85,22 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     // TODO: update game data
 }
 
-const calculatePlayerData = (actions: Action[]): (PlayerData & { playerId: Types.ObjectId })[] => {
+const calculatePlayerData = (
+    inputPoint: IngestedPoint,
+    teamNumber: 'one' | 'two',
+): (PlayerData & { playerId: Types.ObjectId })[] => {
     const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
 
-    for (const action of actions) {
-        updateAtomicStats(atomicStatsMap, action)
+    const players = teamNumber === 'one' ? inputPoint.teamOnePlayers : inputPoint.teamTwoPlayers
+    for (const player of players) {
+        atomicStatsMap.set(player._id, getInitialPlayerData({}))
+    }
+
+    let prevAction: Action | undefined = undefined
+    const actions = teamNumber === 'one' ? inputPoint.teamOneActions : inputPoint.teamTwoActions
+    for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
+        updateAtomicStats(atomicStatsMap, action, prevAction)
+        prevAction = action
     }
 
     const atomicStats: (PlayerData & { playerId: Types.ObjectId })[] = Array.from(atomicStatsMap).map(
@@ -107,7 +118,7 @@ const calculateTeamData = (teamId: Types.ObjectId, inputPoint: IngestedPoint, te
     const teamData = getInitialTeamData({})
 
     const actions = teamNumber === 'one' ? inputPoint.teamOneActions : inputPoint.teamTwoActions
-    for (const action of actions) {
+    for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
         updateTeamData(teamData, action, teamNumber)
     }
 
@@ -155,7 +166,7 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
     }
 }
 
-const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action) => {
+const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
     const playerOneId = action.playerOne?._id
     if (!playerOneId) {
         return
@@ -172,8 +183,13 @@ const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Actio
             break
         case ActionType.TEAM_ONE_SCORE:
         case ActionType.TEAM_TWO_SCORE:
-            // TODO: handle callahan
             incrementMapValue(stats, playerOneId, ['goals', 'touches', 'catches'])
+            if (
+                prevAction &&
+                [ActionType.PULL, ActionType.DROP, ActionType.THROWAWAY].includes(prevAction.actionType)
+            ) {
+                incrementMapValue(stats, playerOneId, ['callahans', 'blocks'])
+            }
             if (playerTwoId) {
                 incrementMapValue(stats, playerTwoId, ['assists', 'completedPasses'])
             }
