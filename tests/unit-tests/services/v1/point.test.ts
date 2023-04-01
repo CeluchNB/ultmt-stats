@@ -108,8 +108,8 @@ describe('test ingest point', () => {
             gameId,
             teamOneActions: actions,
             teamTwoActions: [],
-            pullingTeam: teamOne,
-            receivingTeam: teamTwo,
+            pullingTeam: teamTwo,
+            receivingTeam: teamOne,
             scoringTeam: teamOne,
             teamOnePlayers: [playerOne, playerTwo, playerThree],
             teamTwoPlayers: [],
@@ -163,6 +163,8 @@ describe('test ingest point', () => {
         expect(playerThreeRecord?.catches).toBe(1)
 
         const teamRecord = await Team.findById(teamOneId)
+        expect(teamRecord?.offensePoints).toBe(1)
+        expect(teamRecord?.defensePoints).toBe(0)
         expect(teamRecord?.holds).toBe(1)
         expect(teamRecord?.turnoverFreeHolds).toBe(1)
         expect(teamRecord?.turnovers).toBe(0)
@@ -229,6 +231,8 @@ describe('test ingest point', () => {
         expect(playerOneRecord?.pulls).toBe(1)
 
         const teamRecord = await Team.findById(teamOneId)
+        expect(teamRecord?.defensePoints).toBe(1)
+        expect(teamRecord?.offensePoints).toBe(0)
         expect(teamRecord?.holds).toBe(0)
         expect(teamRecord?.turnoverFreeHolds).toBe(0)
         expect(teamRecord?.turnovers).toBe(0)
@@ -241,5 +245,6 @@ describe('test ingest point', () => {
         const game = await Game.findById(gameId)
         expect(game?.goalsLeader).toBeUndefined()
         expect(game?.assistsLeader).toBeUndefined()
+        expect(game?.points.length).toBe(1)
     })
 })
