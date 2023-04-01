@@ -344,13 +344,25 @@ describe('test ingest point', () => {
         expect(playerTwoRecord?.catches).toBe(1)
         expect(playerTwoRecord?.pulls).toBe(0)
 
+        const teamRecord = await Team.findById(teamOneId)
+        expect(teamRecord?.goalsFor).toBe(1)
+        expect(teamRecord?.goalsAgainst).toBe(0)
+
         const game = await Game.findById(gameId)
-        expect(game?.goalsLeader).toBeUndefined()
-        expect(game?.assistsLeader).toBeUndefined()
+        expect(game?.goalsLeader).toBeDefined()
+        expect(game?.assistsLeader).toBeDefined()
         expect(game?.points.length).toBe(1)
     })
 
     it('handles turnovers', async () => {
+        const fullTeamTwo = {
+            ...teamTwo,
+            _id: teamTwoId,
+            teamName: 'team2',
+            seasonStart: new Date(),
+            seasonEnd: new Date(),
+        }
+        await Team.create(fullTeamTwo)
         const teamOneActions: Action[] = [
             {
                 actionNumber: 1,
@@ -382,6 +394,11 @@ describe('test ingest point', () => {
                 actionType: ActionType.THROWAWAY,
                 team: teamOne,
                 playerOne,
+            },
+            {
+                actionNumber: 6,
+                actionType: ActionType.TEAM_TWO_SCORE,
+                team: teamOne,
             },
         ]
 
@@ -419,8 +436,8 @@ describe('test ingest point', () => {
             teamOneActions,
             teamTwoActions,
             pullingTeam: teamOne,
-            receivingTeam: teamTwo,
-            scoringTeam: teamTwo,
+            receivingTeam: fullTeamTwo,
+            scoringTeam: fullTeamTwo,
             teamOnePlayers: [playerOne, playerTwo, playerThree],
             teamTwoPlayers: [playerFour, playerFive, playerSix],
             teamOneScore: 0,
@@ -469,6 +486,30 @@ describe('test ingest point', () => {
             pointsPlayed: 1,
             assists: 0,
             throwaways: 0,
+        })
+
+        const teamOneRecord = await Team.findById(teamOneId)
+        expect(teamOneRecord).toMatchObject({
+            goalsFor: 0,
+            goalsAgainst: 1,
+            turnovers: 1,
+            turnoversForced: 1,
+            holds: 0,
+            breaks: 0,
+            defensePoints: 1,
+            offensePoints: 0,
+        })
+
+        const teamTwoRecord = await Team.findById(teamTwoId)
+        expect(teamTwoRecord).toMatchObject({
+            goalsFor: 1,
+            goalsAgainst: 0,
+            turnovers: 1,
+            turnoversForced: 1,
+            holds: 1,
+            breaks: 0,
+            defensePoints: 0,
+            offensePoints: 1,
         })
 
         const game = await Game.findById(gameId)

@@ -118,8 +118,10 @@ const calculateTeamData = (teamId: Types.ObjectId, inputPoint: IngestedPoint, te
     const teamData = getInitialTeamData({})
 
     const actions = teamNumber === 'one' ? inputPoint.teamOneActions : inputPoint.teamTwoActions
+    let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
-        updateTeamData(teamData, action, teamNumber)
+        updateTeamData(teamData, action, teamNumber, prevAction)
+        prevAction = action
     }
 
     if (inputPoint.pullingTeam._id?.equals(teamId)) {
@@ -140,7 +142,7 @@ const calculateTeamData = (teamId: Types.ObjectId, inputPoint: IngestedPoint, te
     return teamData
 }
 
-const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two') => {
+const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two', prevAction?: Action) => {
     // TODO: handle data requiring previous action (e.g. turnovers forced)
     switch (action.actionType) {
         case ActionType.DROP:
@@ -163,6 +165,21 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
             } else {
                 team.goalsAgainst += 1
             }
+            break
+        case ActionType.PICKUP:
+            if (prevAction?.actionType !== ActionType.BLOCK) {
+                team.turnoversForced += 1
+            }
+            break
+        case ActionType.CATCH:
+            if (
+                prevAction &&
+                prevAction?.actionType !== ActionType.CATCH &&
+                prevAction?.actionType !== ActionType.PICKUP
+            ) {
+                team.turnoversForced += 1
+            }
+            break
     }
 }
 
