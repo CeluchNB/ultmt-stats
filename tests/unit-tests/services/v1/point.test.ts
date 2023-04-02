@@ -306,47 +306,47 @@ describe('test ingest point', () => {
             teamTwoScore: 0,
         })
 
+        const playerOneResult = {
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 0,
+            catches: 0,
+            pulls: 1,
+        }
         const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
-        expect(playerOneStat?.goals).toBe(0)
-        expect(playerOneStat?.assists).toBe(0)
-        expect(playerOneStat?.pointsPlayed).toBe(1)
-        expect(playerOneStat?.touches).toBe(0)
-        expect(playerOneStat?.catches).toBe(0)
-        expect(playerOneStat?.pulls).toBe(1)
+        expect(playerOneStat).toMatchObject(playerOneResult)
 
         const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord?.goals).toBe(0)
-        expect(playerOneRecord?.assists).toBe(0)
-        expect(playerOneRecord?.pointsPlayed).toBe(1)
-        expect(playerOneRecord?.touches).toBe(0)
-        expect(playerOneRecord?.catches).toBe(0)
-        expect(playerOneRecord?.pulls).toBe(1)
+        expect(playerOneRecord).toMatchObject(playerOneResult)
 
+        const playerTwoResult = {
+            goals: 1,
+            assists: 0,
+            callahans: 1,
+            blocks: 1,
+            pointsPlayed: 1,
+            touches: 1,
+            catches: 1,
+            pulls: 0,
+        }
         const playerTwoStatQuery = await AtomicStat.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
-        expect(playerTwoStat?.goals).toBe(1)
-        expect(playerTwoStat?.assists).toBe(0)
-        expect(playerTwoStat?.callahans).toBe(1)
-        expect(playerTwoStat?.blocks).toBe(1)
-        expect(playerTwoStat?.pointsPlayed).toBe(1)
-        expect(playerTwoStat?.touches).toBe(1)
-        expect(playerTwoStat?.catches).toBe(1)
-        expect(playerTwoStat?.pulls).toBe(0)
+        expect(playerTwoStat).toMatchObject(playerTwoResult)
 
         const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord?.goals).toBe(1)
-        expect(playerTwoRecord?.assists).toBe(0)
-        expect(playerTwoRecord?.callahans).toBe(1)
-        expect(playerTwoRecord?.blocks).toBe(1)
-        expect(playerTwoRecord?.pointsPlayed).toBe(1)
-        expect(playerTwoRecord?.touches).toBe(1)
-        expect(playerTwoRecord?.catches).toBe(1)
-        expect(playerTwoRecord?.pulls).toBe(0)
+        expect(playerTwoRecord).toMatchObject(playerTwoResult)
 
         const teamRecord = await Team.findById(teamOneId)
-        expect(teamRecord?.goalsFor).toBe(1)
-        expect(teamRecord?.goalsAgainst).toBe(0)
+        expect(teamRecord).toMatchObject({
+            goalsFor: 1,
+            goalsAgainst: 0,
+            turnoversForced: 1,
+            turnovers: 0,
+            defensePoints: 1,
+            offensePoints: 0,
+        })
 
         const game = await Game.findById(gameId)
         expect(game?.goalsLeader).toBeDefined()
@@ -507,6 +507,7 @@ describe('test ingest point', () => {
             turnovers: 1,
             turnoversForced: 1,
             holds: 1,
+            turnoverFreeHolds: 0,
             breaks: 0,
             defensePoints: 0,
             offensePoints: 1,

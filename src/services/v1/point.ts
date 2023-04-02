@@ -1,12 +1,12 @@
 import { IngestedPoint, Action, ActionType } from '../../types/point'
 import { Types } from 'mongoose'
-import { PlayerData, PlayerDataIndex } from '../../types/player'
+import { PlayerData } from '../../types/player'
 import Game from '../../models/game'
 import AtomicStat from '../../models/atomic-stat'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import Team from '../../models/team'
-import { isCallahan, PLAYER_ONE_STAT_UPDATES, PLAYER_TWO_STAT_UPDATES } from '../../utils/point'
+import { calculatePlayerData, isCallahan } from '../../utils/player-stats'
 
 export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const game = await Game.findById(inputPoint.gameId)
@@ -14,63 +14,12 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
         throw new Error()
     }
 
-    const { teamOneId, teamTwoId } = game
-    const teamOnePlayerStats = calculatePlayerData(inputPoint, 'one')
-    const teamTwoPlayerStats = calculatePlayerData(inputPoint, 'two')
+    const { _id: gameId, teamOneId, teamTwoId } = game
+    const teamOnePlayerStats = calculatePlayerData(inputPoint.teamOnePlayers, inputPoint.teamOneActions)
+    const teamTwoPlayerStats = calculatePlayerData(inputPoint.teamTwoPlayers, inputPoint.teamTwoActions)
 
-    for (const stats of [...teamOnePlayerStats, ...teamTwoPlayerStats]) {
-        stats.pointsPlayed = 1
-    }
-
-    for (const stats of teamOnePlayerStats) {
-        const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId: inputPoint.gameId })
-        if (statQuery.length === 1) {
-            const record = statQuery[0]
-            record.set({
-                ...addPlayerData(record, stats),
-            })
-            await record.save()
-        } else {
-            await AtomicStat.create({
-                ...stats,
-                gameId: inputPoint.gameId,
-                teamId: teamOneId,
-            })
-        }
-        const player = await Player.findById(stats.playerId)
-        if (player) {
-            player.set({ ...addPlayerData(player, stats) })
-            await player.save()
-        } else {
-            await Player.create({ ...stats })
-        }
-    }
-
-    for (const stats of teamTwoPlayerStats) {
-        const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId: inputPoint.gameId })
-        if (statQuery.length === 1) {
-            const record = statQuery[0]
-            record.set({
-                ...addPlayerData(record, stats),
-                gameId: inputPoint.gameId,
-                teamId: teamTwoId,
-            })
-            await record.save()
-        } else {
-            await AtomicStat.create({
-                ...stats,
-                gameId: inputPoint.gameId,
-                teamId: teamTwoId,
-            })
-        }
-        const player = await Player.findById(stats.playerId)
-        if (player) {
-            player.set({ ...addPlayerData(player, stats) })
-            await player.save()
-        } else {
-            await Player.create({ ...stats })
-        }
-    }
+    await savePlayerData(teamOnePlayerStats, gameId, teamOneId)
+    await savePlayerData(teamTwoPlayerStats, gameId, teamTwoId)
 
     const teamOneData = calculateTeamData(teamOneId, inputPoint, 'one')
     const teamTwoData = calculateTeamData(teamTwoId, inputPoint, 'two')
@@ -86,33 +35,34 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     // TODO: update game data
 }
 
-const calculatePlayerData = (
-    inputPoint: IngestedPoint,
-    teamNumber: 'one' | 'two',
-): (PlayerData & { playerId: Types.ObjectId })[] => {
-    const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
-
-    const players = teamNumber === 'one' ? inputPoint.teamOnePlayers : inputPoint.teamTwoPlayers
-    for (const player of players) {
-        atomicStatsMap.set(player._id, getInitialPlayerData({}))
+const savePlayerData = async (
+    playerStats: (PlayerData & { playerId: Types.ObjectId })[],
+    gameId: Types.ObjectId,
+    teamId: Types.ObjectId,
+) => {
+    for (const stats of playerStats) {
+        const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId })
+        if (statQuery.length === 1) {
+            const record = statQuery[0]
+            record.set({
+                ...addPlayerData(record, stats),
+            })
+            await record.save()
+        } else {
+            await AtomicStat.create({
+                ...stats,
+                gameId,
+                teamId,
+            })
+        }
+        const player = await Player.findById(stats.playerId)
+        if (player) {
+            player.set({ ...addPlayerData(player, stats) })
+            await player.save()
+        } else {
+            await Player.create({ ...stats })
+        }
     }
-
-    let prevAction: Action | undefined = undefined
-    const actions = teamNumber === 'one' ? inputPoint.teamOneActions : inputPoint.teamTwoActions
-    for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
-        updateAtomicStats(atomicStatsMap, action, prevAction)
-        prevAction = action
-    }
-
-    const atomicStats: (PlayerData & { playerId: Types.ObjectId })[] = Array.from(atomicStatsMap).map(
-        ([key, value]) => {
-            return {
-                playerId: key,
-                ...value,
-            }
-        },
-    )
-    return atomicStats
 }
 
 const calculateTeamData = (teamId: Types.ObjectId, inputPoint: IngestedPoint, teamNumber: 'one' | 'two'): TeamData => {
@@ -145,6 +95,7 @@ const calculateTeamData = (teamId: Types.ObjectId, inputPoint: IngestedPoint, te
 
 const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two', prevAction?: Action) => {
     // TODO: handle data requiring previous action (e.g. turnovers forced)
+    // turnover forced could be pickup, block -> pickup
     switch (action.actionType) {
         case ActionType.DROP:
         case ActionType.THROWAWAY:
@@ -156,6 +107,9 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
         case ActionType.TEAM_ONE_SCORE:
             if (teamNumber === 'one') {
                 team.goalsFor += 1
+                if (isCallahan(action, prevAction)) {
+                    team.turnoversForced += 1
+                }
             } else {
                 team.goalsAgainst += 1
             }
@@ -163,6 +117,9 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
         case ActionType.TEAM_TWO_SCORE:
             if (teamNumber === 'two') {
                 team.goalsFor += 1
+                if (isCallahan(action, prevAction)) {
+                    team.turnoversForced += 1
+                }
             } else {
                 team.goalsAgainst += 1
             }
@@ -172,44 +129,7 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
                 team.turnoversForced += 1
             }
             break
-        case ActionType.CATCH:
-            if (
-                prevAction &&
-                prevAction?.actionType !== ActionType.CATCH &&
-                prevAction?.actionType !== ActionType.PICKUP
-            ) {
-                team.turnoversForced += 1
-            }
-            break
     }
-}
-
-const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
-    const playerOneId = action.playerOne?._id
-    if (!playerOneId) {
-        return
-    }
-
-    incrementMapValue(stats, playerOneId, PLAYER_ONE_STAT_UPDATES[action.actionType])
-    if (isCallahan(action, prevAction)) {
-        incrementMapValue(stats, playerOneId, ['callahans', 'blocks'])
-    }
-
-    const playerTwoId = action.playerTwo?._id
-    if (playerTwoId) {
-        incrementMapValue(stats, playerTwoId, PLAYER_TWO_STAT_UPDATES[action.actionType])
-    }
-}
-
-const incrementMapValue = (map: Map<Types.ObjectId, PlayerData>, id: Types.ObjectId, values: PlayerDataIndex[]) => {
-    if (values.length === 0) return
-    const currentValue = map.get(id) || getInitialPlayerData({})
-
-    for (const value of values) {
-        currentValue[value] += 1
-    }
-
-    map.set(id, currentValue)
 }
 
 const getInitialTeamData = (overrides: Partial<TeamData>): TeamData => {
@@ -225,27 +145,6 @@ const getInitialTeamData = (overrides: Partial<TeamData>): TeamData => {
         defensePoints: 0,
         turnovers: 0,
         turnoversForced: 0,
-        ...overrides,
-    }
-}
-
-const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
-    return {
-        goals: 0,
-        assists: 0,
-        blocks: 0,
-        throwaways: 0,
-        drops: 0,
-        stalls: 0,
-        touches: 0,
-        catches: 0,
-        completedPasses: 0,
-        droppedPasses: 0,
-        callahans: 0,
-        pointsPlayed: 0,
-        pulls: 0,
-        wins: 0,
-        losses: 0,
         ...overrides,
     }
 }
