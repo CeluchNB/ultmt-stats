@@ -11,6 +11,7 @@ const schema = new Schema<IPlayer>({
     touches: { type: Number, required: true, default: 0 },
     catches: { type: Number, required: true, default: 0 },
     completedPasses: { type: Number, required: true, default: 0 },
+    droppedPasses: { type: Number, required: true, default: 0 },
     callahans: { type: Number, required: true, default: 0 },
     pointsPlayed: { type: Number, required: true, default: 0 },
     pulls: { type: Number, required: true, default: 0 },

@@ -17,6 +17,7 @@ export interface PlayerData {
     touches: number
     catches: number
     completedPasses: number
+    droppedPasses: number
     callahans: number
     pointsPlayed: number
     pulls: number
