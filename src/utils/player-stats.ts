@@ -1,11 +1,8 @@
 import { Types } from 'mongoose'
-import { EmbeddedPlayer, PlayerData, PlayerDataIndex } from '../types/player'
+import { EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataIndex } from '../types/player'
 import { Action, ActionType } from '../types/point'
 
-export const calculatePlayerData = (
-    players: EmbeddedPlayer[],
-    actions: Action[],
-): (PlayerData & { playerId: Types.ObjectId })[] => {
+export const calculatePlayerData = (players: EmbeddedPlayer[], actions: Action[]): PlayerDataId[] => {
     const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
 
     initializePlayerMap(atomicStatsMap, players)
@@ -29,8 +26,8 @@ const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions: Action
     }
 }
 
-const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): (PlayerData & { playerId: Types.ObjectId })[] => {
-    const atomicStats: (PlayerData & { playerId: Types.ObjectId })[] = Array.from(map).map(([key, value]) => {
+const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDataId[] => {
+    const atomicStats: PlayerDataId[] = Array.from(map).map(([key, value]) => {
         return {
             playerId: key,
             ...value,
