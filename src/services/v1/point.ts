@@ -29,9 +29,16 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     await saveTeamData(teamOneData, teamOneId)
     await saveTeamData(teamTwoData, teamTwoId)
 
-    const idPlayerData = [...teamOnePlayerStats, ...teamTwoPlayerStats].map((stats) => {
+    const idPlayerDataOne = teamOnePlayerStats.map((stats) => {
         return { _id: stats.playerId, ...stats }
     })
+
+    const idPlayerDataTwo = teamTwoPlayerStats.map((stats) => {
+        return { _id: stats.playerId, ...stats }
+    })
+
+    const idPlayerData = [...idPlayerDataOne, ...idPlayerDataTwo]
+    const pointPlayers = [...inputPoint.teamOnePlayers, ...inputPoint.teamTwoPlayers]
 
     const gamePoint: IPoint = {
         _id: new Types.ObjectId(),
@@ -40,8 +47,56 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
         players: idPlayerData,
     }
     game.points.push(gamePoint)
-    // TODO: update game leaders with atomic stats
+
+    const playerMap = new Map<Types.ObjectId, PlayerData>()
+    for (const point of game.points) {
+        for (const player of point.players) {
+            const playerValues = playerMap.get(player._id)
+            if (playerValues) {
+                playerMap.set(player._id, addPlayerData(playerValues, player))
+            } else {
+                playerMap.set(player._id, player)
+            }
+        }
+    }
+
+    for (const values of playerMap.entries()) {
+        let player = pointPlayers.find((p) => p._id.equals(values[0]))
+        if (!player) {
+            // TODO: get players more efficiently
+            player = (await Player.findById(values[0])) || undefined
+        }
+        if (values[1].goals > game.goalsLeader.total) {
+            game.goalsLeader.player = player
+            game.goalsLeader.total = values[1].goals
+        }
+        if (values[1].assists > game.assistsLeader.total) {
+            game.assistsLeader.player = player
+            game.assistsLeader.total = values[1].assists
+        }
+        if (values[1].pointsPlayed > game.pointsPlayedLeader.total) {
+            game.pointsPlayedLeader.player = player
+            game.pointsPlayedLeader.total = values[1].pointsPlayed
+        }
+        if (values[1].blocks > game.blocksLeader.total) {
+            game.blocksLeader.player = player
+            game.blocksLeader.total = values[1].blocks
+        }
+        if (values[1].drops + values[1].throwaways > game.turnoversLeader.total) {
+            game.turnoversLeader.player = player
+            game.turnoversLeader.total = values[1].drops + values[1].throwaways
+        }
+        if (calculatePlayerPlusMinus(values[1]) > game.plusMinusLeader.total) {
+            game.plusMinusLeader.player = player
+            game.plusMinusLeader.total = calculatePlayerPlusMinus(values[1])
+        }
+    }
+
     await game.save()
+}
+
+const calculatePlayerPlusMinus = (player: PlayerData): number => {
+    return player.goals + player.assists + player.blocks - (player.drops + player.throwaways)
 }
 
 const savePlayerData = async (playerStats: PlayerDataId[], gameId: Types.ObjectId, teamId: Types.ObjectId) => {

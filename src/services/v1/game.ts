@@ -32,6 +32,30 @@ export const createGame = async (gameInput: GameInput) => {
         startTime: gameInput.startTime,
         teamOneId: teamOne._id,
         teamTwoId: teamTwo?._id,
+        goalsLeader: {
+            player: undefined,
+            total: 0,
+        },
+        assistsLeader: {
+            player: undefined,
+            total: 0,
+        },
+        blocksLeader: {
+            player: undefined,
+            total: 0,
+        },
+        turnoversLeader: {
+            player: undefined,
+            total: 0,
+        },
+        pointsPlayedLeader: {
+            player: undefined,
+            total: 0,
+        },
+        plusMinusLeader: {
+            player: undefined,
+            total: 0,
+        },
     })
 
     teamOne.games.push(game._id)

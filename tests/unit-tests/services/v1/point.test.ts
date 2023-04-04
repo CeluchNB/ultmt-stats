@@ -81,7 +81,36 @@ describe('test ingest point', () => {
     }
 
     beforeEach(async () => {
-        await Game.create({ _id: gameId, teamOneId, teamTwoId, startTime })
+        await Game.create({
+            _id: gameId,
+            teamOneId,
+            teamTwoId,
+            startTime,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
         await Team.create(teamOne)
         await Player.create(playerOne)
         await Player.create(playerTwo)
@@ -193,10 +222,16 @@ describe('test ingest point', () => {
         expect(teamRecord?.losses).toBe(0)
 
         const game = await Game.findById(gameId)
-        expect(game?.goalsLeader.player._id.toString()).toBe(playerThree._id.toString())
+        expect(game?.goalsLeader.player?._id.toString()).toBe(playerThree._id.toString())
         expect(game?.goalsLeader.total).toBe(1)
-        expect(game?.assistsLeader.player._id.toString()).toBe(playerOne._id.toString())
+        expect(game?.assistsLeader.player?._id.toString()).toBe(playerOne._id.toString())
         expect(game?.assistsLeader.total).toBe(1)
+        expect(game?.blocksLeader.player).toEqual({})
+        expect(game?.turnoversLeader.player).toEqual({})
+        expect(game?.plusMinusLeader.player?._id.toString()).toBe(playerOne._id.toString())
+        expect(game?.plusMinusLeader.total).toBe(1)
+        expect(game?.pointsPlayedLeader.player?._id.toString()).toBe(playerOne._id.toString())
+        expect(game?.pointsPlayedLeader.total).toBe(1)
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(3)
         expect(game?.points[0].players[0].assists).toBe(1)
@@ -271,8 +306,12 @@ describe('test ingest point', () => {
         expect(teamRecord?.losses).toBe(0)
 
         const game = await Game.findById(gameId)
-        expect(game?.goalsLeader).toBeUndefined()
-        expect(game?.assistsLeader).toBeUndefined()
+        expect(game?.assistsLeader.player).toEqual({})
+        expect(game?.blocksLeader.player).toEqual({})
+        expect(game?.turnoversLeader.player).toEqual({})
+        expect(game?.goalsLeader.player).toEqual({})
+        expect(game?.plusMinusLeader.player).toEqual({})
+        expect(game?.pointsPlayedLeader.player?._id.toString()).toBe(playerOne._id.toString())
         expect(game?.points.length).toBe(1)
     })
 
@@ -349,8 +388,14 @@ describe('test ingest point', () => {
         })
 
         const game = await Game.findById(gameId)
-        expect(game?.goalsLeader).toBeDefined()
-        expect(game?.assistsLeader).toBeDefined()
+        expect(game?.goalsLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.goalsLeader.total).toBe(1)
+        expect(game?.assistsLeader.player).toEqual({})
+        expect(game?.blocksLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.blocksLeader.total).toBe(1)
+        expect(game?.turnoversLeader.player).toEqual({})
+        expect(game?.plusMinusLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.plusMinusLeader.total).toBe(2)
         expect(game?.points.length).toBe(1)
     })
 
@@ -514,10 +559,16 @@ describe('test ingest point', () => {
         })
 
         const game = await Game.findById(gameId)
-        expect(game?.goalsLeader.player._id.toString()).toBe(playerSix._id.toString())
+        expect(game?.goalsLeader.player?._id.toString()).toBe(playerSix._id.toString())
         expect(game?.goalsLeader.total).toBe(1)
-        expect(game?.assistsLeader.player._id.toString()).toBe(playerFive._id.toString())
+        expect(game?.assistsLeader.player?._id.toString()).toBe(playerFive._id.toString())
         expect(game?.assistsLeader.total).toBe(1)
+        expect(game?.blocksLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.blocksLeader.total).toBe(1)
+        expect(game?.turnoversLeader.total).toBe(1)
+        expect(game?.pointsPlayedLeader.player?._id.toString()).toBe(playerOne._id.toString())
+        expect(game?.pointsPlayedLeader.total).toBe(1)
+        expect(game?.plusMinusLeader.total).toBe(1)
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(6)
     })

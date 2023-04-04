@@ -3,7 +3,7 @@ import { EmbeddedPlayer, PlayerData } from './player'
 import { EmbeddedTeam, TeamData } from './team'
 
 interface Leader {
-    player: EmbeddedPlayer
+    player?: EmbeddedPlayer
     total: number
 }
 
@@ -20,7 +20,7 @@ export interface GameData {
     goalsLeader: Leader
     assistsLeader: Leader
     blocksLeader: Leader
-    turnoverLeader: Leader
+    turnoversLeader: Leader
     plusMinusLeader: Leader
     pointsPlayedLeader: Leader
 }
