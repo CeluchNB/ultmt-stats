@@ -1,19 +1,22 @@
+import * as Constants from '../../utils/constants'
 import { IngestedPoint } from '../../types/point'
 import { Types } from 'mongoose'
-import { PlayerData, PlayerDataId } from '../../types/player'
+import { PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicStat from '../../models/atomic-stat'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import Team from '../../models/team'
-import { calculatePlayerData } from '../../utils/player-stats'
+import { addPlayerData, calculatePlayerData } from '../../utils/player-stats'
 import { IPoint } from '../../types/game'
-import { calculateTeamData } from '../../utils/team-stats'
+import { addTeamData, calculateTeamData } from '../../utils/team-stats'
+import { getGamePlayerData, updateGameLeaders } from '../../utils/game-stats'
+import { ApiError } from '../../types/error'
 
 export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const game = await Game.findById(inputPoint.gameId)
     if (!game) {
-        throw new Error()
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
     const { _id: gameId, teamOneId, teamTwoId } = game
@@ -48,55 +51,10 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     }
     game.points.push(gamePoint)
 
-    const playerMap = new Map<Types.ObjectId, PlayerData>()
-    for (const point of game.points) {
-        for (const player of point.players) {
-            const playerValues = playerMap.get(player._id)
-            if (playerValues) {
-                playerMap.set(player._id, addPlayerData(playerValues, player))
-            } else {
-                playerMap.set(player._id, player)
-            }
-        }
-    }
-
-    for (const values of playerMap.entries()) {
-        let player = pointPlayers.find((p) => p._id.equals(values[0]))
-        if (!player) {
-            // TODO: get players more efficiently
-            player = (await Player.findById(values[0])) || undefined
-        }
-        if (values[1].goals > game.goalsLeader.total) {
-            game.goalsLeader.player = player
-            game.goalsLeader.total = values[1].goals
-        }
-        if (values[1].assists > game.assistsLeader.total) {
-            game.assistsLeader.player = player
-            game.assistsLeader.total = values[1].assists
-        }
-        if (values[1].pointsPlayed > game.pointsPlayedLeader.total) {
-            game.pointsPlayedLeader.player = player
-            game.pointsPlayedLeader.total = values[1].pointsPlayed
-        }
-        if (values[1].blocks > game.blocksLeader.total) {
-            game.blocksLeader.player = player
-            game.blocksLeader.total = values[1].blocks
-        }
-        if (values[1].drops + values[1].throwaways > game.turnoversLeader.total) {
-            game.turnoversLeader.player = player
-            game.turnoversLeader.total = values[1].drops + values[1].throwaways
-        }
-        if (calculatePlayerPlusMinus(values[1]) > game.plusMinusLeader.total) {
-            game.plusMinusLeader.player = player
-            game.plusMinusLeader.total = calculatePlayerPlusMinus(values[1])
-        }
-    }
+    const playerMap = getGamePlayerData(game)
+    await updateGameLeaders(game, playerMap, pointPlayers)
 
     await game.save()
-}
-
-const calculatePlayerPlusMinus = (player: PlayerData): number => {
-    return player.goals + player.assists + player.blocks - (player.drops + player.throwaways)
 }
 
 const savePlayerData = async (playerStats: PlayerDataId[], gameId: Types.ObjectId, teamId: Types.ObjectId) => {
@@ -137,40 +95,4 @@ const saveTeamData = async (teamData: TeamData, teamId: Types.ObjectId) => {
     const teamRecord = await Team.findById(teamId)
     teamRecord?.set({ ...addTeamData(teamRecord, teamData) })
     await teamRecord?.save()
-}
-
-const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData => {
-    return {
-        goals: data1.goals + data2.goals,
-        assists: data1.assists + data2.assists,
-        touches: data1.touches + data2.touches,
-        catches: data1.catches + data2.catches,
-        callahans: data1.callahans + data2.callahans,
-        throwaways: data1.throwaways + data2.throwaways,
-        blocks: data1.blocks + data2.blocks,
-        drops: data1.drops + data2.drops,
-        stalls: data1.drops + data2.drops,
-        completedPasses: data1.completedPasses + data2.completedPasses,
-        droppedPasses: data1.droppedPasses + data2.droppedPasses,
-        pointsPlayed: data1.pointsPlayed + data2.pointsPlayed,
-        pulls: data1.pulls + data2.pulls,
-        wins: data1.wins + data2.wins,
-        losses: data1.losses + data2.losses,
-    }
-}
-
-const addTeamData = (data1: TeamData, data2: TeamData): TeamData => {
-    return {
-        goalsFor: data1.goalsFor + data2.goalsFor,
-        goalsAgainst: data1.goalsAgainst + data2.goalsAgainst,
-        wins: data1.wins + data2.wins,
-        losses: data1.losses + data2.losses,
-        holds: data1.holds + data2.holds,
-        breaks: data1.breaks + data2.breaks,
-        turnoverFreeHolds: data1.turnoverFreeHolds + data2.turnoverFreeHolds,
-        turnovers: data1.turnovers + data2.turnovers,
-        turnoversForced: data1.turnoversForced + data2.turnoversForced,
-        offensePoints: data1.offensePoints + data2.offensePoints,
-        defensePoints: data1.defensePoints + data2.defensePoints,
-    }
 }

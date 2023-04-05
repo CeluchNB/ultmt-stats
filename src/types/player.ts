@@ -25,7 +25,7 @@ export interface PlayerData {
     losses: number
 }
 
-export type PlayerDataIndex = keyof PlayerData
+export type PlayerDataKey = keyof PlayerData
 export type PlayerDataId = PlayerData & { playerId: Types.ObjectId }
 
 interface IPlayer extends EmbeddedPlayer, PlayerData {

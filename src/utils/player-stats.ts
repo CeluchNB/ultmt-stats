@@ -1,24 +1,23 @@
 import { Types } from 'mongoose'
-import { EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataIndex } from '../types/player'
+import { EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
 
 export const calculatePlayerData = (players: EmbeddedPlayer[], actions: Action[]): PlayerDataId[] => {
     const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
 
     initializePlayerMap(atomicStatsMap, players)
-
     populatePlayerMap(atomicStatsMap, actions)
 
     return flattenPlayerMap(atomicStatsMap)
 }
 
-const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, players: EmbeddedPlayer[]) => {
+export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, players: EmbeddedPlayer[]) => {
     for (const player of players) {
         map.set(player._id, getInitialPlayerData({ pointsPlayed: 1 }))
     }
 }
 
-const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions: Action[]) => {
+export const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions: Action[]) => {
     let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
         updateAtomicStats(map, action, prevAction)
@@ -26,7 +25,7 @@ const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions: Action
     }
 }
 
-const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDataId[] => {
+export const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDataId[] => {
     const atomicStats: PlayerDataId[] = Array.from(map).map(([key, value]) => {
         return {
             playerId: key,
@@ -36,7 +35,7 @@ const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDataId[] 
     return atomicStats
 }
 
-const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
+export const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
     const playerOneId = action.playerOne?._id
     if (!playerOneId) {
         return
@@ -53,7 +52,11 @@ const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Actio
     }
 }
 
-const incrementMapValue = (map: Map<Types.ObjectId, PlayerData>, id: Types.ObjectId, values: PlayerDataIndex[]) => {
+export const incrementMapValue = (
+    map: Map<Types.ObjectId, PlayerData>,
+    id: Types.ObjectId,
+    values: PlayerDataKey[],
+) => {
     if (values.length === 0) return
 
     const currentValue = map.get(id)
@@ -67,6 +70,7 @@ const incrementMapValue = (map: Map<Types.ObjectId, PlayerData>, id: Types.Objec
 }
 
 export const isCallahan = (action: Action, prevAction?: Action): boolean => {
+    // TODO: fix handling of prevAction (subs, timeouts, calls can mess this up)
     return (
         ([ActionType.TEAM_ONE_SCORE, ActionType.TEAM_TWO_SCORE].includes(action.actionType) &&
             prevAction &&
@@ -75,7 +79,7 @@ export const isCallahan = (action: Action, prevAction?: Action): boolean => {
     )
 }
 
-const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
+export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
     return {
         goals: 0,
         assists: 0,
@@ -96,7 +100,27 @@ const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
     }
 }
 
-export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataIndex[] } = {
+export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData => {
+    return {
+        goals: data1.goals + data2.goals,
+        assists: data1.assists + data2.assists,
+        touches: data1.touches + data2.touches,
+        catches: data1.catches + data2.catches,
+        callahans: data1.callahans + data2.callahans,
+        throwaways: data1.throwaways + data2.throwaways,
+        blocks: data1.blocks + data2.blocks,
+        drops: data1.drops + data2.drops,
+        stalls: data1.drops + data2.drops,
+        completedPasses: data1.completedPasses + data2.completedPasses,
+        droppedPasses: data1.droppedPasses + data2.droppedPasses,
+        pointsPlayed: data1.pointsPlayed + data2.pointsPlayed,
+        pulls: data1.pulls + data2.pulls,
+        wins: data1.wins + data2.wins,
+        losses: data1.losses + data2.losses,
+    }
+}
+
+export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } = {
     Drop: ['drops'],
     Throwaway: ['throwaways'],
     TeamOneScore: ['goals', 'touches', 'catches'],
@@ -110,7 +134,7 @@ export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataIndex[] }
     CallOnField: [],
 }
 
-export const PLAYER_TWO_STAT_UPDATES: { [key in ActionType]: PlayerDataIndex[] } = {
+export const PLAYER_TWO_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } = {
     Catch: ['completedPasses'],
     Drop: ['droppedPasses'],
     TeamOneScore: ['assists', 'completedPasses'],
