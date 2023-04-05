@@ -25,7 +25,7 @@ const updateTeamPlayerData = (actions: Action[], teamData: TeamData, teamNumber:
     }
 }
 
-const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamData, teamId: Types.ObjectId) => {
+export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamData, teamId: Types.ObjectId) => {
     if (inputPoint.pullingTeam._id?.equals(teamId)) {
         teamData.defensePoints = 1
         if (teamData.goalsFor === 1) {
@@ -80,7 +80,7 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
     }
 }
 
-const getInitialTeamData = (overrides: Partial<TeamData>): TeamData => {
+export const getInitialTeamData = (overrides: Partial<TeamData>): TeamData => {
     return {
         wins: 0,
         losses: 0,

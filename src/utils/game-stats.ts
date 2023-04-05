@@ -57,6 +57,6 @@ export const updateGameLeaders = async (
     }
 }
 
-const calculatePlayerPlusMinus = (player: PlayerData): number => {
+export const calculatePlayerPlusMinus = (player: PlayerData): number => {
     return player.goals + player.assists + player.blocks - (player.drops + player.throwaways)
 }

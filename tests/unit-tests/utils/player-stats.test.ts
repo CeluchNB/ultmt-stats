@@ -264,6 +264,16 @@ describe('updateAtomicStats', () => {
             getInitialPlayerData({ goals: 1, touches: 1, catches: 1, callahans: 1, blocks: 1 }),
         )
     })
+
+    it('for substitution', () => {
+        action.actionType = ActionType.SUBSTITUTION
+        action.playerOne = playerOne
+        action.playerTwo = playerTwo
+
+        updateAtomicStats(map, action, undefined)
+        expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({}))
+        expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ pointsPlayed: 1 }))
+    })
 })
 
 describe('flattenPlayerMap', () => {
