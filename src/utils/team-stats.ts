@@ -18,7 +18,7 @@ export const calculateTeamData = (
     return teamData
 }
 
-const updateTeamPlayerData = (actions: Action[], teamData: TeamData, teamNumber: 'one' | 'two') => {
+export const updateTeamPlayerData = (actions: Action[], teamData: TeamData, teamNumber: 'one' | 'two') => {
     let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
         updateTeamData(teamData, action, teamNumber, prevAction)
@@ -76,7 +76,6 @@ export const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one'
             }
             break
         case ActionType.PICKUP:
-            // TODO: handle previous action better (roll back until we get a non-timeout, call, or sub)
             if (prevAction?.actionType !== ActionType.BLOCK) {
                 team.turnoversForced += 1
             }

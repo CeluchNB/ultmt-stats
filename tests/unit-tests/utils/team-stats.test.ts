@@ -1,8 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Types } from 'mongoose'
-import { Action, ActionType } from '../../../src/types/point'
+import { Action, ActionType, IngestedPoint } from '../../../src/types/point'
 import { EmbeddedTeam } from '../../../src/types/team'
-import { updateTeamPointData, updateTeamData, getInitialTeamData } from '../../../src/utils/team-stats'
+import {
+    updateTeamPointData,
+    updateTeamData,
+    updateTeamPlayerData,
+    getInitialTeamData,
+    calculateTeamData,
+} from '../../../src/utils/team-stats'
 
 const teamOne: EmbeddedTeam = {
     _id: new Types.ObjectId(),
@@ -136,6 +142,20 @@ describe('updateTeamData', () => {
         expect(data).toMatchObject(getInitialTeamData({ goalsAgainst: 1 }))
     })
 
+    it('with team one callahan', () => {
+        action.actionType = ActionType.TEAM_ONE_SCORE
+        const data = getInitialTeamData({})
+
+        const prevAction: Action = {
+            actionNumber: 1,
+            actionType: ActionType.PULL,
+            team: teamOne,
+        }
+
+        updateTeamData(data, action, 'one', prevAction)
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+    })
+
     it('with team two score on team one', () => {
         action.actionType = ActionType.TEAM_TWO_SCORE
         const data = getInitialTeamData({})
@@ -150,5 +170,100 @@ describe('updateTeamData', () => {
 
         updateTeamData(data, action, 'two', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1 }))
+    })
+
+    it('with team two callahan', () => {
+        action.actionType = ActionType.TEAM_TWO_SCORE
+        const data = getInitialTeamData({})
+
+        const prevAction: Action = {
+            actionNumber: 1,
+            actionType: ActionType.PULL,
+            team: teamOne,
+        }
+
+        updateTeamData(data, action, 'two', prevAction)
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+    })
+
+    it('with pickup', () => {
+        action.actionType = ActionType.PICKUP
+        const data = getInitialTeamData({})
+
+        updateTeamData(data, action, 'one', undefined)
+        expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 1 }))
+    })
+})
+
+describe('updateTeamPlayerData', () => {
+    it('handles complex action list', () => {
+        const actions: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.PULL,
+                team: teamOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamOne,
+            },
+        ]
+
+        const data = getInitialTeamData({})
+        updateTeamPlayerData(actions, data, 'one')
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+    })
+})
+
+describe('calculateTeamData', () => {
+    const inputPoint: IngestedPoint = {
+        teamOneActions: [
+            {
+                actionNumber: 1,
+                actionType: ActionType.PULL,
+                team: teamOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamOne,
+            },
+        ],
+        teamTwoActions: [],
+        pointId: new Types.ObjectId(),
+        gameId: new Types.ObjectId(),
+        pullingTeam: teamOne,
+        receivingTeam: teamTwo,
+        teamOnePlayers: [],
+        teamTwoPlayers: [],
+        scoringTeam: teamOne,
+        teamOneScore: 1,
+        teamTwoScore: 0,
+    }
+    it('for team one', () => {
+        const data = calculateTeamData(new Types.ObjectId(), inputPoint, 'one')
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+    })
+
+    it('for team two', () => {
+        inputPoint.pullingTeam = teamTwo
+        inputPoint.receivingTeam = teamOne
+        inputPoint.scoringTeam = teamTwo
+        inputPoint.teamTwoActions = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.PULL,
+                team: teamTwo,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.TEAM_TWO_SCORE,
+                team: teamTwo,
+            },
+        ]
+
+        const data = calculateTeamData(new Types.ObjectId(), inputPoint, 'two')
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 })

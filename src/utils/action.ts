@@ -1,7 +1,6 @@
 import { Action, ActionType } from '../types/point'
 
 export const isCallahan = (action: Action, prevAction?: Action): boolean => {
-    // TODO: fix handling of prevAction (subs, timeouts, calls can mess this up)
     return (
         ([ActionType.TEAM_ONE_SCORE, ActionType.TEAM_TWO_SCORE].includes(action.actionType) &&
             prevAction &&
