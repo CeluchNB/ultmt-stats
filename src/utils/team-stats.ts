@@ -1,7 +1,8 @@
 import { Types } from 'mongoose'
 import { Action, ActionType, IngestedPoint } from '../types/point'
 import { TeamData } from '../types/team'
-import { isCallahan } from './player-stats'
+import { isDiscMovementAction } from './action'
+import { isCallahan } from './action'
 
 export const calculateTeamData = (
     teamId: Types.ObjectId,
@@ -21,7 +22,9 @@ const updateTeamPlayerData = (actions: Action[], teamData: TeamData, teamNumber:
     let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
         updateTeamData(teamData, action, teamNumber, prevAction)
-        prevAction = action
+        if (isDiscMovementAction(action)) {
+            prevAction = action
+        }
     }
 }
 
@@ -42,7 +45,7 @@ export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamDat
     }
 }
 
-const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two', prevAction?: Action) => {
+export const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two', prevAction?: Action) => {
     // turnover forced could be pickup, block -> pickup
     switch (action.actionType) {
         case ActionType.DROP:
@@ -73,6 +76,7 @@ const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two
             }
             break
         case ActionType.PICKUP:
+            // TODO: handle previous action better (roll back until we get a non-timeout, call, or sub)
             if (prevAction?.actionType !== ActionType.BLOCK) {
                 team.turnoversForced += 1
             }

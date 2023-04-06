@@ -6,7 +6,6 @@ import {
     incrementMapValue,
     getInitialPlayerData,
     populatePlayerMap,
-    isCallahan,
     updateAtomicStats,
     flattenPlayerMap,
     calculatePlayerData,
@@ -88,63 +87,6 @@ describe('incrementMapValue', () => {
             pointsPlayed: 0,
         })
     })
-})
-
-describe('isCallahan', () => {
-    it('is false with non-score action', () => {
-        const action: Action = {
-            actionNumber: 1,
-            actionType: ActionType.CATCH,
-            team: teamOne,
-        }
-
-        expect(isCallahan(action, undefined)).toBe(false)
-    })
-
-    it('is false with scoring action', () => {
-        const action: Action = {
-            actionNumber: 2,
-            actionType: ActionType.TEAM_ONE_SCORE,
-            team: teamOne,
-        }
-
-        const prevAction: Action = {
-            actionNumber: 1,
-            actionType: ActionType.CATCH,
-            team: teamOne,
-        }
-
-        expect(isCallahan(action, prevAction)).toBe(false)
-    })
-
-    it('is false with scoring action and no prev action', () => {
-        const action: Action = {
-            actionNumber: 1,
-            actionType: ActionType.TEAM_ONE_SCORE,
-            team: teamOne,
-        }
-        expect(isCallahan(action, undefined)).toBe(false)
-    })
-
-    it('is true with callahan', () => {
-        const action: Action = {
-            actionNumber: 2,
-            actionType: ActionType.TEAM_ONE_SCORE,
-            team: teamOne,
-        }
-
-        const prevAction: Action = {
-            actionNumber: 1,
-            actionType: ActionType.PULL,
-            team: teamOne,
-        }
-
-        expect(isCallahan(action, prevAction)).toBe(true)
-    })
-
-    // it('is true with substitution', () => {
-
-    // })
 })
 
 describe('updateAtomicStats', () => {

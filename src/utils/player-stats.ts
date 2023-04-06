@@ -1,6 +1,7 @@
 import { Types } from 'mongoose'
 import { EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
+import { isCallahan, isDiscMovementAction } from './action'
 
 export const calculatePlayerData = (players: EmbeddedPlayer[], actions: Action[]): PlayerDataId[] => {
     const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
@@ -21,7 +22,9 @@ export const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions:
     let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
         updateAtomicStats(map, action, prevAction)
-        prevAction = action
+        if (isDiscMovementAction(action)) {
+            prevAction = action
+        }
     }
 }
 
@@ -67,16 +70,6 @@ export const incrementMapValue = (
     }
 
     map.set(id, currentValue)
-}
-
-export const isCallahan = (action: Action, prevAction?: Action): boolean => {
-    // TODO: fix handling of prevAction (subs, timeouts, calls can mess this up)
-    return (
-        ([ActionType.TEAM_ONE_SCORE, ActionType.TEAM_TWO_SCORE].includes(action.actionType) &&
-            prevAction &&
-            [ActionType.PULL, ActionType.DROP, ActionType.THROWAWAY].includes(prevAction.actionType)) ||
-        false
-    )
 }
 
 export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
