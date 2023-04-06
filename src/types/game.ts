@@ -8,7 +8,7 @@ interface Leader {
 }
 
 export type IdentifiedPlayerData = PlayerData & { _id: Types.ObjectId }
-export type IdentifiedTeamData = TeamData & { _id: Types.ObjectId }
+export type IdentifiedTeamData = TeamData & { _id?: Types.ObjectId }
 export interface IPoint {
     _id: Types.ObjectId
     players: IdentifiedPlayerData[]

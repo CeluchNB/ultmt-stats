@@ -40,7 +40,7 @@ const pointSchema = new Schema<IPoint>({
     },
     teamTwo: {
         type: {
-            _id: { type: SchemaTypes.ObjectId, required: true },
+            _id: { type: SchemaTypes.ObjectId, required: false },
             wins: { type: Number, required: true, default: 0 },
             losses: { type: Number, required: true, default: 0 },
             goalsFor: { type: Number, required: true, default: 0 },

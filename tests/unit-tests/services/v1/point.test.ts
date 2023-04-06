@@ -115,9 +115,8 @@ describe('test ingest point', () => {
         await Player.create(playerOne)
         await Player.create(playerTwo)
         await Player.create(playerThree)
-        // await AtomicStat.create({ gameId, playerId: playerOne._id, teamId: teamOneId })
-        // await AtomicStat.create({ gameId, playerId: playerTwo._id, teamId: teamOneId })
-        // await AtomicStat.create({ gameId, playerId: playerThree._id, teamId: teamOneId })
+        await AtomicStat.create({ gameId, playerId: playerOne._id, teamId: teamOneId })
+        await AtomicStat.create({ gameId, playerId: playerTwo._id, teamId: teamOneId })
     })
 
     it('handles basic O point', async () => {
@@ -571,5 +570,23 @@ describe('test ingest point', () => {
         expect(game?.plusMinusLeader.total).toBe(1)
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(6)
+    })
+
+    it('with unfound game', async () => {
+        await expect(
+            ingestPoint({
+                pointId,
+                gameId: new Types.ObjectId(),
+                teamOneActions: [],
+                teamTwoActions: [],
+                pullingTeam: teamTwo,
+                receivingTeam: teamOne,
+                scoringTeam: teamOne,
+                teamOnePlayers: [playerOne, playerTwo, playerThree],
+                teamTwoPlayers: [],
+                teamOneScore: 1,
+                teamTwoScore: 0,
+            }),
+        ).rejects.toThrow()
     })
 })

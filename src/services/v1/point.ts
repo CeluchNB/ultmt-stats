@@ -1,7 +1,7 @@
 import * as Constants from '../../utils/constants'
 import { IngestedPoint } from '../../types/point'
 import { Types } from 'mongoose'
-import { PlayerDataId } from '../../types/player'
+import { EmbeddedPlayer, PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicStat from '../../models/atomic-stat'
 import Player from '../../models/player'
@@ -23,8 +23,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const teamOnePlayerStats = calculatePlayerData(inputPoint.teamOnePlayers, inputPoint.teamOneActions)
     const teamTwoPlayerStats = calculatePlayerData(inputPoint.teamTwoPlayers, inputPoint.teamTwoActions)
 
-    await savePlayerData(teamOnePlayerStats, gameId, teamOneId)
-    await savePlayerData(teamTwoPlayerStats, gameId, teamTwoId)
+    await savePlayerData(teamOnePlayerStats, gameId, teamOneId, inputPoint.teamOnePlayers)
+    await savePlayerData(teamTwoPlayerStats, gameId, teamTwoId, inputPoint.teamTwoPlayers)
 
     const teamOneData = calculateTeamData(teamOneId, inputPoint, 'one')
     const teamTwoData = calculateTeamData(teamTwoId, inputPoint, 'two')
@@ -57,10 +57,15 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     await game.save()
 }
 
-const savePlayerData = async (playerStats: PlayerDataId[], gameId: Types.ObjectId, teamId: Types.ObjectId) => {
+const savePlayerData = async (
+    playerStats: PlayerDataId[],
+    gameId: Types.ObjectId,
+    teamId: Types.ObjectId,
+    players: EmbeddedPlayer[],
+) => {
     for (const stats of playerStats) {
         await saveAtomicStat(stats, gameId, teamId)
-        await savePlayerStats(stats)
+        await savePlayerStats(stats, players)
     }
 }
 
@@ -81,13 +86,15 @@ const saveAtomicStat = async (stats: PlayerDataId, gameId: Types.ObjectId, teamI
     }
 }
 
-const savePlayerStats = async (stats: PlayerDataId) => {
+const savePlayerStats = async (stats: PlayerDataId, players: EmbeddedPlayer[]) => {
     const player = await Player.findById(stats.playerId)
     if (player) {
         player.set({ ...addPlayerData(player, stats) })
         await player.save()
     } else {
-        await Player.create({ ...stats })
+        // TODO: get player in a better way?
+        const embeddedPlayer = players.find((p) => p._id.equals(stats.playerId))
+        await Player.create({ ...stats, ...embeddedPlayer })
     }
 }
 

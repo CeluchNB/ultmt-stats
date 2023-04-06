@@ -2,6 +2,9 @@ import { Schema, model, SchemaTypes } from 'mongoose'
 import IPlayer from '../types/player'
 
 const schema = new Schema<IPlayer>({
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    username: { type: String, required: true },
     goals: { type: Number, required: true, default: 0 },
     assists: { type: Number, required: true, default: 0 },
     blocks: { type: Number, required: true, default: 0 },

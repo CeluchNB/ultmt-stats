@@ -103,7 +103,7 @@ export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData 
         throwaways: data1.throwaways + data2.throwaways,
         blocks: data1.blocks + data2.blocks,
         drops: data1.drops + data2.drops,
-        stalls: data1.drops + data2.drops,
+        stalls: data1.stalls + data2.stalls,
         completedPasses: data1.completedPasses + data2.completedPasses,
         droppedPasses: data1.droppedPasses + data2.droppedPasses,
         pointsPlayed: data1.pointsPlayed + data2.pointsPlayed,

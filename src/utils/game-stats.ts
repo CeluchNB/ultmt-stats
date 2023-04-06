@@ -30,6 +30,8 @@ export const updateGameLeaders = async (
             // TODO: get players more efficiently
             player = (await Player.findById(values[0])) || undefined
         }
+        if (!player) continue
+
         if (values[1].goals > game.goalsLeader.total) {
             game.goalsLeader.player = player
             game.goalsLeader.total = values[1].goals
