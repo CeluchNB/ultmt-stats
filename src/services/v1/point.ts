@@ -9,7 +9,7 @@ import { TeamData } from '../../types/team'
 import Team from '../../models/team'
 import { addPlayerData, calculatePlayerData } from '../../utils/player-stats'
 import { IPoint } from '../../types/game'
-import { addTeamData, calculateTeamData } from '../../utils/team-stats'
+import { addTeamData, calculateTeamData, idEquals } from '../../utils/team-stats'
 import { getGamePlayerData, updateGameLeaders } from '../../utils/game-stats'
 import { ApiError } from '../../types/error'
 
@@ -93,7 +93,7 @@ const savePlayerStats = async (stats: PlayerDataId, players: EmbeddedPlayer[]) =
         await player.save()
     } else {
         // TODO: get player in a better way?
-        const embeddedPlayer = players.find((p) => p._id.equals(stats.playerId))
+        const embeddedPlayer = players.find((p) => idEquals(p._id, stats.playerId))
         await Player.create({ ...stats, ...embeddedPlayer })
     }
 }

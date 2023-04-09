@@ -3,6 +3,7 @@ import Player from '../models/player'
 import IGame from '../types/game'
 import { EmbeddedPlayer, PlayerData } from '../types/player'
 import { addPlayerData } from './player-stats'
+import { idEquals } from './team-stats'
 
 export const getGamePlayerData = (game: IGame): Map<Types.ObjectId, PlayerData> => {
     const playerMap = new Map<Types.ObjectId, PlayerData>()
@@ -25,7 +26,7 @@ export const updateGameLeaders = async (
     pointPlayers: EmbeddedPlayer[],
 ) => {
     for (const values of playerMap.entries()) {
-        let player = pointPlayers.find((p) => p._id.equals(values[0]))
+        let player = pointPlayers.find((p) => idEquals(p._id, values[0]))
         if (!player) {
             // TODO: get players more efficiently
             player = (await Player.findById(values[0])) || undefined

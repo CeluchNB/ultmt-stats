@@ -13,4 +13,10 @@ describe('error response for middleware', () => {
         expect(result.message).toBe(Constants.GAME_ALREADY_EXISTS)
         expect(result.code).toBe(400)
     })
+
+    it('with game not found error', () => {
+        const result = errorResponse(Constants.GAME_NOT_FOUND)
+        expect(result.message).toBe(Constants.GAME_NOT_FOUND)
+        expect(result.code).toBe(404)
+    })
 })

@@ -29,12 +29,12 @@ export const updateTeamPlayerData = (actions: Action[], teamData: TeamData, team
 }
 
 export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamData, teamId: Types.ObjectId) => {
-    if (inputPoint.pullingTeam._id?.equals(teamId)) {
+    if (idEquals(inputPoint.pullingTeam._id, teamId)) {
         teamData.defensePoints = 1
         if (teamData.goalsFor === 1) {
             teamData.breaks = 1
         }
-    } else if (inputPoint.receivingTeam._id?.equals(teamId)) {
+    } else if (idEquals(inputPoint.receivingTeam._id, teamId)) {
         teamData.offensePoints = 1
         if (teamData.goalsFor === 1) {
             teamData.holds = 1
@@ -114,4 +114,12 @@ export const addTeamData = (data1: TeamData, data2: TeamData): TeamData => {
         offensePoints: data1.offensePoints + data2.offensePoints,
         defensePoints: data1.defensePoints + data2.defensePoints,
     }
+}
+
+export const idEquals = (id1?: Types.ObjectId | string, id2?: Types.ObjectId | string): boolean => {
+    if (!id1 || !id2) {
+        return false
+    }
+
+    return id1?.toString() === id2?.toString()
 }
