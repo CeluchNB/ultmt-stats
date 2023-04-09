@@ -1,6 +1,5 @@
 import { Types } from 'mongoose'
 import { Action, ActionType } from '../../../src/types/point'
-import { EmbeddedTeam } from '../../../src/types/team'
 import {
     initializePlayerMap,
     incrementMapValue,
@@ -10,29 +9,10 @@ import {
     flattenPlayerMap,
     calculatePlayerData,
 } from '../../../src/utils/player-stats'
+import { teamOne, getPlayer } from '../../fixtures/data'
 
-const playerOne = {
-    _id: new Types.ObjectId(),
-    firstName: 'First1',
-    lastName: 'Last1',
-    username: 'firstlast1',
-}
-
-const playerTwo = {
-    _id: new Types.ObjectId(),
-    firstName: 'First2',
-    lastName: 'Last2',
-    username: 'firstlast1',
-}
-
-const teamOne: EmbeddedTeam = {
-    _id: new Types.ObjectId(),
-    place: 'Pittsburgh',
-    name: 'Temper',
-    teamName: 'pghtemper',
-    seasonStart: new Date(),
-    seasonEnd: new Date(),
-}
+const playerOne = getPlayer(1)
+const playerTwo = getPlayer(2)
 
 describe('initializePlayerMap', () => {
     it('returns initial map', () => {

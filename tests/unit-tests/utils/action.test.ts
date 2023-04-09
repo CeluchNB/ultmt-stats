@@ -1,16 +1,6 @@
-import { Types } from 'mongoose'
 import { Action, ActionType } from '../../../src/types/point'
-import { EmbeddedTeam } from '../../../src/types/team'
 import { isCallahan, isDiscMovementAction } from '../../../src/utils/action'
-
-const teamOne: EmbeddedTeam = {
-    _id: new Types.ObjectId(),
-    place: 'Pittsburgh',
-    name: 'Temper',
-    teamName: 'pghtemper',
-    seasonStart: new Date(),
-    seasonEnd: new Date(),
-}
+import { teamOne } from '../../fixtures/data'
 
 describe('isCallahan', () => {
     it('is false with non-score action', () => {

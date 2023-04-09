@@ -1,11 +1,11 @@
 import { Types } from 'mongoose'
 import Player from '../../../src/models/player'
 import IGame, { IdentifiedPlayerData } from '../../../src/types/game'
-import { EmbeddedPlayer } from '../../../src/types/player'
 import { EmbeddedTeam } from '../../../src/types/team'
 import { calculatePlayerPlusMinus, getGamePlayerData, updateGameLeaders } from '../../../src/utils/game-stats'
 import { getInitialPlayerData } from '../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../src/utils/team-stats'
+import { getPlayer } from '../../fixtures/data'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../fixtures/setup-db'
 
 beforeAll(async () => {
@@ -79,18 +79,8 @@ describe('updateGameLeaders', () => {
             total: 0,
         },
     }
-    const playerOne: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 1',
-        lastName: 'Last 1',
-        username: 'firstlast1',
-    }
-    const playerTwo: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 2',
-        lastName: 'Last 2',
-        username: 'firstlast2',
-    }
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
     const pointPlayers = [playerOne, playerTwo]
     const map = new Map()
 
@@ -225,18 +215,9 @@ describe('getGamePlayerData', () => {
         place: 'Pittsburgh',
         name: 'Hazard',
     }
-    const playerOne: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 1',
-        lastName: 'Last 1',
-        username: 'firstlast1',
-    }
-    const playerTwo: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 2',
-        lastName: 'Last 2',
-        username: 'firstlast2',
-    }
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+
     const playerDataOne: IdentifiedPlayerData = {
         _id: playerOne._id,
         ...getInitialPlayerData({ goals: 1, pulls: 1, drops: 1, catches: 1, touches: 1 }),

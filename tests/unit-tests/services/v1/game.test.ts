@@ -4,6 +4,7 @@ import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import Team from '../../../../src/models/team'
 import AtomicStat from '../../../../src/models/atomic-stat'
+import { teamOne, teamTwo, getPlayer } from '../../../fixtures/data'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -20,37 +21,8 @@ afterAll(async () => {
 describe('test create game', () => {
     const _id = new Types.ObjectId()
     const startTime = new Date()
-    const teamOne = {
-        _id: new Types.ObjectId(),
-        place: 'Pittsburgh',
-        name: 'Temper',
-        teamName: 'pghtemper',
-        seasonStart: new Date(),
-        seasonEnd: new Date(),
-    }
-
-    const teamTwo = {
-        _id: new Types.ObjectId(),
-        place: 'Pittsburgh',
-        name: 'Hazard',
-        teamName: 'hazzy',
-        seasonStart: new Date(),
-        seasonEnd: new Date(),
-    }
-
-    const playerOne = {
-        _id: new Types.ObjectId(),
-        firstName: 'First1',
-        lastName: 'Last1',
-        username: 'firstlast1',
-    }
-
-    const playerTwo = {
-        _id: new Types.ObjectId(),
-        firstName: 'First2',
-        lastName: 'Last2',
-        username: 'firstlast1',
-    }
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
 
     it('with simple data', async () => {
         await createGame({

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Types } from 'mongoose'
 import { Action, ActionType, IngestedPoint } from '../../../src/types/point'
-import { EmbeddedTeam } from '../../../src/types/team'
 import {
     updateTeamPointData,
     updateTeamData,
@@ -9,24 +8,7 @@ import {
     getInitialTeamData,
     calculateTeamData,
 } from '../../../src/utils/team-stats'
-
-const teamOne: EmbeddedTeam = {
-    _id: new Types.ObjectId(),
-    place: 'Pittsburgh',
-    name: 'Temper',
-    teamName: 'pghtemper',
-    seasonStart: new Date(),
-    seasonEnd: new Date(),
-}
-
-const teamTwo: EmbeddedTeam = {
-    _id: new Types.ObjectId(),
-    place: 'DC',
-    name: 'Truck Stop',
-    teamName: 'dctruck',
-    seasonStart: new Date(),
-    seasonEnd: new Date(),
-}
+import { teamOne, teamTwo } from '../../fixtures/data'
 
 describe('updateTeamPointStats', () => {
     const point = {

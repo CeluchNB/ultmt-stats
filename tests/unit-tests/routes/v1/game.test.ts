@@ -4,6 +4,7 @@ import app from '../../../../src/app'
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
+import { teamOne } from '../../../fixtures/data'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -20,14 +21,6 @@ afterAll(async () => {
 describe('/POST game', () => {
     const _id = new Types.ObjectId()
     const startTime = new Date()
-    const teamOne = {
-        _id: new Types.ObjectId(),
-        place: 'Pittsburgh',
-        name: 'Temper',
-        teamName: 'pghtemper',
-        seasonStart: new Date(),
-        seasonEnd: new Date(),
-    }
 
     it('creates game', async () => {
         await request(app)

@@ -4,10 +4,10 @@ import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import Team from '../../../../src/models/team'
 import { ingestPoint } from '../../../../src/services/v1/point'
-import { EmbeddedPlayer } from '../../../../src/types/player'
 import { Action, ActionType } from '../../../../src/types/point'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import { setUpDatabase, tearDownDatabase, resetDatabase } from '../../../fixtures/setup-db'
+import { teamOne, getPlayer } from '../../../fixtures/data'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -23,67 +23,26 @@ afterAll(async () => {
 
 describe('test ingest point', () => {
     const gameId = new Types.ObjectId()
-    const teamOneId = new Types.ObjectId()
     const teamTwoId = new Types.ObjectId()
     const pointId = new Types.ObjectId()
     const startTime = new Date()
-
-    const teamOne: EmbeddedTeam = {
-        _id: teamOneId,
-        place: 'Pittsburgh',
-        name: 'Temper',
-        teamName: 'pghtemper',
-        seasonStart: new Date(),
-        seasonEnd: new Date(),
-    }
 
     const teamTwo: EmbeddedTeam = {
         place: 'Pittsburgh',
         name: 'Hazard',
     }
 
-    const playerOne: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 1',
-        lastName: 'Last 1',
-        username: 'firstlast1',
-    }
-    const playerTwo: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 2',
-        lastName: 'Last 2',
-        username: 'firstlast2',
-    }
-    const playerThree: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 3',
-        lastName: 'Last 3',
-        username: 'firstlast3',
-    }
-
-    const playerFour: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 4',
-        lastName: 'Last 4',
-        username: 'firstlast4',
-    }
-    const playerFive: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 5',
-        lastName: 'Last 5',
-        username: 'firstlast5',
-    }
-    const playerSix: EmbeddedPlayer = {
-        _id: new Types.ObjectId(),
-        firstName: 'First 6',
-        lastName: 'Last 6',
-        username: 'firstlast6',
-    }
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(3)
+    const playerFour = getPlayer(4)
+    const playerFive = getPlayer(5)
+    const playerSix = getPlayer(6)
 
     beforeEach(async () => {
         await Game.create({
             _id: gameId,
-            teamOneId,
+            teamOneId: teamOne._id,
             teamTwoId,
             startTime,
             goalsLeader: {
@@ -115,8 +74,8 @@ describe('test ingest point', () => {
         await Player.create(playerOne)
         await Player.create(playerTwo)
         await Player.create(playerThree)
-        await AtomicStat.create({ gameId, playerId: playerOne._id, teamId: teamOneId })
-        await AtomicStat.create({ gameId, playerId: playerTwo._id, teamId: teamOneId })
+        await AtomicStat.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
+        await AtomicStat.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
     })
 
     it('handles basic O point', async () => {
@@ -209,7 +168,7 @@ describe('test ingest point', () => {
         expect(playerThreeRecord?.touches).toBe(1)
         expect(playerThreeRecord?.catches).toBe(1)
 
-        const teamRecord = await Team.findById(teamOneId)
+        const teamRecord = await Team.findById(teamOne._id)
         expect(teamRecord?.offensePoints).toBe(1)
         expect(teamRecord?.defensePoints).toBe(0)
         expect(teamRecord?.holds).toBe(1)
@@ -292,7 +251,7 @@ describe('test ingest point', () => {
         expect(playerThreeRecord?.assists).toBe(0)
         expect(playerThreeRecord?.pointsPlayed).toBe(1)
 
-        const teamRecord = await Team.findById(teamOneId)
+        const teamRecord = await Team.findById(teamOne._id)
         expect(teamRecord?.defensePoints).toBe(1)
         expect(teamRecord?.offensePoints).toBe(0)
         expect(teamRecord?.holds).toBe(0)
@@ -376,7 +335,7 @@ describe('test ingest point', () => {
         const playerTwoRecord = await Player.findById(playerTwo._id)
         expect(playerTwoRecord).toMatchObject(playerTwoResult)
 
-        const teamRecord = await Team.findById(teamOneId)
+        const teamRecord = await Team.findById(teamOne._id)
         expect(teamRecord).toMatchObject({
             goalsFor: 1,
             goalsAgainst: 0,
@@ -532,7 +491,7 @@ describe('test ingest point', () => {
             throwaways: 0,
         })
 
-        const teamOneRecord = await Team.findById(teamOneId)
+        const teamOneRecord = await Team.findById(teamOne._id)
         expect(teamOneRecord).toMatchObject({
             goalsFor: 0,
             goalsAgainst: 1,
