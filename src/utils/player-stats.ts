@@ -113,6 +113,26 @@ export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData 
     }
 }
 
+export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData => {
+    return {
+        goals: data1.goals - data2.goals,
+        assists: data1.assists - data2.assists,
+        touches: data1.touches - data2.touches,
+        catches: data1.catches - data2.catches,
+        callahans: data1.callahans - data2.callahans,
+        throwaways: data1.throwaways - data2.throwaways,
+        blocks: data1.blocks - data2.blocks,
+        drops: data1.drops - data2.drops,
+        stalls: data1.stalls - data2.stalls,
+        completedPasses: data1.completedPasses - data2.completedPasses,
+        droppedPasses: data1.droppedPasses - data2.droppedPasses,
+        pointsPlayed: data1.pointsPlayed - data2.pointsPlayed,
+        pulls: data1.pulls - data2.pulls,
+        wins: data1.wins - data2.wins,
+        losses: data1.losses - data2.losses,
+    }
+}
+
 export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } = {
     Drop: ['drops'],
     Throwaway: ['throwaways'],

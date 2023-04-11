@@ -3,11 +3,14 @@ import AtomicStat from '../../../../src/models/atomic-stat'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import Team from '../../../../src/models/team'
-import { ingestPoint } from '../../../../src/services/v1/point'
+import { deletePoint, ingestPoint } from '../../../../src/services/v1/point'
 import { Action, ActionType } from '../../../../src/types/point'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import { setUpDatabase, tearDownDatabase, resetDatabase } from '../../../fixtures/setup-db'
 import { teamOne, getPlayer } from '../../../fixtures/data'
+import { IPoint } from '../../../../src/types/game'
+import { getInitialPlayerData } from '../../../../src/utils/player-stats'
+import { getInitialTeamData } from '../../../../src/utils/team-stats'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -547,5 +550,158 @@ describe('test ingest point', () => {
                 teamTwoScore: 0,
             }),
         ).rejects.toThrow()
+    })
+})
+
+describe('test delete point', () => {
+    const gameId = new Types.ObjectId()
+    const startTime = new Date()
+    const teamTwoId = new Types.ObjectId()
+    const pointId = new Types.ObjectId()
+
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(3)
+
+    beforeEach(async () => {
+        const game = await Game.create({
+            _id: gameId,
+            teamOneId: teamOne._id,
+            teamTwoId,
+            startTime,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
+        await Team.create(teamOne)
+
+        const point: IPoint = {
+            _id: pointId,
+            players: [
+                {
+                    _id: playerOne._id,
+                    ...getInitialPlayerData({ goals: 1, touches: 2, catches: 2 }),
+                },
+                {
+                    _id: playerTwo._id,
+                    ...getInitialPlayerData({ assists: 1, touches: 1 }),
+                },
+                {
+                    _id: playerThree._id,
+                    ...getInitialPlayerData({ drops: 1 }),
+                },
+            ],
+            teamOne: {
+                _id: teamOne._id,
+                ...getInitialTeamData({}),
+            },
+            teamTwo: {
+                _id: teamTwoId,
+                ...getInitialTeamData({}),
+            },
+        }
+
+        game.points.push(point)
+        await game.save()
+    })
+
+    it('updates player stats correctly', async () => {
+        await Player.create({ ...playerOne, goals: 1, touches: 5, catches: 4 })
+        await Player.create({ ...playerTwo, assists: 2, touches: 2, goals: 1 })
+        await Player.create({ ...playerThree, touches: 1, drops: 1, completedPasses: 2 })
+
+        await deletePoint(gameId.toHexString(), pointId.toHexString())
+
+        const playerOneRecord = await Player.findById(playerOne._id)
+        expect(playerOneRecord).toMatchObject({
+            goals: 0,
+            touches: 3,
+            catches: 2,
+        })
+
+        const playerTwoRecord = await Player.findById(playerTwo._id)
+        expect(playerTwoRecord).toMatchObject({
+            assists: 1,
+            touches: 1,
+            goals: 1,
+        })
+
+        const playerThreeRecord = await Player.findById(playerThree._id)
+        expect(playerThreeRecord).toMatchObject({
+            touches: 1,
+            drops: 0,
+            completedPasses: 2,
+        })
+    })
+
+    it('updates atomic stats correctly', async () => {
+        await AtomicStat.create({
+            playerId: playerOne._id,
+            teamId: teamOne._id,
+            gameId,
+            goals: 1,
+            touches: 5,
+            catches: 4,
+        })
+        await AtomicStat.create({
+            playerId: playerTwo._id,
+            teamId: teamOne._id,
+            gameId,
+            assists: 2,
+            touches: 2,
+            goals: 1,
+        })
+        await AtomicStat.create({
+            playerId: playerThree._id,
+            teamId: teamTwoId,
+            gameId,
+            touches: 1,
+            drops: 1,
+            completedPasses: 2,
+        })
+
+        await deletePoint(gameId.toHexString(), pointId.toHexString())
+
+        const atomicStatOne = await AtomicStat.findOne({ playerId: playerOne._id })
+        expect(atomicStatOne).toMatchObject({
+            goals: 0,
+            touches: 3,
+            catches: 2,
+        })
+
+        const atomicStatTwo = await AtomicStat.findOne({ playerId: playerTwo._id })
+        expect(atomicStatTwo).toMatchObject({
+            assists: 1,
+            touches: 1,
+            goals: 1,
+        })
+
+        const atomicStatThree = await AtomicStat.findOne({ playerId: playerThree._id })
+        expect(atomicStatThree).toMatchObject({
+            touches: 1,
+            drops: 0,
+            completedPasses: 2,
+        })
     })
 })

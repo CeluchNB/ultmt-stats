@@ -116,6 +116,22 @@ export const addTeamData = (data1: TeamData, data2: TeamData): TeamData => {
     }
 }
 
+export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => {
+    return {
+        goalsFor: data1.goalsFor - data2.goalsFor,
+        goalsAgainst: data1.goalsAgainst - data2.goalsAgainst,
+        wins: data1.wins - data2.wins,
+        losses: data1.losses - data2.losses,
+        holds: data1.holds - data2.holds,
+        breaks: data1.breaks - data2.breaks,
+        turnoverFreeHolds: data1.turnoverFreeHolds - data2.turnoverFreeHolds,
+        turnovers: data1.turnovers - data2.turnovers,
+        turnoversForced: data1.turnoversForced - data2.turnoversForced,
+        offensePoints: data1.offensePoints - data2.offensePoints,
+        defensePoints: data1.defensePoints - data2.defensePoints,
+    }
+}
+
 export const idEquals = (id1?: Types.ObjectId | string, id2?: Types.ObjectId | string): boolean => {
     if (!id1 || !id2) {
         return false

@@ -7,9 +7,9 @@ import AtomicStat from '../../models/atomic-stat'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import Team from '../../models/team'
-import { addPlayerData, calculatePlayerData } from '../../utils/player-stats'
+import { addPlayerData, calculatePlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { IPoint } from '../../types/game'
-import { addTeamData, calculateTeamData, idEquals } from '../../utils/team-stats'
+import { addTeamData, calculateTeamData, idEquals, subtractTeamData } from '../../utils/team-stats'
 import { getGamePlayerData, updateGameLeaders } from '../../utils/game-stats'
 import { ApiError } from '../../types/error'
 
@@ -102,4 +102,50 @@ const saveTeamData = async (teamData: TeamData, teamId: Types.ObjectId) => {
     const teamRecord = await Team.findById(teamId)
     teamRecord?.set({ ...addTeamData(teamRecord, teamData) })
     await teamRecord?.save()
+}
+
+export const deletePoint = async (gameId: string, pointId: string) => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+
+    const point = game.points.find((p) => idEquals(p._id, pointId))
+    if (!point) {
+        // TODO: throw error here
+        return
+    }
+    const players = await Player.where({ _id: { $in: point?.players.map((p) => p._id) } })
+    const atomicStats = await AtomicStat.where({ playerId: { $in: point?.players.map((p) => p._id) } })
+
+    // subtract point stats from players
+    // subtract point stats from atomic stats
+    for (const player of point.players) {
+        const playerRecord = players.find((p) => idEquals(p._id, player._id))
+        const atomicStatRecord = atomicStats.find((a) => idEquals(a.playerId, player._id))
+
+        playerRecord?.set({ ...subtractPlayerData(playerRecord, player) })
+        atomicStatRecord?.set({ ...subtractPlayerData(atomicStatRecord, player) })
+
+        await playerRecord?.save()
+        await atomicStatRecord?.save()
+    }
+
+    // subtract teamone stats from team one
+    const teamOne = await Team.findById(point.teamOne._id)
+    teamOne?.set({ ...subtractTeamData(teamOne, point.teamOne) })
+    await teamOne?.save()
+
+    // subtract team two stats from team two
+    const teamTwo = await Team.findById(point.teamTwo._id)
+    teamTwo?.set({ ...subtractTeamData(teamTwo, point.teamTwo) })
+    await teamTwo?.save()
+
+    // delete point from game
+    game.points = game.points.filter((p) => !idEquals(p._id, pointId))
+
+    // recalculate game leaders
+    const playerMap = getGamePlayerData(game)
+    await updateGameLeaders(game, playerMap, [])
+    await game.save()
 }
