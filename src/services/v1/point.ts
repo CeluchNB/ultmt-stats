@@ -112,8 +112,7 @@ export const deletePoint = async (gameId: string, pointId: string) => {
 
     const point = game.points.find((p) => idEquals(p._id, pointId))
     if (!point) {
-        // TODO: throw error here
-        return
+        throw new ApiError(Constants.POINT_NOT_FOUND, 404)
     }
     const players = await Player.where({ _id: { $in: point?.players.map((p) => p._id) } })
     const atomicStats = await AtomicStat.where({ playerId: { $in: point?.players.map((p) => p._id) } })

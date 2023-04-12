@@ -199,6 +199,21 @@ describe('updateGameLeaders', () => {
         expect(game.goalsLeader.player).toBe(undefined)
         expect(game.goalsLeader.total).toBe(0)
     })
+
+    it('with empty map', async () => {
+        game.goalsLeader.player = playerOne
+        game.goalsLeader.total = 5
+        game.plusMinusLeader.player = playerTwo
+        game.plusMinusLeader.total = 4
+        await updateGameLeaders(game, map, [])
+
+        expect(game.goalsLeader.player).toBeUndefined()
+        expect(game.goalsLeader.total).toBe(0)
+        expect(game.plusMinusLeader.player).toBeUndefined()
+        expect(game.plusMinusLeader.total).toBe(0)
+        expect(game.assistsLeader.player).toBeUndefined()
+        expect(game.assistsLeader.total).toBe(0)
+    })
 })
 
 describe('getGamePlayerData', () => {

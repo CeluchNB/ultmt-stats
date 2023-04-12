@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import * as Constants from '../../../../src/utils/constants'
 import { Types } from 'mongoose'
 import AtomicStat from '../../../../src/models/atomic-stat'
 import Game from '../../../../src/models/game'
@@ -7,10 +9,11 @@ import { deletePoint, ingestPoint } from '../../../../src/services/v1/point'
 import { Action, ActionType } from '../../../../src/types/point'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import { setUpDatabase, tearDownDatabase, resetDatabase } from '../../../fixtures/setup-db'
-import { teamOne, getPlayer } from '../../../fixtures/data'
+import { teamOne, getPlayer, teamTwo } from '../../../fixtures/data'
 import { IPoint } from '../../../../src/types/game'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
+import { getGamePlayerData, updateGameLeaders } from '../../../../src/utils/game-stats'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -703,5 +706,98 @@ describe('test delete point', () => {
             drops: 0,
             completedPasses: 2,
         })
+    })
+
+    it('update team stats correctly', async () => {
+        await Team.create({
+            ...teamTwo,
+            _id: teamTwoId,
+            goalsFor: 2,
+            goalsAgainst: 2,
+            turnovers: 3,
+            turnoversForced: 4,
+            holds: 2,
+        })
+
+        const teamSetupRecord = await Team.findById(teamOne._id)
+        teamSetupRecord?.set({ ...getInitialTeamData({ goalsAgainst: 2, breaks: 1, holds: 1, turnovers: 5 }) })
+        await teamSetupRecord?.save()
+
+        const point: IPoint = {
+            _id: pointId,
+            players: [],
+            teamOne: {
+                _id: teamOne._id,
+                ...getInitialTeamData({ goalsAgainst: 1, turnovers: 2 }),
+            },
+            teamTwo: {
+                _id: teamTwoId,
+                ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 }),
+            },
+        }
+
+        const game = await Game.findById(gameId)
+        game!.points = [point]
+        await game?.save()
+
+        await deletePoint(gameId.toHexString(), pointId.toHexString())
+
+        const teamOneRecord = await Team.findById(teamOne._id)
+        expect(teamOneRecord).toMatchObject({ goalsAgainst: 1, turnovers: 3 })
+
+        const teamTwoRecord = await Team.findById(teamTwoId)
+        expect(teamTwoRecord).toMatchObject({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 })
+    })
+
+    it('updates game correctly', async () => {
+        await Player.create({ ...playerOne })
+        await Player.create({ ...playerTwo })
+        await Player.create({ ...playerThree })
+
+        const game = await Game.findById(gameId)
+        const playerMap = getGamePlayerData(game!)
+        await updateGameLeaders(game!, playerMap, [])
+
+        await game?.save()
+
+        await deletePoint(gameId.toHexString(), pointId.toHexString())
+
+        const gameRecord = await Game.findById(gameId)
+        expect(gameRecord?.points.length).toBe(0)
+        expect(gameRecord).toMatchObject({
+            points: [],
+            goalsLeader: {
+                total: 0,
+            },
+            assistsLeader: {
+                total: 0,
+            },
+            turnoversLeader: {
+                total: 0,
+            },
+            plusMinusLeader: {
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                total: 0,
+            },
+            blocksLeader: {
+                total: 0,
+            },
+        })
+        expect(gameRecord?.goalsLeader.player).toMatchObject({})
+        expect(gameRecord?.assistsLeader.player).toMatchObject({})
+    })
+
+    it('throws error with unfound game', async () => {
+        await expect(deletePoint(new Types.ObjectId().toHexString(), pointId.toHexString())).rejects.toThrowError(
+            Constants.GAME_NOT_FOUND,
+        )
+    })
+
+    it('throws error with unfound point', async () => {
+        await expect(deletePoint(gameId.toHexString(), new Types.ObjectId().toHexString())).rejects.toThrowError(
+            Constants.POINT_NOT_FOUND,
+        )
     })
 })

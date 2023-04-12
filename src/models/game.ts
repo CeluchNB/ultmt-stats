@@ -72,6 +72,7 @@ const schema = new Schema<IGame>({
             total: Number,
         },
         required: true,
+        _id: false,
     },
     assistsLeader: {
         type: {
@@ -84,6 +85,7 @@ const schema = new Schema<IGame>({
             total: Number,
         },
         required: true,
+        _id: false,
     },
     blocksLeader: {
         type: {
@@ -96,6 +98,7 @@ const schema = new Schema<IGame>({
             total: Number,
         },
         required: true,
+        _id: false,
     },
     turnoversLeader: {
         type: {
@@ -108,6 +111,7 @@ const schema = new Schema<IGame>({
             total: Number,
         },
         required: true,
+        _id: false,
     },
     plusMinusLeader: {
         type: {
@@ -120,6 +124,7 @@ const schema = new Schema<IGame>({
             total: Number,
         },
         required: true,
+        _id: false,
     },
     pointsPlayedLeader: {
         type: {
@@ -132,6 +137,7 @@ const schema = new Schema<IGame>({
             total: Number,
         },
         required: true,
+        _id: false,
     },
     teamOneId: { type: SchemaTypes.ObjectId, required: true },
     teamTwoId: { type: SchemaTypes.ObjectId, required: false },

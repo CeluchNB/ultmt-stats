@@ -25,6 +25,21 @@ export const updateGameLeaders = async (
     playerMap: Map<Types.ObjectId, PlayerData>,
     pointPlayers: EmbeddedPlayer[],
 ) => {
+    if (playerMap.size === 0) {
+        game.goalsLeader.player = undefined
+        game.goalsLeader.total = 0
+        game.assistsLeader.player = undefined
+        game.assistsLeader.total = 0
+        game.pointsPlayedLeader.player = undefined
+        game.pointsPlayedLeader.total = 0
+        game.blocksLeader.player = undefined
+        game.blocksLeader.total = 0
+        game.turnoversLeader.player = undefined
+        game.turnoversLeader.total = 0
+        game.plusMinusLeader.player = undefined
+        game.plusMinusLeader.total = 0
+        return
+    }
     for (const values of playerMap.entries()) {
         let player = pointPlayers.find((p) => idEquals(p._id, values[0]))
         if (!player) {
