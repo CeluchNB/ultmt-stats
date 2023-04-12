@@ -19,4 +19,10 @@ describe('error response for middleware', () => {
         expect(result.message).toBe(Constants.GAME_NOT_FOUND)
         expect(result.code).toBe(404)
     })
+
+    it('with point not found error', () => {
+        const result = errorResponse(Constants.POINT_NOT_FOUND)
+        expect(result.message).toBe(Constants.POINT_NOT_FOUND)
+        expect(result.code).toBe(404)
+    })
 })

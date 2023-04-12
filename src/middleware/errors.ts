@@ -6,6 +6,8 @@ export const errorResponse = (error: string): { message: string; code: number } 
         return { message: Constants.GAME_ALREADY_EXISTS, code: 400 }
     } else if (error.includes(Constants.GAME_NOT_FOUND)) {
         return { message: Constants.GAME_NOT_FOUND, code: 404 }
+    } else if (error.includes(Constants.POINT_NOT_FOUND)) {
+        return { message: Constants.POINT_NOT_FOUND, code: 404 }
     }
     return { message: Constants.GENERIC_ERROR, code: 500 }
 }

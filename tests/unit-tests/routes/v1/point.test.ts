@@ -10,6 +10,9 @@ import Team from '../../../../src/models/team'
 import AtomicStat from '../../../../src/models/atomic-stat'
 import { Action, ActionType } from '../../../../src/types/point'
 import app from '../../../../src/app'
+import { IPoint } from '../../../../src/types/game'
+import { getInitialPlayerData } from '../../../../src/utils/player-stats'
+import { getInitialTeamData } from '../../../../src/utils/team-stats'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -151,5 +154,94 @@ describe('POST /point', () => {
             .expect(404)
 
         expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
+    })
+})
+
+describe('DELETE /point', () => {
+    const gameId = new Types.ObjectId()
+    const startTime = new Date()
+    const teamTwoId = new Types.ObjectId()
+    const pointId = new Types.ObjectId()
+
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(3)
+
+    beforeEach(async () => {
+        const game = await Game.create({
+            _id: gameId,
+            teamOneId: teamOne._id,
+            teamTwoId,
+            startTime,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
+        await Team.create(teamOne)
+
+        const point: IPoint = {
+            _id: pointId,
+            players: [
+                {
+                    _id: playerOne._id,
+                    ...getInitialPlayerData({ goals: 1, touches: 2, catches: 2 }),
+                },
+                {
+                    _id: playerTwo._id,
+                    ...getInitialPlayerData({ assists: 1, touches: 1 }),
+                },
+                {
+                    _id: playerThree._id,
+                    ...getInitialPlayerData({ drops: 1 }),
+                },
+            ],
+            teamOne: {
+                _id: teamOne._id,
+                ...getInitialTeamData({}),
+            },
+            teamTwo: {
+                _id: teamTwoId,
+                ...getInitialTeamData({}),
+            },
+        }
+
+        game.points.push(point)
+        await game.save()
+    })
+    it('with successful call', async () => {
+        await request(app).delete(`/api/v1/stats/point/${pointId}`).send({ gameId }).expect(200)
+
+        const gameRecord = await Game.findOne({})
+        expect(gameRecord?.points.length).toBe(0)
+    })
+
+    it('with unsuccessful call', async () => {
+        const response = await request(app)
+            .delete(`/api/v1/stats/point/${new Types.ObjectId()}`)
+            .send({ gameId })
+            .expect(404)
+
+        expect(response.body.message).toBe(Constants.POINT_NOT_FOUND)
     })
 })
