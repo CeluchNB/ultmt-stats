@@ -92,35 +92,74 @@ export const finishGame = async (gameId: string) => {
 
     const teamOne = await Team.findById(game.teamOneId)
     const teamTwo = await Team.findById(game.teamTwoId)
+    const prevWinner = game.winningTeam
 
     const winner = calculateWinner(game)
 
     const losingPlayers = []
     const winningPlayers = []
+    const prevWinningPlayers = []
+    const prevLosingPlayers = []
     if (winner === 'one') {
         if (teamOne) {
-            teamOne.wins += 1
-            winningPlayers.push(...teamOne.players)
+            if (prevWinner === 'two') {
+                teamOne.losses -= 1
+                teamOne.wins += 1
+                prevWinningPlayers.push(...escapeNullArray(teamTwo?.players))
+                prevLosingPlayers.push(...teamOne.players)
+                winningPlayers.push(...teamOne.players)
+            } else if (!prevWinner) {
+                teamOne.wins += 1
+                winningPlayers.push(...teamOne.players)
+            }
         }
         if (teamTwo) {
-            teamTwo.losses += 1
-            losingPlayers.push(...teamTwo.players)
+            if (prevWinner === 'two') {
+                teamTwo.wins -= 1
+                teamTwo.losses += 1
+                prevWinningPlayers.push(...teamTwo.players)
+                prevLosingPlayers.push(...escapeNullArray(teamOne?.players))
+                losingPlayers.push(...teamTwo.players)
+            } else if (!prevWinner) {
+                teamTwo.losses += 1
+                losingPlayers.push(...teamTwo.players)
+            }
         }
     } else {
         if (teamOne) {
-            teamOne.losses += 1
-            losingPlayers.push(...teamOne.players)
+            if (prevWinner === 'one') {
+                teamOne.wins -= 1
+                teamOne.losses += 1
+                prevWinningPlayers.push(...teamOne.players)
+                prevLosingPlayers.push(...escapeNullArray(teamTwo?.players))
+                losingPlayers.push(...teamOne.players)
+            } else if (!prevWinner) {
+                teamOne.losses += 1
+                losingPlayers.push(...teamOne.players)
+            }
         }
         if (teamTwo) {
-            teamTwo.wins += 1
-            winningPlayers.push(...teamTwo.players)
+            if (prevWinner === 'one') {
+                teamTwo.losses -= 1
+                teamTwo.wins += 1
+                prevWinningPlayers.push(...escapeNullArray(teamOne?.players))
+                prevLosingPlayers.push(...teamTwo.players)
+                winningPlayers.push(...teamTwo.players)
+            } else if (!prevWinner) {
+                teamTwo.wins += 1
+                winningPlayers.push(...teamTwo.players)
+            }
         }
     }
 
     await Player.updateMany({ _id: { $in: winningPlayers } }, { $inc: { wins: 1 } })
     await Player.updateMany({ _id: { $in: losingPlayers } }, { $inc: { losses: 1 } })
+    await Player.updateMany({ _id: { $in: prevWinningPlayers } }, { $inc: { wins: -1 } })
+    await Player.updateMany({ _id: { $in: prevLosingPlayers } }, { $inc: { losses: -1 } })
     await teamOne?.save()
     await teamTwo?.save()
+    game.winningTeam = winner
+    await game.save()
 }
 
 const calculateWinner = (game: IGame): 'one' | 'two' => {
@@ -134,4 +173,8 @@ const calculateWinner = (game: IGame): 'one' | 'two' => {
     }
 
     return scores.teamOne >= scores.teamTwo ? 'one' : 'two'
+}
+
+const escapeNullArray = (arr?: unknown[]): unknown[] => {
+    return arr || []
 }

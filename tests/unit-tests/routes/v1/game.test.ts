@@ -73,3 +73,5 @@ describe('/POST game', () => {
         expect(response.body.message).toBe(Constants.GAME_ALREADY_EXISTS)
     })
 })
+
+// describe('/POST finish game', () => {})

@@ -141,6 +141,7 @@ const schema = new Schema<IGame>({
     },
     teamOneId: { type: SchemaTypes.ObjectId, required: true },
     teamTwoId: { type: SchemaTypes.ObjectId, required: false },
+    winningTeam: { type: String, enum: ['one', 'two'], required: false },
     points: [pointSchema],
 })
 

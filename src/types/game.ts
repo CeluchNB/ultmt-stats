@@ -30,6 +30,7 @@ interface IGame extends GameData {
     startTime: Date
     teamOneId: Types.ObjectId
     teamTwoId?: Types.ObjectId
+    winningTeam?: 'one' | 'two'
     points: IPoint[]
 }
 

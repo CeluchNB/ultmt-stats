@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express'
-import { createGame } from '../../services/v1/game'
+import { createGame, finishGame } from '../../services/v1/game'
 import { body } from 'express-validator'
 import { errorMiddleware } from '../../middleware/errors'
 
@@ -14,4 +14,12 @@ gameRouter.post('/game', body('game').isObject(), async (req: Request, res: Resp
     }
 })
 
+gameRouter.post('/game/finish/:id', async (req: Request, res: Response, next) => {
+    try {
+        await finishGame(req.body.id)
+        return res.send()
+    } catch (error) {
+        next(error)
+    }
+})
 gameRouter.use(errorMiddleware)

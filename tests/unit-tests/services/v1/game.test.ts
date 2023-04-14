@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as Constants from '../../../../src/utils/constants'
 import { createGame, finishGame } from '../../../../src/services/v1/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
@@ -266,7 +267,139 @@ describe('test finish game', () => {
         expect(playerFourRecord).toMatchObject({ wins: 0, losses: 1 })
     })
 
-    it('with existing team two winning', async () => {
+    it('with team one re-winning', async () => {
+        const game = await Game.findOne({})
+        const teamOneModify = await Team.findById(teamOne._id)
+        teamOneModify!.wins = 1
+        const playerOneModify = await Player.findById(playerOne._id)
+        playerOneModify!.wins = 1
+        const playerTwoModify = await Player.findById(playerTwo._id)
+        playerTwoModify!.wins = 1
+
+        const teamTwoModify = await Team.findById(teamTwo._id)
+        teamTwoModify!.losses = 1
+        const playerThreeModify = await Player.findById(playerThree._id)
+        playerThreeModify!.losses = 1
+        const playerFourModify = await Player.findById(playerFour._id)
+        playerFourModify!.losses = 1
+
+        await teamOneModify?.save()
+        await teamTwoModify?.save()
+        await playerOneModify?.save()
+        await playerTwoModify?.save()
+        await playerThreeModify?.save()
+        await playerFourModify?.save()
+        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
+        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
+        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
+        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+
+        const points = [
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+            },
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+            },
+        ]
+        game?.points.push(...points)
+        game!.winningTeam = 'one'
+        await game?.save()
+
+        await finishGame(gameId.toHexString())
+
+        const teamOneRecord = await Team.findById(teamOne._id)
+        expect(teamOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const teamTwoRecord = await Team.findById(teamTwo._id)
+        expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerOneRecord = await Player.findById(playerOne._id)
+        expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerTwoRecord = await Player.findById(playerTwo._id)
+        expect(playerTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerThreeRecord = await Player.findById(playerThree._id)
+        expect(playerThreeRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerFourRecord = await Player.findById(playerFour._id)
+        expect(playerFourRecord).toMatchObject({ wins: 0, losses: 1 })
+    })
+
+    it('with team one winning after team two', async () => {
+        const game = await Game.findOne({})
+        const teamOneModify = await Team.findById(teamOne._id)
+        teamOneModify!.losses = 1
+        const playerOneModify = await Player.findById(playerOne._id)
+        playerOneModify!.losses = 1
+        const playerTwoModify = await Player.findById(playerTwo._id)
+        playerTwoModify!.losses = 1
+
+        const teamTwoModify = await Team.findById(teamTwo._id)
+        teamTwoModify!.wins = 1
+        const playerThreeModify = await Player.findById(playerThree._id)
+        playerThreeModify!.wins = 1
+        const playerFourModify = await Player.findById(playerFour._id)
+        playerFourModify!.wins = 1
+
+        await teamOneModify?.save()
+        await teamTwoModify?.save()
+        await playerOneModify?.save()
+        await playerTwoModify?.save()
+        await playerThreeModify?.save()
+        await playerFourModify?.save()
+        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
+        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
+        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
+        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+
+        const points = [
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+            },
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+            },
+        ]
+        game?.points.push(...points)
+        game!.winningTeam = 'two'
+        await game?.save()
+
+        await finishGame(gameId.toHexString())
+
+        const teamOneRecord = await Team.findById(teamOne._id)
+        expect(teamOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const teamTwoRecord = await Team.findById(teamTwo._id)
+        expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerOneRecord = await Player.findById(playerOne._id)
+        expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerTwoRecord = await Player.findById(playerTwo._id)
+        expect(playerTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerThreeRecord = await Player.findById(playerThree._id)
+        expect(playerThreeRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerFourRecord = await Player.findById(playerFour._id)
+        expect(playerFourRecord).toMatchObject({ wins: 0, losses: 1 })
+    })
+
+    it('with existent team two winning', async () => {
         const game = await Game.findOne({})
         const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
         const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
@@ -287,6 +420,141 @@ describe('test finish game', () => {
                 teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
             },
         ]
+        game?.points.push(...points)
+        await game?.save()
+
+        await finishGame(gameId.toHexString())
+
+        const teamOneRecord = await Team.findById(teamOne._id)
+        expect(teamOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const teamTwoRecord = await Team.findById(teamTwo._id)
+        expect(teamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerOneRecord = await Player.findById(playerOne._id)
+        expect(playerOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerTwoRecord = await Player.findById(playerTwo._id)
+        expect(playerTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerThreeRecord = await Player.findById(playerThree._id)
+        expect(playerThreeRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerFourRecord = await Player.findById(playerFour._id)
+        expect(playerFourRecord).toMatchObject({ wins: 1, losses: 0 })
+    })
+
+    it('with team two re-winning', async () => {
+        const game = await Game.findOne({})
+        const teamOneModify = await Team.findById(teamOne._id)
+        teamOneModify!.losses = 1
+        const playerOneModify = await Player.findById(playerOne._id)
+        playerOneModify!.losses = 1
+        const playerTwoModify = await Player.findById(playerTwo._id)
+        playerTwoModify!.losses = 1
+
+        const teamTwoModify = await Team.findById(teamTwo._id)
+        teamTwoModify!.wins = 1
+        const playerThreeModify = await Player.findById(playerThree._id)
+        playerThreeModify!.wins = 1
+        const playerFourModify = await Player.findById(playerFour._id)
+        playerFourModify!.wins = 1
+
+        await teamOneModify?.save()
+        await teamTwoModify?.save()
+        await playerOneModify?.save()
+        await playerTwoModify?.save()
+        await playerThreeModify?.save()
+        await playerFourModify?.save()
+        await teamOneModify?.save()
+        await teamTwoModify?.save()
+        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
+        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
+        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
+        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+
+        const points = [
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
+            },
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
+            },
+        ]
+        game!.winningTeam = 'two'
+        game?.points.push(...points)
+        await game?.save()
+
+        await finishGame(gameId.toHexString())
+
+        const teamOneRecord = await Team.findById(teamOne._id)
+        expect(teamOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const teamTwoRecord = await Team.findById(teamTwo._id)
+        expect(teamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerOneRecord = await Player.findById(playerOne._id)
+        expect(playerOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerTwoRecord = await Player.findById(playerTwo._id)
+        expect(playerTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const playerThreeRecord = await Player.findById(playerThree._id)
+        expect(playerThreeRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const playerFourRecord = await Player.findById(playerFour._id)
+        expect(playerFourRecord).toMatchObject({ wins: 1, losses: 0 })
+    })
+
+    it('with team two winning after team one', async () => {
+        const game = await Game.findOne({})
+        const teamOneModify = await Team.findById(teamOne._id)
+        teamOneModify!.wins = 1
+        const playerOneModify = await Player.findById(playerOne._id)
+        playerOneModify!.wins = 1
+        const playerTwoModify = await Player.findById(playerTwo._id)
+        playerTwoModify!.wins = 1
+
+        const teamTwoModify = await Team.findById(teamTwo._id)
+        teamTwoModify!.losses = 1
+        const playerThreeModify = await Player.findById(playerThree._id)
+        playerThreeModify!.losses = 1
+        const playerFourModify = await Player.findById(playerFour._id)
+        playerFourModify!.losses = 1
+
+        await teamOneModify?.save()
+        await teamTwoModify?.save()
+        await playerOneModify?.save()
+        await playerTwoModify?.save()
+        await playerThreeModify?.save()
+        await playerFourModify?.save()
+
+        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
+        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
+        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
+        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+
+        const points = [
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
+            },
+            {
+                _id: new Types.ObjectId(),
+                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
+                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
+            },
+        ]
+        game!.winningTeam = 'one'
         game?.points.push(...points)
         await game?.save()
 
