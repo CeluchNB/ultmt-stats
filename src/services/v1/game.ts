@@ -1,6 +1,6 @@
 import AtomicStat from '../../models/atomic-stat'
 import Game from '../../models/game'
-import { GameInput } from '../../types/game'
+import IGame, { GameInput } from '../../types/game'
 import Team from '../../models/team'
 import * as Constants from '../../utils/constants'
 import Player from '../../models/player'
@@ -82,4 +82,56 @@ const createAtomicStats = async (player: EmbeddedPlayer, gameId: Types.ObjectId,
     playerRecord.games.push(gameId)
     await playerRecord.save()
     await AtomicStat.create({ playerId: playerRecord._id, teamId, gameId })
+}
+
+export const finishGame = async (gameId: string) => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+
+    const teamOne = await Team.findById(game.teamOneId)
+    const teamTwo = await Team.findById(game.teamTwoId)
+
+    const winner = calculateWinner(game)
+
+    const losingPlayers = []
+    const winningPlayers = []
+    if (winner === 'one') {
+        if (teamOne) {
+            teamOne.wins += 1
+            winningPlayers.push(...teamOne.players)
+        }
+        if (teamTwo) {
+            teamTwo.losses += 1
+            losingPlayers.push(...teamTwo.players)
+        }
+    } else {
+        if (teamOne) {
+            teamOne.losses += 1
+            losingPlayers.push(...teamOne.players)
+        }
+        if (teamTwo) {
+            teamTwo.wins += 1
+            winningPlayers.push(...teamTwo.players)
+        }
+    }
+
+    await Player.updateMany({ _id: { $in: winningPlayers } }, { $inc: { wins: 1 } })
+    await Player.updateMany({ _id: { $in: losingPlayers } }, { $inc: { losses: 1 } })
+    await teamOne?.save()
+    await teamTwo?.save()
+}
+
+const calculateWinner = (game: IGame): 'one' | 'two' => {
+    const scores = { teamOne: 0, teamTwo: 0 }
+    for (const point of game.points) {
+        if (point.teamOne.goalsFor === 1) {
+            scores.teamOne += 1
+        } else if (point.teamTwo.goalsFor === 1) {
+            scores.teamTwo += 1
+        }
+    }
+
+    return scores.teamOne >= scores.teamTwo ? 'one' : 'two'
 }

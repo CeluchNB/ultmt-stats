@@ -19,20 +19,6 @@ export const teamTwo = {
     seasonEnd: new Date(),
 }
 
-// export const playerOne = {
-//     _id: new Types.ObjectId(),
-//     firstName: 'First 1',
-//     lastName: 'Last 1',
-//     username: 'firstlast1',
-// }
-
-// export const playerTwo = {
-//     _id: new Types.ObjectId(),
-//     firstName: 'First 2',
-//     lastName: 'Last 2',
-//     username: 'firstlast2',
-// }
-
 export const getPlayer = (num: number): EmbeddedPlayer => {
     return {
         _id: new Types.ObjectId(),
