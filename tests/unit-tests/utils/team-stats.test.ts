@@ -224,7 +224,7 @@ describe('calculateTeamData', () => {
         teamTwoScore: 0,
     }
     it('for team one', () => {
-        const data = calculateTeamData(new Types.ObjectId(), inputPoint, 'one')
+        const data = calculateTeamData(inputPoint, 'one', new Types.ObjectId())
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 
@@ -245,7 +245,7 @@ describe('calculateTeamData', () => {
             },
         ]
 
-        const data = calculateTeamData(new Types.ObjectId(), inputPoint, 'two')
+        const data = calculateTeamData(inputPoint, 'two', new Types.ObjectId())
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 })

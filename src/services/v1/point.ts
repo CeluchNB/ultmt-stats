@@ -23,11 +23,11 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const teamOnePlayerStats = calculatePlayerData(inputPoint.teamOnePlayers, inputPoint.teamOneActions)
     const teamTwoPlayerStats = calculatePlayerData(inputPoint.teamTwoPlayers, inputPoint.teamTwoActions)
 
-    await savePlayerData(teamOnePlayerStats, gameId, teamOneId, inputPoint.teamOnePlayers)
-    await savePlayerData(teamTwoPlayerStats, gameId, teamTwoId, inputPoint.teamTwoPlayers)
+    await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
+    await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)
 
-    const teamOneData = calculateTeamData(teamOneId, inputPoint, 'one')
-    const teamTwoData = calculateTeamData(teamTwoId, inputPoint, 'two')
+    const teamOneData = calculateTeamData(inputPoint, 'one', teamOneId)
+    const teamTwoData = calculateTeamData(inputPoint, 'two', teamTwoId)
 
     await saveTeamData(teamOneData, teamOneId)
     await saveTeamData(teamTwoData, teamTwoId)
@@ -60,8 +60,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
 const savePlayerData = async (
     playerStats: PlayerDataId[],
     gameId: Types.ObjectId,
-    teamId: Types.ObjectId,
     players: EmbeddedPlayer[],
+    teamId?: Types.ObjectId,
 ) => {
     for (const stats of playerStats) {
         await saveAtomicStat(stats, gameId, teamId)
@@ -69,7 +69,7 @@ const savePlayerData = async (
     }
 }
 
-const saveAtomicStat = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
+const saveAtomicStat = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
     const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId })
     if (statQuery.length === 1) {
         const record = statQuery[0]
@@ -98,7 +98,7 @@ const savePlayerStats = async (stats: PlayerDataId, players: EmbeddedPlayer[]) =
     }
 }
 
-const saveTeamData = async (teamData: TeamData, teamId: Types.ObjectId) => {
+const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
     const teamRecord = await Team.findById(teamId)
     teamRecord?.set({ ...addTeamData(teamRecord, teamData) })
     await teamRecord?.save()

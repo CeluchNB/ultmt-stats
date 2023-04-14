@@ -5,9 +5,9 @@ import { isDiscMovementAction } from './action'
 import { isCallahan } from './action'
 
 export const calculateTeamData = (
-    teamId: Types.ObjectId,
     inputPoint: IngestedPoint,
     teamNumber: 'one' | 'two',
+    teamId?: Types.ObjectId,
 ): TeamData => {
     const teamData = getInitialTeamData({})
 
@@ -28,7 +28,7 @@ export const updateTeamPlayerData = (actions: Action[], teamData: TeamData, team
     }
 }
 
-export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamData, teamId: Types.ObjectId) => {
+export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamData, teamId?: Types.ObjectId) => {
     if (idEquals(inputPoint.pullingTeam._id, teamId)) {
         teamData.defensePoints = 1
         if (teamData.goalsFor === 1) {
