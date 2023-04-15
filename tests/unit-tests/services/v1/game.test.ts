@@ -7,10 +7,11 @@ import Game from '../../../../src/models/game'
 import Team from '../../../../src/models/team'
 import AtomicStat from '../../../../src/models/atomic-stat'
 import { teamOne, teamTwo, getPlayer } from '../../../fixtures/data'
-import { EmbeddedTeam } from '../../../../src/types/team'
+import { EmbeddedTeam, TeamData } from '../../../../src/types/team'
 import Player from '../../../../src/models/player'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
+import { IdentifiedPlayerData, IPoint } from '../../../../src/types/game'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -222,26 +223,34 @@ describe('test finish game', () => {
         await Player.create(playerFour)
     })
 
-    it('with team one winning', async () => {
-        const game = await Game.findOne({})
+    const getIdPlayers = (): IdentifiedPlayerData[] => {
         const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
         const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
         const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
         const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+        return [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour]
+    }
+
+    const createPoint = (
+        players: IdentifiedPlayerData[],
+        teamOneOverrides: Partial<TeamData>,
+        teamTwoOverrides: Partial<TeamData>,
+    ): IPoint => {
+        return {
+            _id: new Types.ObjectId(),
+            players,
+            teamOne: { _id: teamOne._id, ...getInitialTeamData(teamOneOverrides) },
+            teamTwo: { _id: teamTwo._id, ...getInitialTeamData(teamTwoOverrides) },
+        }
+    }
+
+    it('with team one winning', async () => {
+        const game = await Game.findOne({})
+        const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
         ]
         game?.points.push(...points)
         await game?.save()
@@ -289,24 +298,11 @@ describe('test finish game', () => {
         await playerTwoModify?.save()
         await playerThreeModify?.save()
         await playerFourModify?.save()
-        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
-        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
-        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
-        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+        const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
         ]
         game?.points.push(...points)
         game!.winningTeam = 'one'
@@ -355,10 +351,7 @@ describe('test finish game', () => {
         await playerTwoModify?.save()
         await playerThreeModify?.save()
         await playerFourModify?.save()
-        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
-        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
-        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
-        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+        const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
             {
@@ -401,24 +394,11 @@ describe('test finish game', () => {
 
     it('with existent team two winning', async () => {
         const game = await Game.findOne({})
-        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
-        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
-        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
-        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+        const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
         ]
         game?.points.push(...points)
         await game?.save()
@@ -468,24 +448,11 @@ describe('test finish game', () => {
         await playerFourModify?.save()
         await teamOneModify?.save()
         await teamTwoModify?.save()
-        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
-        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
-        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
-        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+        const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
         ]
         game!.winningTeam = 'two'
         game?.points.push(...points)
@@ -535,24 +502,11 @@ describe('test finish game', () => {
         await playerThreeModify?.save()
         await playerFourModify?.save()
 
-        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
-        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
-        const idPlayerThree = { _id: playerThree._id, ...getInitialPlayerData({}) }
-        const idPlayerFour = { _id: playerFour._id, ...getInitialPlayerData({}) }
+        const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
         ]
         game!.winningTeam = 'one'
         game?.points.push(...points)
@@ -581,22 +535,11 @@ describe('test finish game', () => {
 
     it('with non-existent team two winning', async () => {
         const game = await Game.findOne({})
-        const idPlayerOne = { _id: playerOne._id, ...getInitialPlayerData({}) }
-        const idPlayerTwo = { _id: playerTwo._id, ...getInitialPlayerData({}) }
+        const [idPlayerOne, idPlayerTwo] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 0 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 1 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo], {}, { goalsFor: 1 }),
         ]
         game?.points.push(...points)
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
