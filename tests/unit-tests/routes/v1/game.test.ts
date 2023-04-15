@@ -169,7 +169,7 @@ describe('/POST finish game', () => {
         game?.points.push(...points)
         await game?.save()
 
-        await request(app).post(`/api/v1/stats/game/finish/${gameId}`).send().expect(200)
+        await request(app).put(`/api/v1/stats/game/finish/${gameId}`).send().expect(200)
 
         const teamOneRecord = await Team.findById(teamOne._id)
         expect(teamOneRecord).toMatchObject({ wins: 1, losses: 0 })
@@ -191,7 +191,7 @@ describe('/POST finish game', () => {
     })
 
     it('with not found error', async () => {
-        const response = await request(app).post(`/api/v1/stats/game/finish/${new Types.ObjectId()}`).expect(404)
+        const response = await request(app).put(`/api/v1/stats/game/finish/${new Types.ObjectId()}`).expect(404)
 
         expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
     })

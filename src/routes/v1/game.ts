@@ -14,7 +14,7 @@ gameRouter.post('/game', body('game').isObject(), async (req: Request, res: Resp
     }
 })
 
-gameRouter.post('/game/finish/:id', async (req: Request, res: Response, next) => {
+gameRouter.put('/game/finish/:id', async (req: Request, res: Response, next) => {
     try {
         await finishGame(req.params.id)
         return res.send()

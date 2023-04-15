@@ -7,6 +7,7 @@ import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
+import ITeam from '../../types/team'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -96,70 +97,72 @@ export const finishGame = async (gameId: string) => {
 
     const winner = calculateWinner(game)
 
-    const losingPlayers = []
-    const winningPlayers = []
-    const prevWinningPlayers = []
-    const prevLosingPlayers = []
     if (winner === 'one') {
-        if (teamOne) {
-            if (prevWinner === 'two') {
-                teamOne.losses -= 1
-                teamOne.wins += 1
-                prevWinningPlayers.push(...escapeNullArray(teamTwo?.players))
-                prevLosingPlayers.push(...teamOne.players)
-                winningPlayers.push(...teamOne.players)
-            } else if (!prevWinner) {
-                teamOne.wins += 1
-                winningPlayers.push(...teamOne.players)
-            }
-        }
-        if (teamTwo) {
-            if (prevWinner === 'two') {
-                teamTwo.wins -= 1
-                teamTwo.losses += 1
-                prevWinningPlayers.push(...teamTwo.players)
-                prevLosingPlayers.push(...escapeNullArray(teamOne?.players))
-                losingPlayers.push(...teamTwo.players)
-            } else if (!prevWinner) {
-                teamTwo.losses += 1
-                losingPlayers.push(...teamTwo.players)
-            }
+        if (prevWinner === 'two') {
+            updateTeam('losses', -1, teamOne)
+            updateTeam('wins', 1, teamOne)
+            updateTeam('wins', -1, teamTwo)
+            updateTeam('losses', 1, teamTwo)
+            await updatePlayers('losses', -1, teamOne?.players)
+            await updatePlayers('wins', 1, teamOne?.players)
+            await updatePlayers('losses', 1, teamTwo?.players)
+            await updatePlayers('wins', -1, teamTwo?.players)
+        } else if (!prevWinner) {
+            updateTeam('wins', 1, teamOne)
+            updateTeam('losses', 1, teamTwo)
+            await updatePlayers('wins', 1, teamOne?.players)
+            await updatePlayers('losses', 1, teamTwo?.players)
         }
     } else {
-        if (teamOne) {
-            if (prevWinner === 'one') {
-                teamOne.wins -= 1
-                teamOne.losses += 1
-                prevWinningPlayers.push(...teamOne.players)
-                prevLosingPlayers.push(...escapeNullArray(teamTwo?.players))
-                losingPlayers.push(...teamOne.players)
-            } else if (!prevWinner) {
-                teamOne.losses += 1
-                losingPlayers.push(...teamOne.players)
-            }
-        }
-        if (teamTwo) {
-            if (prevWinner === 'one') {
-                teamTwo.losses -= 1
-                teamTwo.wins += 1
-                prevWinningPlayers.push(...escapeNullArray(teamOne?.players))
-                prevLosingPlayers.push(...teamTwo.players)
-                winningPlayers.push(...teamTwo.players)
-            } else if (!prevWinner) {
-                teamTwo.wins += 1
-                winningPlayers.push(...teamTwo.players)
-            }
+        if (prevWinner === 'one') {
+            updateTeam('wins', 1, teamTwo)
+            updateTeam('losses', -1, teamTwo)
+            updateTeam('wins', -1, teamOne)
+            updateTeam('losses', 1, teamOne)
+            await updatePlayers('wins', 1, teamTwo?.players)
+            await updatePlayers('losses', -1, teamTwo?.players)
+            await updatePlayers('wins', -1, teamOne?.players)
+            await updatePlayers('losses', 1, teamOne?.players)
+        } else if (!prevWinner) {
+            updateTeam('wins', 1, teamTwo)
+            updateTeam('losses', 1, teamOne)
+            await updatePlayers('wins', 1, teamTwo?.players)
+            await updatePlayers('losses', 1, teamOne?.players)
         }
     }
 
-    await Player.updateMany({ _id: { $in: winningPlayers } }, { $inc: { wins: 1 } })
-    await Player.updateMany({ _id: { $in: losingPlayers } }, { $inc: { losses: 1 } })
-    await Player.updateMany({ _id: { $in: prevWinningPlayers } }, { $inc: { wins: -1 } })
-    await Player.updateMany({ _id: { $in: prevLosingPlayers } }, { $inc: { losses: -1 } })
     await teamOne?.save()
     await teamTwo?.save()
     game.winningTeam = winner
     await game.save()
+}
+
+const updatePlayers = async (property: 'wins' | 'losses', value: number, players?: Types.ObjectId[]) => {
+    if (!players || players.length === 0) return
+    if (property === 'wins') await updateWinningPlayers(players, value)
+    if (property === 'losses') await updateLosingPlayers(players, value)
+}
+
+const updateWinningPlayers = async (players: Types.ObjectId[], value: number) => {
+    await Player.updateMany({ _id: { $in: players } }, { $inc: { wins: value } })
+}
+
+const updateLosingPlayers = async (players: Types.ObjectId[], value: number) => {
+    await Player.updateMany({ _id: { $in: players } }, { $inc: { losses: value } })
+}
+
+const updateTeam = async (property: 'wins' | 'losses', value: number, team?: ITeam | null) => {
+    if (!team) return
+    if (property === 'wins') updateWinningTeam(team, value)
+    if (property === 'losses') updateLosingTeam(team, value)
+}
+
+const updateLosingTeam = (team: ITeam, value: number) => {
+    team.losses += value
+}
+
+const updateWinningTeam = (team: ITeam, value: number) => {
+    team.wins += value
 }
 
 const calculateWinner = (game: IGame): 'one' | 'two' => {
@@ -173,8 +176,4 @@ const calculateWinner = (game: IGame): 'one' | 'two' => {
     }
 
     return scores.teamOne >= scores.teamTwo ? 'one' : 'two'
-}
-
-const escapeNullArray = (arr?: unknown[]): unknown[] => {
-    return arr || []
 }
