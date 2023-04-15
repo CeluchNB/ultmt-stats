@@ -99,35 +99,27 @@ export const finishGame = async (gameId: string) => {
 
     if (winner === 'one') {
         if (prevWinner === 'two') {
-            updateTeam('losses', -1, teamOne)
-            updateTeam('wins', 1, teamOne)
-            updateTeam('wins', -1, teamTwo)
-            updateTeam('losses', 1, teamTwo)
-            await updatePlayers('losses', -1, teamOne?.players)
-            await updatePlayers('wins', 1, teamOne?.players)
-            await updatePlayers('losses', 1, teamTwo?.players)
-            await updatePlayers('wins', -1, teamTwo?.players)
+            updateTeam(1, -1, teamOne)
+            updateTeam(-1, 1, teamTwo)
+            await updatePlayers({ losses: -1, wins: 1 }, teamOne?.players)
+            await updatePlayers({ losses: 1, wins: -1 }, teamTwo?.players)
         } else if (!prevWinner) {
-            updateTeam('wins', 1, teamOne)
-            updateTeam('losses', 1, teamTwo)
-            await updatePlayers('wins', 1, teamOne?.players)
-            await updatePlayers('losses', 1, teamTwo?.players)
+            updateTeam(1, 0, teamOne)
+            updateTeam(0, 1, teamTwo)
+            await updatePlayers({ wins: 1 }, teamOne?.players)
+            await updatePlayers({ losses: 1 }, teamTwo?.players)
         }
     } else {
         if (prevWinner === 'one') {
-            updateTeam('wins', 1, teamTwo)
-            updateTeam('losses', -1, teamTwo)
-            updateTeam('wins', -1, teamOne)
-            updateTeam('losses', 1, teamOne)
-            await updatePlayers('wins', 1, teamTwo?.players)
-            await updatePlayers('losses', -1, teamTwo?.players)
-            await updatePlayers('wins', -1, teamOne?.players)
-            await updatePlayers('losses', 1, teamOne?.players)
+            updateTeam(1, -1, teamTwo)
+            updateTeam(-1, 1, teamOne)
+            await updatePlayers({ wins: 1, losses: -1 }, teamTwo?.players)
+            await updatePlayers({ wins: -1, losses: 1 }, teamOne?.players)
         } else if (!prevWinner) {
-            updateTeam('wins', 1, teamTwo)
-            updateTeam('losses', 1, teamOne)
-            await updatePlayers('wins', 1, teamTwo?.players)
-            await updatePlayers('losses', 1, teamOne?.players)
+            updateTeam(1, 0, teamTwo)
+            updateTeam(0, 1, teamOne)
+            await updatePlayers({ wins: 1 }, teamTwo?.players)
+            await updatePlayers({ losses: 1 }, teamOne?.players)
         }
     }
 
@@ -137,32 +129,15 @@ export const finishGame = async (gameId: string) => {
     await game.save()
 }
 
-const updatePlayers = async (property: 'wins' | 'losses', value: number, players?: Types.ObjectId[]) => {
+const updatePlayers = async (updates: { [x: string]: number }, players?: Types.ObjectId[]) => {
     if (!players || players.length === 0) return
-    if (property === 'wins') await updateWinningPlayers(players, value)
-    if (property === 'losses') await updateLosingPlayers(players, value)
+    await Player.updateMany({ _id: { $in: players } }, { $inc: updates })
 }
 
-const updateWinningPlayers = async (players: Types.ObjectId[], value: number) => {
-    await Player.updateMany({ _id: { $in: players } }, { $inc: { wins: value } })
-}
-
-const updateLosingPlayers = async (players: Types.ObjectId[], value: number) => {
-    await Player.updateMany({ _id: { $in: players } }, { $inc: { losses: value } })
-}
-
-const updateTeam = async (property: 'wins' | 'losses', value: number, team?: ITeam | null) => {
+const updateTeam = async (wins: number, losses: number, team?: ITeam | null) => {
     if (!team) return
-    if (property === 'wins') updateWinningTeam(team, value)
-    if (property === 'losses') updateLosingTeam(team, value)
-}
-
-const updateLosingTeam = (team: ITeam, value: number) => {
-    team.losses += value
-}
-
-const updateWinningTeam = (team: ITeam, value: number) => {
-    team.wins += value
+    team.wins += wins
+    team.losses += losses
 }
 
 const calculateWinner = (game: IGame): 'one' | 'two' => {
