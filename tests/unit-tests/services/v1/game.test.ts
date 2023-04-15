@@ -354,18 +354,8 @@ describe('test finish game', () => {
         const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
-            },
-            {
-                _id: new Types.ObjectId(),
-                players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
-                teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
-                teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
-            },
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
         ]
         game?.points.push(...points)
         game!.winningTeam = 'two'
@@ -542,7 +532,6 @@ describe('test finish game', () => {
             createPoint([idPlayerOne, idPlayerTwo], {}, { goalsFor: 1 }),
         ]
         game?.points.push(...points)
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         game!.teamTwoId = undefined
         await game?.save()
 
