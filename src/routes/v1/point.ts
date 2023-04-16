@@ -15,7 +15,7 @@ pointRouter.post('/point', async (req: Request, res: Response, next) => {
     }
 })
 
-pointRouter.delete('/point/:id', async (req: Request, res: Response, next) => {
+pointRouter.put('/point/:id/delete', async (req: Request, res: Response, next) => {
     try {
         await deletePoint(req.body.gameId, req.params.id)
         return res.status(200).send()

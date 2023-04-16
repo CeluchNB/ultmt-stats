@@ -157,7 +157,7 @@ describe('POST /point', () => {
     })
 })
 
-describe('DELETE /point', () => {
+describe('PUT /point/:id/delete', () => {
     const gameId = new Types.ObjectId()
     const startTime = new Date()
     const teamTwoId = new Types.ObjectId()
@@ -230,7 +230,7 @@ describe('DELETE /point', () => {
         await game.save()
     })
     it('with successful call', async () => {
-        await request(app).delete(`/api/v1/stats/point/${pointId}`).send({ gameId }).expect(200)
+        await request(app).put(`/api/v1/stats/point/${pointId}/delete`).send({ gameId }).expect(200)
 
         const gameRecord = await Game.findOne({})
         expect(gameRecord?.points.length).toBe(0)
@@ -238,7 +238,7 @@ describe('DELETE /point', () => {
 
     it('with unsuccessful call', async () => {
         const response = await request(app)
-            .delete(`/api/v1/stats/point/${new Types.ObjectId()}`)
+            .put(`/api/v1/stats/point/${new Types.ObjectId()}/delete`)
             .send({ gameId })
             .expect(404)
 

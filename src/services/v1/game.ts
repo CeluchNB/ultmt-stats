@@ -19,12 +19,12 @@ export const createGame = async (gameInput: GameInput) => {
     // create teams if not exists
     let teamOne = await Team.findById(gameInput.teamOne._id)
     if (!teamOne) {
-        teamOne = await Team.create({ ...gameInput.teamOne })
+        teamOne = await Team.create({ ...gameInput.teamOne, players: gameInput.teamOnePlayers.map((p) => p._id) })
     }
 
     let teamTwo = await Team.findById(gameInput.teamTwo._id)
     if (!teamTwo && gameInput.teamTwo?._id) {
-        teamTwo = await Team.create({ ...gameInput.teamTwo })
+        teamTwo = await Team.create({ ...gameInput.teamTwo, players: gameInput.teamTwoPlayers.map((p) => p._id) })
     }
 
     // create game
