@@ -4,7 +4,7 @@ import ITeam from '../types/team'
 const schema = new Schema<ITeam>({
     place: { type: String, required: true },
     name: { type: String, required: true },
-    teamName: { type: String, required: true },
+    teamname: { type: String, required: true },
     wins: { type: Number, required: true, default: 0 },
     losses: { type: Number, required: true, default: 0 },
     goalsFor: { type: Number, required: true, default: 0 },

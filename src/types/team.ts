@@ -4,7 +4,7 @@ export interface EmbeddedTeam {
     _id?: Types.ObjectId
     place: string
     name: string
-    teamName?: string
+    teamname?: string
     seasonStart?: Date
     seasonEnd?: Date
 }

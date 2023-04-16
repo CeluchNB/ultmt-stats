@@ -367,7 +367,7 @@ describe('test ingest point', () => {
         const fullTeamTwo = {
             ...teamTwo,
             _id: teamTwoId,
-            teamName: 'team2',
+            teamname: 'team2',
             seasonStart: new Date(),
             seasonEnd: new Date(),
         }

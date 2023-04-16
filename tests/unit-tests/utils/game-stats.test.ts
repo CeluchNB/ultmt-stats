@@ -221,7 +221,7 @@ describe('getGamePlayerData', () => {
         _id: new Types.ObjectId(),
         place: 'Pittsburgh',
         name: 'Temper',
-        teamName: 'pghtemper',
+        teamname: 'pghtemper',
         seasonStart: new Date(),
         seasonEnd: new Date(),
     }

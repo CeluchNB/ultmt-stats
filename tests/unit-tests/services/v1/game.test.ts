@@ -167,13 +167,13 @@ describe('test finish game', () => {
         _id: new Types.ObjectId(),
         place: 'Place 1',
         name: 'Name 1',
-        teamName: 'placename1',
+        teamname: 'placename1',
     }
     const teamTwo: EmbeddedTeam = {
         _id: new Types.ObjectId(),
         place: 'Place 1',
         name: 'Name 1',
-        teamName: 'placename1',
+        teamname: 'placename1',
     }
 
     beforeEach(async () => {

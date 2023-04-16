@@ -5,7 +5,7 @@ export const teamOne = {
     _id: new Types.ObjectId(),
     place: 'Pittsburgh',
     name: 'Temper',
-    teamName: 'pghtemper',
+    teamname: 'pghtemper',
     seasonStart: new Date(),
     seasonEnd: new Date(),
 }
@@ -14,7 +14,7 @@ export const teamTwo = {
     _id: new Types.ObjectId(),
     place: 'Pittsburgh',
     name: 'Hazard',
-    teamName: 'hazzy',
+    teamname: 'hazzy',
     seasonStart: new Date(),
     seasonEnd: new Date(),
 }
