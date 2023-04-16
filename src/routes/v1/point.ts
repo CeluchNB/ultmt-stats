@@ -6,11 +6,9 @@ export const pointRouter = Router()
 
 pointRouter.post('/point', async (req: Request, res: Response, next) => {
     try {
-        console.log('got point', req.body.point.gameId)
         await ingestPoint(req.body.point)
         return res.status(201).send()
     } catch (e) {
-        console.log('got error', e)
         next(e)
     }
 })

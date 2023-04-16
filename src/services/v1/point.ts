@@ -44,7 +44,7 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const pointPlayers = [...inputPoint.teamOnePlayers, ...inputPoint.teamTwoPlayers]
 
     const gamePoint: IPoint = {
-        _id: new Types.ObjectId(),
+        _id: new Types.ObjectId(inputPoint.pointId),
         teamOne: { _id: teamOneId, ...teamOneData },
         teamTwo: { _id: teamTwoId, ...teamTwoData },
         players: idPlayerData,
