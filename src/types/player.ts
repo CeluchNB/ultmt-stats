@@ -28,7 +28,17 @@ export interface PlayerData {
 export type PlayerDataKey = keyof PlayerData
 export type PlayerDataId = PlayerData & { playerId: Types.ObjectId }
 
-interface IPlayer extends EmbeddedPlayer, PlayerData {
+interface CalculatedPlayerData {
+    plusMinus: number
+    catchingPercentage: number
+    throwingPercentage: number
+    ppGoals: number
+    ppAssists: number
+    ppThrowaways: number
+    ppDrops: number
+    ppBlocks: number
+}
+interface IPlayer extends EmbeddedPlayer, PlayerData, CalculatedPlayerData {
     games: Types.ObjectId[]
     teams: Types.ObjectId[]
 }
