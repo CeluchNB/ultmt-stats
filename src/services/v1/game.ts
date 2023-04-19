@@ -19,13 +19,15 @@ export const createGame = async (gameInput: GameInput) => {
     // create teams if not exists
     let teamOne = await Team.findById(gameInput.teamOne._id)
     if (!teamOne) {
-        teamOne = await Team.create({ ...gameInput.teamOne, players: gameInput.teamOnePlayers.map((p) => p._id) })
+        teamOne = await Team.create({ ...gameInput.teamOne })
     }
+    updateTeamPlayers(gameInput.teamOnePlayers, teamOne)
 
     let teamTwo = await Team.findById(gameInput.teamTwo._id)
     if (!teamTwo && gameInput.teamTwo?._id) {
-        teamTwo = await Team.create({ ...gameInput.teamTwo, players: gameInput.teamTwoPlayers.map((p) => p._id) })
+        teamTwo = await Team.create({ ...gameInput.teamTwo })
     }
+    updateTeamPlayers(gameInput.teamTwoPlayers, teamTwo)
 
     // create game
     const game = await Game.create({
@@ -66,23 +68,36 @@ export const createGame = async (gameInput: GameInput) => {
 
     // create players if not exists
     for (const p of gameInput.teamOnePlayers) {
-        await createAtomicStats(p, game._id, teamOne._id)
+        await createPlayerStatRecords(p, game._id, teamOne._id)
     }
 
     for (const p of gameInput.teamTwoPlayers) {
         if (!teamTwo) break
-        await createAtomicStats(p, game._id, teamTwo._id)
+        await createPlayerStatRecords(p, game._id, teamTwo._id)
     }
 }
 
-const createAtomicStats = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
+const updateTeamPlayers = (players: EmbeddedPlayer[], team: ITeam | undefined | null) => {
+    if (!team) return
+    for (const player of players) {
+        if (!team.players.includes(player._id)) {
+            team.players.push(player._id)
+        }
+    }
+}
+
+const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
+    await upsertPlayerRecord(player, gameId)
+    await AtomicStat.create({ playerId: player._id, teamId, gameId })
+}
+
+const upsertPlayerRecord = async (player: EmbeddedPlayer, gameId: Types.ObjectId) => {
     let playerRecord = await Player.findById(player._id)
     if (!playerRecord) {
         playerRecord = await Player.create({ ...player })
     }
     playerRecord.games.push(gameId)
     await playerRecord.save()
-    await AtomicStat.create({ playerId: playerRecord._id, teamId, gameId })
 }
 
 export const finishGame = async (gameId: string) => {

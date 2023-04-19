@@ -73,11 +73,15 @@ describe('test create game', () => {
         expect(teamOneRecord).toMatchObject(teamOne)
         expect(teamOneRecord?.games.length).toBe(1)
         expect(teamOneRecord?.games[0].toString()).toBe(_id.toString())
+        expect(teamOneRecord?.players.length).toBe(1)
+        expect(teamOneRecord?.players[0].toHexString()).toBe(playerOne._id.toHexString())
 
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject(teamTwo)
         expect(teamTwoRecord?.games.length).toBe(1)
         expect(teamTwoRecord?.games[0].toString()).toBe(_id.toString())
+        expect(teamTwoRecord?.players.length).toBe(1)
+        expect(teamTwoRecord?.players[0].toHexString()).toBe(playerTwo._id.toHexString())
 
         const stats = await AtomicStat.find({})
         expect(stats.length).toBe(2)
