@@ -25,4 +25,10 @@ describe('error response for middleware', () => {
         expect(result.message).toBe(Constants.POINT_NOT_FOUND)
         expect(result.code).toBe(404)
     })
+
+    it('with player not found error', () => {
+        const result = errorResponse(Constants.PLAYER_NOT_FOUND)
+        expect(result.message).toBe(Constants.PLAYER_NOT_FOUND)
+        expect(result.code).toBe(404)
+    })
 })
