@@ -37,6 +37,7 @@ interface CalculatedPlayerData {
     ppThrowaways: number
     ppDrops: number
     ppBlocks: number
+    winPercentage: number
 }
 interface IPlayer extends EmbeddedPlayer, PlayerData, CalculatedPlayerData {
     games: Types.ObjectId[]

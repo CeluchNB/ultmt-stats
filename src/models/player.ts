@@ -1,5 +1,6 @@
 import { Schema, model, SchemaTypes } from 'mongoose'
 import IPlayer from '../types/player'
+import { createSafeFraction } from '../utils/utils'
 
 const schema = new Schema<IPlayer>(
     {
@@ -35,31 +36,35 @@ schema.virtual('plusMinus').get(function () {
 })
 
 schema.virtual('catchingPercentage').get(function () {
-    return Number(this.catches / (this.catches + this.drops)).toPrecision(2)
+    return createSafeFraction(this.catches, this.catches + this.drops)
 })
 
 schema.virtual('throwingPercentage').get(function () {
-    return Number(this.completedPasses / (this.completedPasses + this.throwaways + this.droppedPasses)).toPrecision(2)
+    return createSafeFraction(this.completedPasses, this.completedPasses + this.throwaways + this.droppedPasses)
 })
 
 schema.virtual('ppGoals').get(function () {
-    return Number(this.goals / this.pointsPlayed).toPrecision(2)
+    return createSafeFraction(this.goals, this.pointsPlayed)
 })
 
 schema.virtual('ppAssists').get(function () {
-    return Number(this.assists / this.pointsPlayed).toPrecision(2)
+    return createSafeFraction(this.assists, this.pointsPlayed)
 })
 
 schema.virtual('ppThrowaways').get(function () {
-    return Number(this.throwaways / this.pointsPlayed).toPrecision(2)
+    return createSafeFraction(this.throwaways, this.pointsPlayed)
 })
 
 schema.virtual('ppDrops').get(function () {
-    return Number(this.drops / this.pointsPlayed).toPrecision(2)
+    return createSafeFraction(this.drops, this.pointsPlayed)
 })
 
 schema.virtual('ppBlocks').get(function () {
-    return Number(this.blocks / this.pointsPlayed).toPrecision(2)
+    return createSafeFraction(this.blocks, this.pointsPlayed)
+})
+
+schema.virtual('winPercentage').get(function () {
+    return createSafeFraction(this.wins, this.wins + this.losses)
 })
 
 const Player = model<IPlayer>('Player', schema)

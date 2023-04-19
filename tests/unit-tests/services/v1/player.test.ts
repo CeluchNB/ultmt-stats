@@ -40,6 +40,8 @@ describe('test getPlayerById', () => {
                 completedPasses: 5,
                 droppedPasses: 1,
                 throwaways: 1,
+                wins: 1,
+                losses: 1,
             }),
         })
 
@@ -56,15 +58,18 @@ describe('test getPlayerById', () => {
                 completedPasses: 5,
                 droppedPasses: 1,
                 throwaways: 1,
+                wins: 1,
+                losses: 1,
             }),
             plusMinus: 2,
-            throwingPercentage: Number(5 / 7).toPrecision(2),
-            catchingPercentage: Number(10 / 11).toPrecision(2),
-            ppGoals: Number(0.25).toPrecision(2),
-            ppAssists: Number(0.25).toPrecision(2),
-            ppBlocks: Number(0.5).toPrecision(2),
-            ppDrops: Number(0.25).toPrecision(2),
-            ppThrowaways: Number(0.25).toPrecision(2),
+            throwingPercentage: 5 / 7,
+            catchingPercentage: 10 / 11,
+            ppGoals: 0.25,
+            ppAssists: 0.25,
+            ppBlocks: 0.5,
+            ppDrops: 0.25,
+            ppThrowaways: 0.25,
+            winPercentage: 0.5,
         })
     })
 })
