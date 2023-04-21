@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express'
-import { createGame, finishGame } from '../../services/v1/game'
+import { createGame, finishGame, getGameById } from '../../services/v1/game'
 import { body } from 'express-validator'
 import { errorMiddleware } from '../../middleware/errors'
 
@@ -22,4 +22,14 @@ gameRouter.put('/game/finish/:id', async (req: Request, res: Response, next) => 
         next(error)
     }
 })
+
+gameRouter.get('/game/:id', async (req: Request, res: Response, next) => {
+    try {
+        const game = await getGameById(req.params.id)
+        return res.json({ game })
+    } catch (error) {
+        next(error)
+    }
+})
+
 gameRouter.use(errorMiddleware)

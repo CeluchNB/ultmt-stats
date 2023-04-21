@@ -196,3 +196,50 @@ describe('/POST finish game', () => {
         expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
     })
 })
+
+describe('/GET game by id', () => {
+    it('with found game', async () => {
+        const gameId = new Types.ObjectId()
+        await Game.create({
+            _id: gameId,
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: undefined,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
+
+        const response = await request(app).get(`/api/v1/stats/game/${gameId}`).expect(200)
+        expect(response.body.game).toMatchObject({
+            teamOneId: teamOne._id.toHexString(),
+            goalsLeader: { total: 0 },
+        })
+    })
+
+    it('with unfound game', async () => {
+        const response = await request(app).get(`/api/v1/stats/game/${new Types.ObjectId()}`).expect(404)
+        expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
+    })
+})

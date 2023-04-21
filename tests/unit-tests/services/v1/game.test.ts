@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as Constants from '../../../../src/utils/constants'
-import { createGame, finishGame } from '../../../../src/services/v1/game'
+import { createGame, finishGame, getGameById } from '../../../../src/services/v1/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
@@ -12,6 +12,7 @@ import Player from '../../../../src/models/player'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { IdentifiedPlayerData, IPoint } from '../../../../src/types/game'
+import { ApiError } from '../../../../src/types/error'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -562,5 +563,54 @@ describe('test finish game', () => {
 
     it('with unfound gamd', async () => {
         await expect(finishGame(new Types.ObjectId().toHexString())).rejects.toThrowError(Constants.GAME_NOT_FOUND)
+    })
+})
+
+describe('test get game by id', () => {
+    it('with found game', async () => {
+        const gameId = new Types.ObjectId()
+        await Game.create({
+            _id: gameId,
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
+
+        const result = await getGameById(gameId.toHexString())
+        expect(result).toMatchObject({
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo._id,
+            goalsLeader: { total: 0 },
+        })
+    })
+
+    it('with unfound game', async () => {
+        await expect(getGameById(new Types.ObjectId().toHexString())).rejects.toThrowError(
+            new ApiError(Constants.GAME_NOT_FOUND, 404),
+        )
     })
 })

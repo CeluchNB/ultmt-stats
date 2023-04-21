@@ -167,3 +167,11 @@ const calculateWinner = (game: IGame): 'one' | 'two' => {
 
     return scores.teamOne >= scores.teamTwo ? 'one' : 'two'
 }
+
+export const getGameById = async (gameId: string): Promise<IGame> => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+    return game
+}
