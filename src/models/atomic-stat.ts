@@ -16,10 +16,12 @@ const schema = new Schema<IAtomicStat>({
     wins: { type: Number, required: true, default: 0 },
     losses: { type: Number, required: true, default: 0 },
     pulls: { type: Number, required: true, default: 0 },
-    playerId: { type: SchemaTypes.ObjectId, required: true, unique: true },
+    playerId: { type: SchemaTypes.ObjectId, required: true },
     gameId: { type: SchemaTypes.ObjectId, required: true },
     teamId: { type: SchemaTypes.ObjectId, required: true },
 })
+
+schema.index({ playerId: 1, gameId: 1, teamId: 1 }, { unique: true })
 
 const AtomicStat = model<IAtomicStat>('AtomicStat', schema)
 export type IAtomicStatModel = typeof AtomicStat

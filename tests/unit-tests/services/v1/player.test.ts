@@ -1,11 +1,12 @@
 import * as Constants from '../../../../src/utils/constants'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import Player from '../../../../src/models/player'
-import { getPlayerById } from '../../../../src/services/v1/player'
+import { getPlayerById, filterPlayerStats } from '../../../../src/services/v1/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../../../src/types/error'
-import { getPlayer } from '../../../fixtures/data'
+import { getPlayer, teamOne, teamTwo } from '../../../fixtures/data'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
+import AtomicStat from '../../../../src/models/atomic-stat'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -71,5 +72,75 @@ describe('test getPlayerById', () => {
             ppThrowaways: 0.25,
             winPercentage: 0.5,
         })
+    })
+})
+
+describe('test playerFilter', () => {
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const gameOneId = new Types.ObjectId()
+    const gameTwoId = new Types.ObjectId()
+    const gameThreeId = new Types.ObjectId()
+
+    beforeEach(async () => {
+        await AtomicStat.create({
+            playerId: playerOne._id,
+            gameId: gameOneId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ goals: 1 }),
+        })
+
+        await AtomicStat.create({
+            playerId: playerOne._id,
+            gameId: gameTwoId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ assists: 1 }),
+        })
+
+        await AtomicStat.create({
+            playerId: playerOne._id,
+            gameId: gameThreeId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ throwaways: 1 }),
+        })
+
+        await AtomicStat.create({
+            playerId: playerTwo._id,
+            gameId: gameTwoId,
+            teamId: teamTwo._id,
+            ...getInitialPlayerData({ blocks: 1 }),
+        })
+    })
+
+    it('gets accurate stats by game', async () => {
+        const result = await filterPlayerStats(
+            playerOne._id.toHexString(),
+            [gameOneId.toHexString(), gameTwoId.toHexString()],
+            [],
+        )
+
+        expect(result.length).toBe(2)
+        expect(result[0].goals).toBe(1)
+        expect(result[1].assists).toBe(1)
+    })
+
+    it('gets accurate stats by team', async () => {
+        const result = await filterPlayerStats(playerOne._id.toHexString(), [], [teamOne._id.toHexString()])
+        expect(result.length).toBe(3)
+        expect(result[0].goals).toBe(1)
+        expect(result[1].assists).toBe(1)
+        expect(result[2].throwaways).toBe(1)
+    })
+
+    it('gets accurate overlapping stats', async () => {
+        const result = await filterPlayerStats(
+            playerOne._id.toHexString(),
+            [gameOneId.toHexString(), gameTwoId.toHexString()],
+            [teamOne._id.toHexString()],
+        )
+
+        expect(result.length).toBe(2)
+        expect(result[0].goals).toBe(1)
+        expect(result[1].assists).toBe(1)
     })
 })
