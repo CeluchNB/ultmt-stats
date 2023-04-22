@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as Constants from '../../../../src/utils/constants'
-import { createGame, finishGame, getGameById } from '../../../../src/services/v1/game'
+import { createGame, finishGame, gameFilterStats, getGameById } from '../../../../src/services/v1/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
@@ -612,5 +612,94 @@ describe('test get game by id', () => {
         await expect(getGameById(new Types.ObjectId().toHexString())).rejects.toThrowError(
             new ApiError(Constants.GAME_NOT_FOUND, 404),
         )
+    })
+})
+
+describe('test get game filter stats', () => {
+    const gameId = new Types.ObjectId()
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(3)
+
+    beforeEach(async () => {
+        await Player.create({ ...playerOne })
+        await Player.create({ ...playerTwo })
+        await Player.create({ ...playerThree })
+        await AtomicStat.create({
+            gameId,
+            teamId: teamOne._id,
+            playerId: playerOne._id,
+            ...getInitialPlayerData({ goals: 1, pointsPlayed: 2 }),
+        })
+        await AtomicStat.create({
+            gameId,
+            teamId: teamOne._id,
+            playerId: playerTwo._id,
+            ...getInitialPlayerData({ assists: 1, pointsPlayed: 1 }),
+        })
+        await AtomicStat.create({
+            gameId,
+            teamId: teamTwo._id,
+            playerId: playerThree._id,
+            ...getInitialPlayerData({ throwaways: 1, pointsPlayed: 3 }),
+        })
+        await Game.create({
+            _id: gameId,
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
+    })
+
+    it('gets team one successfully', async () => {
+        const result = await gameFilterStats(gameId.toHexString(), teamOne._id.toHexString())
+
+        expect(result._id.toHexString()).toBe(gameId.toHexString())
+        expect(result.goalsLeader).toMatchObject({ total: 1, player: playerOne })
+        expect(result.pointsPlayedLeader).toMatchObject({ total: 2, player: playerOne })
+        expect(result.assistsLeader).toMatchObject({ total: 1, player: playerTwo })
+        expect(result.plusMinusLeader).toMatchObject({ total: 1, player: playerOne })
+        expect(result.turnoversLeader).toMatchObject({ total: 0 })
+    })
+
+    it('gets team two successfully', async () => {
+        const result = await gameFilterStats(gameId.toHexString(), teamTwo._id.toHexString())
+
+        expect(result._id.toHexString()).toBe(gameId.toHexString())
+        expect(result.goalsLeader).toMatchObject({ total: 0 })
+        expect(result.pointsPlayedLeader).toMatchObject({ total: 3, player: playerThree })
+        expect(result.assistsLeader).toMatchObject({ total: 0 })
+        expect(result.plusMinusLeader).toMatchObject({ total: -1, player: playerThree })
+        expect(result.turnoversLeader).toMatchObject({ total: 1, player: playerThree })
+    })
+
+    it('with unfound game', async () => {
+        await expect(
+            gameFilterStats(new Types.ObjectId().toHexString(), teamOne._id.toHexString()),
+        ).rejects.toThrowError(new ApiError(Constants.GAME_NOT_FOUND, 404))
     })
 })

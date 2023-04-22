@@ -1,6 +1,6 @@
 import AtomicStat from '../../models/atomic-stat'
 import Game from '../../models/game'
-import IGame, { GameInput } from '../../types/game'
+import IGame, { GameData, GameInput } from '../../types/game'
 import Team from '../../models/team'
 import * as Constants from '../../utils/constants'
 import Player from '../../models/player'
@@ -8,6 +8,7 @@ import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
 import ITeam from '../../types/team'
+import { updateGameData } from '../../utils/game-stats'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -174,4 +175,35 @@ export const getGameById = async (gameId: string): Promise<IGame> => {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
     return game
+}
+
+export const gameFilterStats = async (gameId: string, teamId: string): Promise<IGame> => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+
+    const stats = await AtomicStat.where({ gameId, teamId })
+    const leaders: GameData = {
+        goalsLeader: { total: 0, player: undefined },
+        assistsLeader: { total: 0, player: undefined },
+        blocksLeader: { total: 0, player: undefined },
+        plusMinusLeader: { total: 0, player: undefined },
+        pointsPlayedLeader: { total: 0, player: undefined },
+        turnoversLeader: { total: 0, player: undefined },
+    }
+    for (const stat of stats) {
+        // TODO: get players more efficiently
+        const player = await Player.findById(stat.playerId)
+        updateGameData(leaders, stat, player)
+    }
+
+    return {
+        _id: game._id,
+        teamOneId: game.teamOneId,
+        teamTwoId: game.teamTwoId,
+        startTime: game.startTime,
+        points: game.points,
+        ...leaders,
+    }
 }

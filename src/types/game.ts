@@ -2,7 +2,7 @@ import { Types } from 'mongoose'
 import { EmbeddedPlayer, PlayerData } from './player'
 import { EmbeddedTeam, TeamData } from './team'
 
-interface Leader {
+export interface Leader {
     player?: EmbeddedPlayer
     total: number
 }

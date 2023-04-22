@@ -92,7 +92,6 @@ const savePlayerStats = async (stats: PlayerDataId, players: EmbeddedPlayer[]) =
         player.set({ ...addPlayerData(player, stats) })
         await player.save()
     } else {
-        // TODO: get player in a better way?
         const embeddedPlayer = players.find((p) => idEquals(p._id, stats.playerId))
         await Player.create({ ...stats, ...embeddedPlayer })
     }
