@@ -6,7 +6,7 @@ import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import Team from '../../../../src/models/team'
 import AtomicPlayer from '../../../../src/models/atomic-player'
-import { teamOne, teamTwo, getPlayer } from '../../../fixtures/data'
+import { getPlayer } from '../../../fixtures/data'
 import { EmbeddedTeam, TeamData } from '../../../../src/types/team'
 import Player from '../../../../src/models/player'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
@@ -27,6 +27,19 @@ afterAll(async () => {
     await tearDownDatabase()
 })
 
+const teamOne: EmbeddedTeam = {
+    _id: new Types.ObjectId(),
+    place: 'Place 1',
+    name: 'Name 1',
+    teamname: 'placename1',
+}
+const teamTwo: EmbeddedTeam = {
+    _id: new Types.ObjectId(),
+    place: 'Place 1',
+    name: 'Name 1',
+    teamname: 'placename1',
+}
+
 describe('test create game', () => {
     const _id = new Types.ObjectId()
     const startTime = new Date()
@@ -44,7 +57,7 @@ describe('test create game', () => {
         })
 
         const game = await Game.findById(_id)
-        expect(game?.teamOneId.toString()).toEqual(teamOne._id.toString())
+        expect(game?.teamOneId.toString()).toEqual(teamOne._id!.toString())
         expect(game?.assistsLeader).toMatchObject({})
         expect(game?.points.length).toBe(0)
 
@@ -58,7 +71,7 @@ describe('test create game', () => {
 
         const atomicTeams = await AtomicTeam.find({})
         expect(atomicTeams.length).toBe(1)
-        expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id.toHexString())
+        expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id!.toHexString())
         expect(atomicTeams[0].gameId.toHexString()).toBe(game?._id.toHexString())
     })
 
@@ -72,7 +85,7 @@ describe('test create game', () => {
             teamTwoPlayers: [playerTwo],
         })
         const game = await Game.findById(_id)
-        expect(game?.teamOneId.toString()).toEqual(teamOne._id.toString())
+        expect(game?.teamOneId.toString()).toEqual(teamOne._id!.toString())
         expect(game?.assistsLeader.player).toMatchObject({})
         expect(game?.points.length).toBe(0)
 
@@ -95,9 +108,9 @@ describe('test create game', () => {
 
         const atomicTeams = await AtomicTeam.find({})
         expect(atomicTeams.length).toBe(2)
-        expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id.toHexString())
+        expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id!.toHexString())
         expect(atomicTeams[0].gameId.toHexString()).toBe(game?._id.toHexString())
-        expect(atomicTeams[1].teamId.toHexString()).toBe(teamTwo._id.toHexString())
+        expect(atomicTeams[1].teamId.toHexString()).toBe(teamTwo._id!.toHexString())
         expect(atomicTeams[1].gameId.toHexString()).toBe(game?._id.toHexString())
     })
 
@@ -112,7 +125,7 @@ describe('test create game', () => {
         })
 
         const game = await Game.findById(_id)
-        expect(game?.teamOneId.toString()).toEqual(teamOne._id.toString())
+        expect(game?.teamOneId.toString()).toEqual(teamOne._id!.toString())
 
         const teamOneRecord = await Team.findById(teamOne._id)
         expect(teamOneRecord).toMatchObject(teamOne)
@@ -181,18 +194,6 @@ describe('test finish game', () => {
     const playerTwo = getPlayer(2)
     const playerThree = getPlayer(3)
     const playerFour = getPlayer(4)
-    const teamOne: EmbeddedTeam = {
-        _id: new Types.ObjectId(),
-        place: 'Place 1',
-        name: 'Name 1',
-        teamname: 'placename1',
-    }
-    const teamTwo: EmbeddedTeam = {
-        _id: new Types.ObjectId(),
-        place: 'Place 1',
-        name: 'Name 1',
-        teamname: 'placename1',
-    }
 
     beforeEach(async () => {
         await Team.create({
@@ -203,6 +204,8 @@ describe('test finish game', () => {
             ...teamTwo,
             players: [playerThree._id, playerFour._id],
         })
+        await AtomicTeam.create({ ...teamOne, gameId, teamId: teamOne._id })
+        await AtomicTeam.create({ ...teamTwo, gameId, teamId: teamTwo._id })
 
         await Game.create({
             _id: gameId,
@@ -281,6 +284,12 @@ describe('test finish game', () => {
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
 
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
 
@@ -298,6 +307,8 @@ describe('test finish game', () => {
         const game = await Game.findOne({})
         const teamOneModify = await Team.findById(teamOne._id)
         teamOneModify!.wins = 1
+        const atomicTeamOneModify = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        atomicTeamOneModify!.wins = 1
         const playerOneModify = await Player.findById(playerOne._id)
         playerOneModify!.wins = 1
         const playerTwoModify = await Player.findById(playerTwo._id)
@@ -305,6 +316,8 @@ describe('test finish game', () => {
 
         const teamTwoModify = await Team.findById(teamTwo._id)
         teamTwoModify!.losses = 1
+        const atomicTeamTwoModify = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        atomicTeamTwoModify!.losses = 1
         const playerThreeModify = await Player.findById(playerThree._id)
         playerThreeModify!.losses = 1
         const playerFourModify = await Player.findById(playerFour._id)
@@ -312,6 +325,8 @@ describe('test finish game', () => {
 
         await teamOneModify?.save()
         await teamTwoModify?.save()
+        await atomicTeamOneModify?.save()
+        await atomicTeamTwoModify?.save()
         await playerOneModify?.save()
         await playerTwoModify?.save()
         await playerThreeModify?.save()
@@ -334,6 +349,12 @@ describe('test finish game', () => {
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
 
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
 
@@ -351,6 +372,8 @@ describe('test finish game', () => {
         const game = await Game.findOne({})
         const teamOneModify = await Team.findById(teamOne._id)
         teamOneModify!.losses = 1
+        const atomicTeamOneModify = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        atomicTeamOneModify!.losses = 1
         const playerOneModify = await Player.findById(playerOne._id)
         playerOneModify!.losses = 1
         const playerTwoModify = await Player.findById(playerTwo._id)
@@ -358,6 +381,8 @@ describe('test finish game', () => {
 
         const teamTwoModify = await Team.findById(teamTwo._id)
         teamTwoModify!.wins = 1
+        const atomicTeamTwoModify = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        atomicTeamTwoModify!.wins = 1
         const playerThreeModify = await Player.findById(playerThree._id)
         playerThreeModify!.wins = 1
         const playerFourModify = await Player.findById(playerFour._id)
@@ -365,6 +390,8 @@ describe('test finish game', () => {
 
         await teamOneModify?.save()
         await teamTwoModify?.save()
+        await atomicTeamOneModify?.save()
+        await atomicTeamTwoModify?.save()
         await playerOneModify?.save()
         await playerTwoModify?.save()
         await playerThreeModify?.save()
@@ -386,6 +413,12 @@ describe('test finish game', () => {
 
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
 
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
@@ -419,6 +452,12 @@ describe('test finish game', () => {
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
 
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 0, losses: 1 })
 
@@ -436,6 +475,8 @@ describe('test finish game', () => {
         const game = await Game.findOne({})
         const teamOneModify = await Team.findById(teamOne._id)
         teamOneModify!.losses = 1
+        const atomicTeamOneModify = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        atomicTeamOneModify!.losses = 1
         const playerOneModify = await Player.findById(playerOne._id)
         playerOneModify!.losses = 1
         const playerTwoModify = await Player.findById(playerTwo._id)
@@ -443,6 +484,8 @@ describe('test finish game', () => {
 
         const teamTwoModify = await Team.findById(teamTwo._id)
         teamTwoModify!.wins = 1
+        const atomicTeamTwoModify = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        atomicTeamTwoModify!.wins = 1
         const playerThreeModify = await Player.findById(playerThree._id)
         playerThreeModify!.wins = 1
         const playerFourModify = await Player.findById(playerFour._id)
@@ -454,8 +497,8 @@ describe('test finish game', () => {
         await playerTwoModify?.save()
         await playerThreeModify?.save()
         await playerFourModify?.save()
-        await teamOneModify?.save()
-        await teamTwoModify?.save()
+        await atomicTeamOneModify?.save()
+        await atomicTeamTwoModify?.save()
         const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
@@ -474,6 +517,12 @@ describe('test finish game', () => {
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
 
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 0, losses: 1 })
 
@@ -491,6 +540,8 @@ describe('test finish game', () => {
         const game = await Game.findOne({})
         const teamOneModify = await Team.findById(teamOne._id)
         teamOneModify!.wins = 1
+        const atomicTeamOneModify = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        atomicTeamOneModify!.wins = 1
         const playerOneModify = await Player.findById(playerOne._id)
         playerOneModify!.wins = 1
         const playerTwoModify = await Player.findById(playerTwo._id)
@@ -498,6 +549,8 @@ describe('test finish game', () => {
 
         const teamTwoModify = await Team.findById(teamTwo._id)
         teamTwoModify!.losses = 1
+        const atomicTeamTwoModify = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        atomicTeamTwoModify!.losses = 1
         const playerThreeModify = await Player.findById(playerThree._id)
         playerThreeModify!.losses = 1
         const playerFourModify = await Player.findById(playerFour._id)
@@ -505,6 +558,8 @@ describe('test finish game', () => {
 
         await teamOneModify?.save()
         await teamTwoModify?.save()
+        await atomicTeamOneModify?.save()
+        await atomicTeamTwoModify?.save()
         await playerOneModify?.save()
         await playerTwoModify?.save()
         await playerThreeModify?.save()
@@ -527,6 +582,12 @@ describe('test finish game', () => {
 
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
+
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 1, losses: 0 })
 
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 0, losses: 1 })
@@ -560,6 +621,12 @@ describe('test finish game', () => {
 
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 0 })
+
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwo._id, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({ wins: 0, losses: 0 })
 
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 0, losses: 1 })
@@ -689,7 +756,7 @@ describe('test get filtered game stats', () => {
     })
 
     it('gets team one successfully', async () => {
-        const result = await filterGameStats(gameId.toHexString(), teamOne._id.toHexString())
+        const result = await filterGameStats(gameId.toHexString(), teamOne._id!.toHexString())
 
         expect(result._id.toHexString()).toBe(gameId.toHexString())
         expect(result.goalsLeader).toMatchObject({ total: 1, player: playerOne })
@@ -700,7 +767,7 @@ describe('test get filtered game stats', () => {
     })
 
     it('gets team two successfully', async () => {
-        const result = await filterGameStats(gameId.toHexString(), teamTwo._id.toHexString())
+        const result = await filterGameStats(gameId.toHexString(), teamTwo._id!.toHexString())
 
         expect(result._id.toHexString()).toBe(gameId.toHexString())
         expect(result.goalsLeader).toMatchObject({ total: 0 })
@@ -712,7 +779,7 @@ describe('test get filtered game stats', () => {
 
     it('with unfound game', async () => {
         await expect(
-            filterGameStats(new Types.ObjectId().toHexString(), teamOne._id.toHexString()),
+            filterGameStats(new Types.ObjectId().toHexString(), teamOne._id!.toHexString()),
         ).rejects.toThrowError(new ApiError(Constants.GAME_NOT_FOUND, 404))
     })
 })

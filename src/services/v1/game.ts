@@ -7,7 +7,7 @@ import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
-import ITeam from '../../types/team'
+import ITeam, { TeamData } from '../../types/team'
 import { updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getInitialTeamData } from '../../utils/team-stats'
@@ -116,6 +116,8 @@ export const finishGame = async (gameId: string) => {
 
     const teamOne = await Team.findById(game.teamOneId)
     const teamTwo = await Team.findById(game.teamTwoId)
+    const atomicTeamOne = await AtomicTeam.findOne({ gameId: game._id, teamId: teamOne?._id })
+    const atomicTeamTwo = await AtomicTeam.findOne({ gameId: game._id, teamId: teamTwo?._id })
     const prevWinner = game.winningTeam
 
     const winner = calculateWinner(game)
@@ -124,11 +126,15 @@ export const finishGame = async (gameId: string) => {
         if (prevWinner === 'two') {
             updateTeam(1, -1, teamOne)
             updateTeam(-1, 1, teamTwo)
+            updateTeam(1, -1, atomicTeamOne)
+            updateTeam(-1, 1, atomicTeamTwo)
             await updatePlayers({ losses: -1, wins: 1 }, teamOne?.players)
             await updatePlayers({ losses: 1, wins: -1 }, teamTwo?.players)
         } else if (!prevWinner) {
             updateTeam(1, 0, teamOne)
             updateTeam(0, 1, teamTwo)
+            updateTeam(1, 0, atomicTeamOne)
+            updateTeam(0, 1, atomicTeamTwo)
             await updatePlayers({ wins: 1 }, teamOne?.players)
             await updatePlayers({ losses: 1 }, teamTwo?.players)
         }
@@ -136,11 +142,15 @@ export const finishGame = async (gameId: string) => {
         if (prevWinner === 'one') {
             updateTeam(1, -1, teamTwo)
             updateTeam(-1, 1, teamOne)
+            updateTeam(1, -1, atomicTeamTwo)
+            updateTeam(-1, 1, atomicTeamOne)
             await updatePlayers({ wins: 1, losses: -1 }, teamTwo?.players)
             await updatePlayers({ wins: -1, losses: 1 }, teamOne?.players)
         } else if (!prevWinner) {
             updateTeam(1, 0, teamTwo)
             updateTeam(0, 1, teamOne)
+            updateTeam(1, 0, atomicTeamTwo)
+            updateTeam(0, 1, atomicTeamOne)
             await updatePlayers({ wins: 1 }, teamTwo?.players)
             await updatePlayers({ losses: 1 }, teamOne?.players)
         }
@@ -148,6 +158,8 @@ export const finishGame = async (gameId: string) => {
 
     await teamOne?.save()
     await teamTwo?.save()
+    await atomicTeamOne?.save()
+    await atomicTeamTwo?.save()
     game.winningTeam = winner
     await game.save()
 }
@@ -157,7 +169,7 @@ const updatePlayers = async (updates: { [x: string]: number }, players?: Types.O
     await Player.updateMany({ _id: { $in: players } }, { $inc: updates })
 }
 
-const updateTeam = async (wins: number, losses: number, team?: ITeam | null) => {
+const updateTeam = async (wins: number, losses: number, team?: TeamData | null) => {
     if (!team) return
     team.wins += wins
     team.losses += losses

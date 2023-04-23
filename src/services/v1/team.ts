@@ -19,16 +19,13 @@ export const filterTeamStats = async (teamId: string, gameIds: string[]): Promis
         throw new ApiError(Constants.TEAM_NOT_FOUND, 404)
     }
 
-    const filter: { $and: unknown[] } = { $and: [] }
-    if (gameIds.length > 0) {
-        filter.$and.push({ gameId: { $in: gameIds } })
-    }
+    const filter = { $and: [{ teamId }, { gameId: { $in: gameIds } }] }
     const stats = await AtomicTeam.where({ teamId, ...filter })
-    const data: TeamData = getInitialTeamData({})
+    let data: TeamData = getInitialTeamData({})
 
     stats.forEach((stat) => {
-        return addTeamData(data, stat)
+        data = { ...addTeamData(stat, data) }
     })
 
-    return { ...team, ...data }
+    return { _id: team._id, place: team.place, name: team.name, players: team.players, games: team.games, ...data }
 }
