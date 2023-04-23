@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express'
-import { createGame, finishGame, getGameById } from '../../services/v1/game'
-import { body } from 'express-validator'
+import { createGame, filterGameStats, finishGame, getGameById } from '../../services/v1/game'
+import { body, param, query } from 'express-validator'
 import { errorMiddleware } from '../../middleware/errors'
 
 export const gameRouter = Router()
@@ -31,5 +31,19 @@ gameRouter.get('/game/:id', async (req: Request, res: Response, next) => {
         next(error)
     }
 })
+
+gameRouter.get(
+    '/filter/game/:id',
+    param('id').isString(),
+    query('team').isString(),
+    async (req: Request, res: Response, next) => {
+        try {
+            const game = await filterGameStats(req.params.id, req.query.team as string)
+            return res.json({ game })
+        } catch (error) {
+            next(error)
+        }
+    },
+)
 
 gameRouter.use(errorMiddleware)

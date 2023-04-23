@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as Constants from '../../../../src/utils/constants'
-import { createGame, finishGame, gameFilterStats, getGameById } from '../../../../src/services/v1/game'
+import { createGame, finishGame, filterGameStats, getGameById } from '../../../../src/services/v1/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
@@ -615,7 +615,7 @@ describe('test get game by id', () => {
     })
 })
 
-describe('test get game filter stats', () => {
+describe('test get filtered game stats', () => {
     const gameId = new Types.ObjectId()
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
@@ -676,7 +676,7 @@ describe('test get game filter stats', () => {
     })
 
     it('gets team one successfully', async () => {
-        const result = await gameFilterStats(gameId.toHexString(), teamOne._id.toHexString())
+        const result = await filterGameStats(gameId.toHexString(), teamOne._id.toHexString())
 
         expect(result._id.toHexString()).toBe(gameId.toHexString())
         expect(result.goalsLeader).toMatchObject({ total: 1, player: playerOne })
@@ -687,7 +687,7 @@ describe('test get game filter stats', () => {
     })
 
     it('gets team two successfully', async () => {
-        const result = await gameFilterStats(gameId.toHexString(), teamTwo._id.toHexString())
+        const result = await filterGameStats(gameId.toHexString(), teamTwo._id.toHexString())
 
         expect(result._id.toHexString()).toBe(gameId.toHexString())
         expect(result.goalsLeader).toMatchObject({ total: 0 })
@@ -699,7 +699,7 @@ describe('test get game filter stats', () => {
 
     it('with unfound game', async () => {
         await expect(
-            gameFilterStats(new Types.ObjectId().toHexString(), teamOne._id.toHexString()),
+            filterGameStats(new Types.ObjectId().toHexString(), teamOne._id.toHexString()),
         ).rejects.toThrowError(new ApiError(Constants.GAME_NOT_FOUND, 404))
     })
 })

@@ -177,7 +177,7 @@ export const getGameById = async (gameId: string): Promise<IGame> => {
     return game
 }
 
-export const gameFilterStats = async (gameId: string, teamId: string): Promise<IGame> => {
+export const filterGameStats = async (gameId: string, teamId: string): Promise<IGame> => {
     const game = await Game.findById(gameId)
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)

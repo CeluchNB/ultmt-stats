@@ -4,12 +4,13 @@ import app from '../../../../src/app'
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
-import { getPlayer, teamOne } from '../../../fixtures/data'
+import { getPlayer, teamOne, teamTwo } from '../../../fixtures/data'
 import Team from '../../../../src/models/team'
 import Player from '../../../../src/models/player'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { EmbeddedTeam } from '../../../../src/types/team'
+import AtomicStat from '../../../../src/models/atomic-stat'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -240,6 +241,90 @@ describe('/GET game by id', () => {
 
     it('with unfound game', async () => {
         const response = await request(app).get(`/api/v1/stats/game/${new Types.ObjectId()}`).expect(404)
+        expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
+    })
+})
+
+describe('/GET filtered game', () => {
+    const gameId = new Types.ObjectId()
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(3)
+
+    beforeEach(async () => {
+        await Player.create({ ...playerOne })
+        await Player.create({ ...playerTwo })
+        await Player.create({ ...playerThree })
+        await AtomicStat.create({
+            gameId,
+            teamId: teamOne._id,
+            playerId: playerOne._id,
+            ...getInitialPlayerData({ goals: 1, pointsPlayed: 2 }),
+        })
+        await AtomicStat.create({
+            gameId,
+            teamId: teamOne._id,
+            playerId: playerTwo._id,
+            ...getInitialPlayerData({ assists: 1, pointsPlayed: 1 }),
+        })
+        await AtomicStat.create({
+            gameId,
+            teamId: teamTwo._id,
+            playerId: playerThree._id,
+            ...getInitialPlayerData({ throwaways: 1, pointsPlayed: 3 }),
+        })
+        await Game.create({
+            _id: gameId,
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+            goalsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            assistsLeader: {
+                player: undefined,
+                total: 0,
+            },
+            blocksLeader: {
+                player: undefined,
+                total: 0,
+            },
+            turnoversLeader: {
+                player: undefined,
+                total: 0,
+            },
+            pointsPlayedLeader: {
+                player: undefined,
+                total: 0,
+            },
+            plusMinusLeader: {
+                player: undefined,
+                total: 0,
+            },
+        })
+    })
+
+    it('with filtered response', async () => {
+        const response = await request(app).get(`/api/v1/stats/filter/game/${gameId}?team=${teamOne._id}`).expect(200)
+
+        const { game } = response.body
+        expect(game._id).toBe(gameId.toHexString())
+        expect(game.goalsLeader.total).toBe(1)
+        expect(game.goalsLeader.player._id).toBe(playerOne._id.toHexString())
+        expect(game.pointsPlayedLeader.total).toBe(2)
+        expect(game.pointsPlayedLeader.player._id).toBe(playerOne._id.toHexString())
+        expect(game.assistsLeader.total).toBe(1)
+        expect(game.assistsLeader.player._id).toBe(playerTwo._id.toHexString())
+        expect(game.plusMinusLeader.total).toBe(1)
+        expect(game.plusMinusLeader.player._id).toBe(playerOne._id.toHexString())
+        expect(game.turnoversLeader).toMatchObject({ total: 0 })
+    })
+
+    it('with error', async () => {
+        const response = await request(app)
+            .get(`/api/v1/stats/filter/game/${new Types.ObjectId()}?team=${teamOne._id}`)
+            .expect(404)
         expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
     })
 })
