@@ -10,6 +10,8 @@ export const errorResponse = (error: string): { message: string; code: number } 
         return { message: Constants.POINT_NOT_FOUND, code: 404 }
     } else if (error.includes(Constants.PLAYER_NOT_FOUND)) {
         return { message: Constants.PLAYER_NOT_FOUND, code: 404 }
+    } else if (error.includes(Constants.TEAM_NOT_FOUND)) {
+        return { message: Constants.TEAM_NOT_FOUND, code: 404 }
     }
     return { message: Constants.GENERIC_ERROR, code: 500 }
 }
