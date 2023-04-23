@@ -6,7 +6,7 @@ import Player from '../../../../src/models/player'
 import { getPlayer, teamOne } from '../../../fixtures/data'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { Types } from 'mongoose'
-import AtomicStat from '../../../../src/models/atomic-stat'
+import AtomicPlayer from '../../../../src/models/atomic-player'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -49,14 +49,14 @@ describe('/GET filtered player stats', () => {
     const gameTwoId = new Types.ObjectId()
 
     beforeEach(async () => {
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameOneId,
             teamId: teamOne._id,
             ...getInitialPlayerData({ goals: 1 }),
         })
 
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameTwoId,
             teamId: teamOne._id,

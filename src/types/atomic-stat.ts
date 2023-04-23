@@ -1,10 +1,14 @@
 import { Types } from 'mongoose'
 import { PlayerData } from './player'
+import { TeamData } from './team'
 
-interface IAtomicStat extends PlayerData {
+export interface IAtomicPlayer extends PlayerData {
     playerId: Types.ObjectId
     gameId: Types.ObjectId
     teamId: Types.ObjectId
 }
 
-export default IAtomicStat
+export interface IAtomicTeam extends TeamData {
+    teamId: Types.ObjectId
+    gameId: Types.ObjectId
+}

@@ -5,7 +5,7 @@ import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixture
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import Team from '../../../../src/models/team'
-import AtomicStat from '../../../../src/models/atomic-stat'
+import AtomicPlayer from '../../../../src/models/atomic-player'
 import { teamOne, teamTwo, getPlayer } from '../../../fixtures/data'
 import { EmbeddedTeam, TeamData } from '../../../../src/types/team'
 import Player from '../../../../src/models/player'
@@ -52,7 +52,7 @@ describe('test create game', () => {
         expect(team?.games.length).toBe(1)
         expect(team?.games[0].toString()).toBe(_id.toString())
 
-        const stats = await AtomicStat.find({})
+        const stats = await AtomicPlayer.find({})
         expect(stats.length).toBe(0)
     })
 
@@ -84,7 +84,7 @@ describe('test create game', () => {
         expect(teamTwoRecord?.players.length).toBe(1)
         expect(teamTwoRecord?.players[0].toHexString()).toBe(playerTwo._id.toHexString())
 
-        const stats = await AtomicStat.find({})
+        const stats = await AtomicPlayer.find({})
         expect(stats.length).toBe(2)
     })
 
@@ -107,7 +107,7 @@ describe('test create game', () => {
         const teamTwoRecord = await Team.findById(teamTwo._id)
         expect(teamTwoRecord).toBeNull()
 
-        const stats = await AtomicStat.find({})
+        const stats = await AtomicPlayer.find({})
         expect(stats.length).toBe(1)
     })
 
@@ -625,19 +625,19 @@ describe('test get filtered game stats', () => {
         await Player.create({ ...playerOne })
         await Player.create({ ...playerTwo })
         await Player.create({ ...playerThree })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             gameId,
             teamId: teamOne._id,
             playerId: playerOne._id,
             ...getInitialPlayerData({ goals: 1, pointsPlayed: 2 }),
         })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             gameId,
             teamId: teamOne._id,
             playerId: playerTwo._id,
             ...getInitialPlayerData({ assists: 1, pointsPlayed: 1 }),
         })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             gameId,
             teamId: teamTwo._id,
             playerId: playerThree._id,

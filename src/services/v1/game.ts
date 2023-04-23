@@ -1,4 +1,4 @@
-import AtomicStat from '../../models/atomic-stat'
+import AtomicPlayer from '../../models/atomic-player'
 import Game from '../../models/game'
 import IGame, { GameData, GameInput } from '../../types/game'
 import Team from '../../models/team'
@@ -89,7 +89,7 @@ const updateTeamPlayers = (players: EmbeddedPlayer[], team: ITeam | undefined | 
 
 const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
     await upsertPlayerRecord(player, gameId)
-    await AtomicStat.create({ playerId: player._id, teamId, gameId })
+    await AtomicPlayer.create({ playerId: player._id, teamId, gameId })
 }
 
 const upsertPlayerRecord = async (player: EmbeddedPlayer, gameId: Types.ObjectId) => {
@@ -183,7 +183,7 @@ export const filterGameStats = async (gameId: string, teamId: string): Promise<I
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
-    const stats = await AtomicStat.where({ gameId, teamId })
+    const stats = await AtomicPlayer.where({ gameId, teamId })
     const leaders: GameData = {
         goalsLeader: { total: 0, player: undefined },
         assistsLeader: { total: 0, player: undefined },

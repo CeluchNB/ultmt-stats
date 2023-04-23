@@ -7,7 +7,7 @@ import { EmbeddedTeam } from '../../../../src/types/team'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import Team from '../../../../src/models/team'
-import AtomicStat from '../../../../src/models/atomic-stat'
+import AtomicPlayer from '../../../../src/models/atomic-player'
 import { Action, ActionType } from '../../../../src/types/point'
 import app from '../../../../src/app'
 import { IPoint } from '../../../../src/types/game'
@@ -76,8 +76,8 @@ describe('POST /point', () => {
         await Player.create(playerOne)
         await Player.create(playerTwo)
         await Player.create(playerThree)
-        await AtomicStat.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
-        await AtomicStat.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
+        await AtomicPlayer.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
+        await AtomicPlayer.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
     })
 
     it('with correct data', async () => {

@@ -10,7 +10,7 @@ import Player from '../../../../src/models/player'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { EmbeddedTeam } from '../../../../src/types/team'
-import AtomicStat from '../../../../src/models/atomic-stat'
+import AtomicPlayer from '../../../../src/models/atomic-player'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -255,19 +255,19 @@ describe('/GET filtered game', () => {
         await Player.create({ ...playerOne })
         await Player.create({ ...playerTwo })
         await Player.create({ ...playerThree })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             gameId,
             teamId: teamOne._id,
             playerId: playerOne._id,
             ...getInitialPlayerData({ goals: 1, pointsPlayed: 2 }),
         })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             gameId,
             teamId: teamOne._id,
             playerId: playerTwo._id,
             ...getInitialPlayerData({ assists: 1, pointsPlayed: 1 }),
         })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             gameId,
             teamId: teamTwo._id,
             playerId: playerThree._id,

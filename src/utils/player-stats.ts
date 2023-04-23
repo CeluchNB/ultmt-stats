@@ -4,12 +4,12 @@ import { Action, ActionType } from '../types/point'
 import { isCallahan, isDiscMovementAction } from './action'
 
 export const calculatePlayerData = (players: EmbeddedPlayer[], actions: Action[]): PlayerDataId[] => {
-    const atomicStatsMap = new Map<Types.ObjectId, PlayerData>()
+    const atomicPlayersMap = new Map<Types.ObjectId, PlayerData>()
 
-    initializePlayerMap(atomicStatsMap, players)
-    populatePlayerMap(atomicStatsMap, actions)
+    initializePlayerMap(atomicPlayersMap, players)
+    populatePlayerMap(atomicPlayersMap, actions)
 
-    return flattenPlayerMap(atomicStatsMap)
+    return flattenPlayerMap(atomicPlayersMap)
 }
 
 export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, players: EmbeddedPlayer[]) => {
@@ -21,7 +21,7 @@ export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, player
 export const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions: Action[]) => {
     let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
-        updateAtomicStats(map, action, prevAction)
+        updateAtomicPlayer(map, action, prevAction)
         if (isDiscMovementAction(action)) {
             prevAction = action
         }
@@ -29,16 +29,16 @@ export const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions:
 }
 
 export const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDataId[] => {
-    const atomicStats: PlayerDataId[] = Array.from(map).map(([key, value]) => {
+    const atomicPlayers: PlayerDataId[] = Array.from(map).map(([key, value]) => {
         return {
             playerId: key,
             ...value,
         }
     })
-    return atomicStats
+    return atomicPlayers
 }
 
-export const updateAtomicStats = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
+export const updateAtomicPlayer = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
     const playerOneId = action.playerOne?._id
     if (!playerOneId) {
         return

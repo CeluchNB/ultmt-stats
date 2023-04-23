@@ -6,7 +6,7 @@ import { Types } from 'mongoose'
 import { ApiError } from '../../../../src/types/error'
 import { getPlayer, teamOne, teamTwo } from '../../../fixtures/data'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
-import AtomicStat from '../../../../src/models/atomic-stat'
+import AtomicPlayer from '../../../../src/models/atomic-player'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -83,28 +83,28 @@ describe('test playerFilter', () => {
     const gameThreeId = new Types.ObjectId()
 
     beforeEach(async () => {
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameOneId,
             teamId: teamOne._id,
             ...getInitialPlayerData({ goals: 1 }),
         })
 
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
             ...getInitialPlayerData({ assists: 1 }),
         })
 
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameThreeId,
             teamId: teamOne._id,
             ...getInitialPlayerData({ throwaways: 1 }),
         })
 
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerTwo._id,
             gameId: gameTwoId,
             teamId: teamTwo._id,

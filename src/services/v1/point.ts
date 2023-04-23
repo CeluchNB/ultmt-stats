@@ -3,7 +3,7 @@ import { IngestedPoint } from '../../types/point'
 import { Types } from 'mongoose'
 import { EmbeddedPlayer, PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
-import AtomicStat from '../../models/atomic-stat'
+import AtomicPlayer from '../../models/atomic-player'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import Team from '../../models/team'
@@ -64,13 +64,13 @@ const savePlayerData = async (
     teamId?: Types.ObjectId,
 ) => {
     for (const stats of playerStats) {
-        await saveAtomicStat(stats, gameId, teamId)
+        await saveAtomicPlayer(stats, gameId, teamId)
         await savePlayerStats(stats, players)
     }
 }
 
-const saveAtomicStat = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
-    const statQuery = await AtomicStat.find({ playerId: stats.playerId, gameId })
+const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
+    const statQuery = await AtomicPlayer.find({ playerId: stats.playerId, gameId })
     if (statQuery.length === 1) {
         const record = statQuery[0]
         record.set({
@@ -78,7 +78,7 @@ const saveAtomicStat = async (stats: PlayerDataId, gameId: Types.ObjectId, teamI
         })
         await record.save()
     } else {
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             ...stats,
             gameId,
             teamId,
@@ -114,19 +114,19 @@ export const deletePoint = async (gameId: string, pointId: string) => {
         throw new ApiError(Constants.POINT_NOT_FOUND, 404)
     }
     const players = await Player.where({ _id: { $in: point?.players.map((p) => p._id) } })
-    const atomicStats = await AtomicStat.where({ playerId: { $in: point?.players.map((p) => p._id) } })
+    const atomicPlayers = await AtomicPlayer.where({ playerId: { $in: point?.players.map((p) => p._id) } })
 
     // subtract point stats from players
     // subtract point stats from atomic stats
     for (const player of point.players) {
         const playerRecord = players.find((p) => idEquals(p._id, player._id))
-        const atomicStatRecord = atomicStats.find((a) => idEquals(a.playerId, player._id))
+        const atomicPlayerRecord = atomicPlayers.find((a) => idEquals(a.playerId, player._id))
 
         playerRecord?.set({ ...subtractPlayerData(playerRecord, player) })
-        atomicStatRecord?.set({ ...subtractPlayerData(atomicStatRecord, player) })
+        atomicPlayerRecord?.set({ ...subtractPlayerData(atomicPlayerRecord, player) })
 
         await playerRecord?.save()
-        await atomicStatRecord?.save()
+        await atomicPlayerRecord?.save()
     }
 
     // subtract teamone stats from team one

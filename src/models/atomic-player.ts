@@ -1,7 +1,7 @@
 import { model, Schema, SchemaTypes } from 'mongoose'
-import IAtomicStat from '../types/atomic-stat'
+import { IAtomicPlayer } from '../types/atomic-stat'
 
-const schema = new Schema<IAtomicStat>({
+const schema = new Schema<IAtomicPlayer>({
     goals: { type: Number, required: true, default: 0 },
     assists: { type: Number, required: true, default: 0 },
     blocks: { type: Number, required: true, default: 0 },
@@ -23,6 +23,6 @@ const schema = new Schema<IAtomicStat>({
 
 schema.index({ playerId: 1, gameId: 1, teamId: 1 }, { unique: true })
 
-const AtomicStat = model<IAtomicStat>('AtomicStat', schema)
-export type IAtomicStatModel = typeof AtomicStat
-export default AtomicStat
+const AtomicPlayer = model<IAtomicPlayer>('AtomicPlayer', schema)
+export type IAtomicPlayerModel = typeof AtomicPlayer
+export default AtomicPlayer

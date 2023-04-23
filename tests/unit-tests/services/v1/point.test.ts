@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as Constants from '../../../../src/utils/constants'
 import { Types } from 'mongoose'
-import AtomicStat from '../../../../src/models/atomic-stat'
+import AtomicPlayer from '../../../../src/models/atomic-player'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import Team from '../../../../src/models/team'
@@ -80,8 +80,8 @@ describe('test ingest point', () => {
         await Player.create(playerOne)
         await Player.create(playerTwo)
         await Player.create(playerThree)
-        await AtomicStat.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
-        await AtomicStat.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
+        await AtomicPlayer.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
+        await AtomicPlayer.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
     })
 
     it('handles basic O point', async () => {
@@ -129,7 +129,7 @@ describe('test ingest point', () => {
             teamTwoScore: 0,
         })
 
-        const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
+        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
         expect(playerOneStat?.goals).toBe(0)
         expect(playerOneStat?.assists).toBe(1)
@@ -137,7 +137,7 @@ describe('test ingest point', () => {
         expect(playerOneStat?.touches).toBe(2)
         expect(playerOneStat?.catches).toBe(2)
 
-        const playerTwoStatQuery = await AtomicStat.find({ playerId: playerTwo._id, gameId })
+        const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
         expect(playerTwoStat?.goals).toBe(0)
         expect(playerTwoStat?.assists).toBe(0)
@@ -145,7 +145,7 @@ describe('test ingest point', () => {
         expect(playerTwoStat?.touches).toBe(1)
         expect(playerTwoStat?.catches).toBe(1)
 
-        const playerThreeStatQuery = await AtomicStat.find({ playerId: playerThree._id, gameId })
+        const playerThreeStatQuery = await AtomicPlayer.find({ playerId: playerThree._id, gameId })
         const playerThreeStat = playerThreeStatQuery[0]
         expect(playerThreeStat?.goals).toBe(1)
         expect(playerThreeStat?.assists).toBe(0)
@@ -230,7 +230,7 @@ describe('test ingest point', () => {
             teamTwoScore: 0,
         })
 
-        const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
+        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
         expect(playerOneStat?.goals).toBe(0)
         expect(playerOneStat?.assists).toBe(0)
@@ -317,7 +317,7 @@ describe('test ingest point', () => {
             catches: 0,
             pulls: 1,
         }
-        const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
+        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
         expect(playerOneStat).toMatchObject(playerOneResult)
 
@@ -334,7 +334,7 @@ describe('test ingest point', () => {
             catches: 1,
             pulls: 0,
         }
-        const playerTwoStatQuery = await AtomicStat.find({ playerId: playerTwo._id, gameId })
+        const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
         expect(playerTwoStat).toMatchObject(playerTwoResult)
 
@@ -453,19 +453,19 @@ describe('test ingest point', () => {
             teamTwoScore: 1,
         })
 
-        const playerOneStatQuery = await AtomicStat.find({ playerId: playerOne._id, gameId })
+        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
         expect(playerOneStat).toMatchObject({ pulls: 1, touches: 1, throwaways: 1, pointsPlayed: 1, blocks: 0 })
 
-        const playerTwoStatQuery = await AtomicStat.find({ playerId: playerTwo._id, gameId })
+        const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
         expect(playerTwoStat).toMatchObject({ blocks: 1, pulls: 0, pointsPlayed: 1, throwaways: 0, touches: 1 })
 
-        const playerThreeStatQuery = await AtomicStat.find({ playerId: playerThree._id, gameId })
+        const playerThreeStatQuery = await AtomicPlayer.find({ playerId: playerThree._id, gameId })
         const playerThreeStat = playerThreeStatQuery[0]
         expect(playerThreeStat).toMatchObject({ blocks: 0, pulls: 0, pointsPlayed: 1, throwaways: 0, touches: 0 })
 
-        const playerFourStatQuery = await AtomicStat.find({ playerId: playerFour._id, gameId })
+        const playerFourStatQuery = await AtomicPlayer.find({ playerId: playerFour._id, gameId })
         const playerFourStat = playerFourStatQuery[0]
         expect(playerFourStat).toMatchObject({
             catches: 1,
@@ -476,7 +476,7 @@ describe('test ingest point', () => {
             assists: 0,
         })
 
-        const playerFiveStatQuery = await AtomicStat.find({ playerId: playerFive._id, gameId })
+        const playerFiveStatQuery = await AtomicPlayer.find({ playerId: playerFive._id, gameId })
         const playerFiveStat = playerFiveStatQuery[0]
         expect(playerFiveStat).toMatchObject({
             touches: 1,
@@ -486,7 +486,7 @@ describe('test ingest point', () => {
             catches: 0,
         })
 
-        const playerSixStatQuery = await AtomicStat.find({ playerId: playerSix._id, gameId })
+        const playerSixStatQuery = await AtomicPlayer.find({ playerId: playerSix._id, gameId })
         const playerSixStat = playerSixStatQuery[0]
         expect(playerSixStat).toMatchObject({
             touches: 1,
@@ -659,7 +659,7 @@ describe('test delete point', () => {
     })
 
     it('updates atomic stats correctly', async () => {
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerOne._id,
             teamId: teamOne._id,
             gameId,
@@ -667,7 +667,7 @@ describe('test delete point', () => {
             touches: 5,
             catches: 4,
         })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerTwo._id,
             teamId: teamOne._id,
             gameId,
@@ -675,7 +675,7 @@ describe('test delete point', () => {
             touches: 2,
             goals: 1,
         })
-        await AtomicStat.create({
+        await AtomicPlayer.create({
             playerId: playerThree._id,
             teamId: teamTwoId,
             gameId,
@@ -686,22 +686,22 @@ describe('test delete point', () => {
 
         await deletePoint(gameId.toHexString(), pointId.toHexString())
 
-        const atomicStatOne = await AtomicStat.findOne({ playerId: playerOne._id })
-        expect(atomicStatOne).toMatchObject({
+        const atomicPlayerOne = await AtomicPlayer.findOne({ playerId: playerOne._id })
+        expect(atomicPlayerOne).toMatchObject({
             goals: 0,
             touches: 3,
             catches: 2,
         })
 
-        const atomicStatTwo = await AtomicStat.findOne({ playerId: playerTwo._id })
-        expect(atomicStatTwo).toMatchObject({
+        const atomicPlayerTwo = await AtomicPlayer.findOne({ playerId: playerTwo._id })
+        expect(atomicPlayerTwo).toMatchObject({
             assists: 1,
             touches: 1,
             goals: 1,
         })
 
-        const atomicStatThree = await AtomicStat.findOne({ playerId: playerThree._id })
-        expect(atomicStatThree).toMatchObject({
+        const atomicPlayerThree = await AtomicPlayer.findOne({ playerId: playerThree._id })
+        expect(atomicPlayerThree).toMatchObject({
             touches: 1,
             drops: 0,
             completedPasses: 2,

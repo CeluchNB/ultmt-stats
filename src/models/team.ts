@@ -1,10 +1,7 @@
 import { Schema, model, SchemaTypes } from 'mongoose'
 import ITeam from '../types/team'
 
-const schema = new Schema<ITeam>({
-    place: { type: String, required: true },
-    name: { type: String, required: true },
-    teamname: { type: String, required: true },
+export const teamDataSchema = {
     wins: { type: Number, required: true, default: 0 },
     losses: { type: Number, required: true, default: 0 },
     goalsFor: { type: Number, required: true, default: 0 },
@@ -16,10 +13,17 @@ const schema = new Schema<ITeam>({
     defensePoints: { type: Number, required: true, default: 0 },
     turnovers: { type: Number, required: true, default: 0 },
     turnoversForced: { type: Number, required: true, default: 0 },
+}
+
+const schema = new Schema<ITeam>({
+    place: { type: String, required: true },
+    name: { type: String, required: true },
+    teamname: { type: String, required: true },
     seasonStart: { type: Date, required: false },
     seasonEnd: { type: Date, required: false },
     players: [SchemaTypes.ObjectId],
     games: [SchemaTypes.ObjectId],
+    ...teamDataSchema,
 })
 
 const Team = model<ITeam>('Team', schema)
