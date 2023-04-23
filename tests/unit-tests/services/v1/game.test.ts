@@ -13,6 +13,7 @@ import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { IdentifiedPlayerData, IPoint } from '../../../../src/types/game'
 import { ApiError } from '../../../../src/types/error'
+import AtomicTeam from '../../../../src/models/atomic-team'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -52,8 +53,13 @@ describe('test create game', () => {
         expect(team?.games.length).toBe(1)
         expect(team?.games[0].toString()).toBe(_id.toString())
 
-        const stats = await AtomicPlayer.find({})
-        expect(stats.length).toBe(0)
+        const players = await AtomicPlayer.find({})
+        expect(players.length).toBe(0)
+
+        const atomicTeams = await AtomicTeam.find({})
+        expect(atomicTeams.length).toBe(1)
+        expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id.toHexString())
+        expect(atomicTeams[0].gameId.toHexString()).toBe(game?._id.toHexString())
     })
 
     it('with team two and players', async () => {
@@ -86,6 +92,13 @@ describe('test create game', () => {
 
         const stats = await AtomicPlayer.find({})
         expect(stats.length).toBe(2)
+
+        const atomicTeams = await AtomicTeam.find({})
+        expect(atomicTeams.length).toBe(2)
+        expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id.toHexString())
+        expect(atomicTeams[0].gameId.toHexString()).toBe(game?._id.toHexString())
+        expect(atomicTeams[1].teamId.toHexString()).toBe(teamTwo._id.toHexString())
+        expect(atomicTeams[1].gameId.toHexString()).toBe(game?._id.toHexString())
     })
 
     it('with team two players but no team two', async () => {

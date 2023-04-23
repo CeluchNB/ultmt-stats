@@ -14,6 +14,7 @@ import { IPoint } from '../../../../src/types/game'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { getGamePlayerData, updateGameLeaders } from '../../../../src/utils/game-stats'
+import AtomicTeam from '../../../../src/models/atomic-team'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -82,6 +83,7 @@ describe('test ingest point', () => {
         await Player.create(playerThree)
         await AtomicPlayer.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
         await AtomicPlayer.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
+        await AtomicTeam.create({ gameId, teamId: teamOne._id })
     })
 
     it('handles basic O point', async () => {
@@ -185,6 +187,17 @@ describe('test ingest point', () => {
         expect(teamRecord?.wins).toBe(0)
         expect(teamRecord?.losses).toBe(0)
 
+        const atomicTeamRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamRecord?.offensePoints).toBe(1)
+        expect(atomicTeamRecord?.defensePoints).toBe(0)
+        expect(atomicTeamRecord?.holds).toBe(1)
+        expect(atomicTeamRecord?.turnoverFreeHolds).toBe(1)
+        expect(atomicTeamRecord?.turnovers).toBe(0)
+        expect(atomicTeamRecord?.goalsFor).toBe(1)
+        expect(atomicTeamRecord?.goalsAgainst).toBe(0)
+        expect(atomicTeamRecord?.wins).toBe(0)
+        expect(atomicTeamRecord?.losses).toBe(0)
+
         const game = await Game.findById(gameId)
         expect(game?.goalsLeader.player?._id.toString()).toBe(playerThree._id.toString())
         expect(game?.goalsLeader.total).toBe(1)
@@ -269,6 +282,18 @@ describe('test ingest point', () => {
         expect(teamRecord?.wins).toBe(0)
         expect(teamRecord?.losses).toBe(0)
 
+        const atomicTeamRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamRecord?.defensePoints).toBe(1)
+        expect(atomicTeamRecord?.offensePoints).toBe(0)
+        expect(atomicTeamRecord?.holds).toBe(0)
+        expect(atomicTeamRecord?.turnoverFreeHolds).toBe(0)
+        expect(atomicTeamRecord?.turnovers).toBe(0)
+        expect(atomicTeamRecord?.goalsFor).toBe(0)
+        expect(atomicTeamRecord?.goalsAgainst).toBe(1)
+        expect(atomicTeamRecord?.breaks).toBe(0)
+        expect(atomicTeamRecord?.wins).toBe(0)
+        expect(atomicTeamRecord?.losses).toBe(0)
+
         const game = await Game.findById(gameId)
         expect(game?.assistsLeader.player).toEqual({})
         expect(game?.blocksLeader.player).toEqual({})
@@ -351,6 +376,16 @@ describe('test ingest point', () => {
             offensePoints: 0,
         })
 
+        const atomicTeamRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamRecord).toMatchObject({
+            goalsFor: 1,
+            goalsAgainst: 0,
+            turnoversForced: 1,
+            turnovers: 0,
+            defensePoints: 1,
+            offensePoints: 0,
+        })
+
         const game = await Game.findById(gameId)
         expect(game?.goalsLeader.player?._id.toString()).toBe(playerTwo._id.toString())
         expect(game?.goalsLeader.total).toBe(1)
@@ -371,6 +406,7 @@ describe('test ingest point', () => {
             seasonStart: new Date(),
             seasonEnd: new Date(),
         }
+        await AtomicTeam.create({ gameId, teamId: teamTwoId })
         await Team.create(fullTeamTwo)
         const teamOneActions: Action[] = [
             {
@@ -509,8 +545,33 @@ describe('test ingest point', () => {
             offensePoints: 0,
         })
 
+        const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
+        expect(atomicTeamOneRecord).toMatchObject({
+            goalsFor: 0,
+            goalsAgainst: 1,
+            turnovers: 1,
+            turnoversForced: 1,
+            holds: 0,
+            breaks: 0,
+            defensePoints: 1,
+            offensePoints: 0,
+        })
+
         const teamTwoRecord = await Team.findById(teamTwoId)
         expect(teamTwoRecord).toMatchObject({
+            goalsFor: 1,
+            goalsAgainst: 0,
+            turnovers: 1,
+            turnoversForced: 1,
+            holds: 1,
+            turnoverFreeHolds: 0,
+            breaks: 0,
+            defensePoints: 0,
+            offensePoints: 1,
+        })
+
+        const atomicTeamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwoId, gameId })
+        expect(atomicTeamTwoRecord).toMatchObject({
             goalsFor: 1,
             goalsAgainst: 0,
             turnovers: 1,
@@ -598,6 +659,7 @@ describe('test delete point', () => {
             },
         })
         await Team.create(teamOne)
+        await AtomicTeam.create({ gameId: game._id, teamId: teamOne._id, ...getInitialTeamData({}) })
 
         const point: IPoint = {
             _id: pointId,
@@ -658,7 +720,7 @@ describe('test delete point', () => {
         })
     })
 
-    it('updates atomic stats correctly', async () => {
+    it('updates atomic player correctly', async () => {
         await AtomicPlayer.create({
             playerId: playerOne._id,
             teamId: teamOne._id,
@@ -746,6 +808,47 @@ describe('test delete point', () => {
         expect(teamOneRecord).toMatchObject({ goalsAgainst: 1, turnovers: 3 })
 
         const teamTwoRecord = await Team.findById(teamTwoId)
+        expect(teamTwoRecord).toMatchObject({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 })
+    })
+
+    it('update atomic team correctly', async () => {
+        await AtomicTeam.create({
+            gameId: gameId,
+            teamId: teamTwoId,
+            goalsFor: 2,
+            goalsAgainst: 2,
+            turnovers: 3,
+            turnoversForced: 4,
+            holds: 2,
+        })
+
+        const teamSetupRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId: gameId })
+        teamSetupRecord?.set({ ...getInitialTeamData({ goalsAgainst: 2, breaks: 1, holds: 1, turnovers: 5 }) })
+        await teamSetupRecord?.save()
+
+        const point: IPoint = {
+            _id: pointId,
+            players: [],
+            teamOne: {
+                _id: teamOne._id,
+                ...getInitialTeamData({ goalsAgainst: 1, turnovers: 2 }),
+            },
+            teamTwo: {
+                _id: teamTwoId,
+                ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 }),
+            },
+        }
+
+        const game = await Game.findById(gameId)
+        game!.points = [point]
+        await game?.save()
+
+        await deletePoint(gameId.toHexString(), pointId.toHexString())
+
+        const teamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId: gameId })
+        expect(teamOneRecord).toMatchObject({ goalsAgainst: 1, turnovers: 3 })
+
+        const teamTwoRecord = await AtomicTeam.findOne({ teamId: teamTwoId, gameId: gameId })
         expect(teamTwoRecord).toMatchObject({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 })
     })
 

@@ -9,6 +9,8 @@ import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
 import ITeam from '../../types/team'
 import { updateGameData } from '../../utils/game-stats'
+import AtomicTeam from '../../models/atomic-team'
+import { getInitialTeamData } from '../../utils/team-stats'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -66,6 +68,11 @@ export const createGame = async (gameInput: GameInput) => {
     teamTwo?.games.push(game._id)
     await teamOne.save()
     await teamTwo?.save()
+
+    await AtomicTeam.create({ gameId: game._id, teamId: teamOne._id, ...getInitialTeamData({}) })
+    if (teamTwo) {
+        await AtomicTeam.create({ gameId: game._id, teamId: teamTwo._id, ...getInitialTeamData({}) })
+    }
 
     // create players if not exists
     for (const p of gameInput.teamOnePlayers) {

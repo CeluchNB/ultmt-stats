@@ -12,6 +12,7 @@ import { IPoint } from '../../types/game'
 import { addTeamData, calculateTeamData, idEquals, subtractTeamData } from '../../utils/team-stats'
 import { getGamePlayerData, updateGameLeaders } from '../../utils/game-stats'
 import { ApiError } from '../../types/error'
+import AtomicTeam from '../../models/atomic-team'
 
 export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const game = await Game.findById(inputPoint.gameId)
@@ -31,6 +32,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
 
     await saveTeamData(teamOneData, teamOneId)
     await saveTeamData(teamTwoData, teamTwoId)
+    await saveAtomicTeam(teamOneData, game._id, teamOneId)
+    await saveAtomicTeam(teamTwoData, game._id, teamTwoId)
 
     const idPlayerDataOne = teamOnePlayerStats.map((stats) => {
         return { _id: stats.playerId, ...stats }
@@ -70,14 +73,14 @@ const savePlayerData = async (
 }
 
 const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
-    const statQuery = await AtomicPlayer.find({ playerId: stats.playerId, gameId })
-    if (statQuery.length === 1) {
-        const record = statQuery[0]
+    const query = await AtomicPlayer.find({ playerId: stats.playerId, gameId })
+    if (query.length === 1) {
+        const record = query[0]
         record.set({
             ...addPlayerData(record, stats),
         })
         await record.save()
-    } else {
+    } else if (teamId) {
         await AtomicPlayer.create({
             ...stats,
             gameId,
@@ -101,6 +104,21 @@ const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
     const teamRecord = await Team.findById(teamId)
     teamRecord?.set({ ...addTeamData(teamRecord, teamData) })
     await teamRecord?.save()
+}
+
+const saveAtomicTeam = async (teamData: TeamData, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
+    const query = await AtomicTeam.where({ gameId, teamId })
+    if (query.length === 1) {
+        const record = query[0]
+        record.set({ ...addTeamData(record, teamData) })
+        record.save()
+    } else if (teamId) {
+        await AtomicTeam.create({
+            ...teamData,
+            gameId,
+            teamId,
+        })
+    }
 }
 
 export const deletePoint = async (gameId: string, pointId: string) => {
@@ -129,15 +147,8 @@ export const deletePoint = async (gameId: string, pointId: string) => {
         await atomicPlayerRecord?.save()
     }
 
-    // subtract teamone stats from team one
-    const teamOne = await Team.findById(point.teamOne._id)
-    teamOne?.set({ ...subtractTeamData(teamOne, point.teamOne) })
-    await teamOne?.save()
-
-    // subtract team two stats from team two
-    const teamTwo = await Team.findById(point.teamTwo._id)
-    teamTwo?.set({ ...subtractTeamData(teamTwo, point.teamTwo) })
-    await teamTwo?.save()
+    // subtract stats from teams
+    await removePointDataFromTeam(point, game._id)
 
     // delete point from game
     game.points = game.points.filter((p) => !idEquals(p._id, pointId))
@@ -146,4 +157,22 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     const playerMap = getGamePlayerData(game)
     await updateGameLeaders(game, playerMap, [])
     await game.save()
+}
+
+const removePointDataFromTeam = async (point: IPoint, gameId: Types.ObjectId) => {
+    const teamOne = await Team.findById(point.teamOne._id)
+    teamOne?.set({ ...subtractTeamData(teamOne, point.teamOne) })
+    await teamOne?.save()
+
+    const teamTwo = await Team.findById(point.teamTwo._id)
+    teamTwo?.set({ ...subtractTeamData(teamTwo, point.teamTwo) })
+    await teamTwo?.save()
+
+    const atomicTeamOne = await AtomicTeam.findOne({ gameId, teamId: point.teamOne._id })
+    atomicTeamOne?.set({ ...subtractTeamData(atomicTeamOne, point.teamOne) })
+    await atomicTeamOne?.save()
+
+    const atomicTeamTwo = await AtomicTeam.findOne({ gameId, teamId: point.teamTwo._id })
+    atomicTeamTwo?.set({ ...subtractTeamData(atomicTeamTwo, point.teamTwo) })
+    await atomicTeamTwo?.save()
 }
