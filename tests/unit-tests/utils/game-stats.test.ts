@@ -2,7 +2,12 @@ import { Types } from 'mongoose'
 import Player from '../../../src/models/player'
 import IGame, { IdentifiedPlayerData } from '../../../src/types/game'
 import { EmbeddedTeam } from '../../../src/types/team'
-import { calculatePlayerPlusMinus, getGamePlayerData, updateGameLeaders } from '../../../src/utils/game-stats'
+import {
+    calculatePlayerPlusMinus,
+    calculatePlayerTurnovers,
+    getGamePlayerData,
+    updateGameLeaders,
+} from '../../../src/utils/game-stats'
 import { getInitialPlayerData } from '../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../src/utils/team-stats'
 import { getPlayer } from '../../fixtures/data'
@@ -44,6 +49,13 @@ describe('calculatePlayerPlusMinus', () => {
     it('with drop', () => {
         const result = calculatePlayerPlusMinus(getInitialPlayerData({ drops: 1 }))
         expect(result).toBe(-1)
+    })
+})
+
+describe('calculatePlayerTurnovers', () => {
+    it('with normal data', () => {
+        const result = calculatePlayerTurnovers(getInitialPlayerData({ throwaways: 1, drops: 1, stalls: 1 }))
+        expect(result).toBe(3)
     })
 })
 

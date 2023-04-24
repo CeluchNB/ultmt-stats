@@ -69,9 +69,9 @@ export const updateGameData = async (gameData: GameData, playerData: PlayerData,
         gameData.blocksLeader.player = player
         gameData.blocksLeader.total = playerData.blocks
     }
-    if (playerData.drops + playerData.throwaways > gameData.turnoversLeader.total) {
+    if (calculatePlayerTurnovers(playerData) > gameData.turnoversLeader.total) {
         gameData.turnoversLeader.player = player
-        gameData.turnoversLeader.total = playerData.drops + playerData.throwaways
+        gameData.turnoversLeader.total = calculatePlayerTurnovers(playerData)
     }
     if (!gameData.plusMinusLeader.player || calculatePlayerPlusMinus(playerData) > gameData.plusMinusLeader.total) {
         gameData.plusMinusLeader.player = player
@@ -81,4 +81,8 @@ export const updateGameData = async (gameData: GameData, playerData: PlayerData,
 
 export const calculatePlayerPlusMinus = (player: PlayerData): number => {
     return player.goals + player.assists + player.blocks - (player.drops + player.throwaways)
+}
+
+export const calculatePlayerTurnovers = (player: PlayerData): number => {
+    return player.drops + player.throwaways + player.stalls
 }

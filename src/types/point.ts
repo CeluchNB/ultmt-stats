@@ -14,6 +14,7 @@ export enum ActionType {
     TIMEOUT = 'Timeout',
     SUBSTITUTION = 'Substitution',
     CALL_ON_FIELD = 'CallOnField',
+    STALL = 'Stall',
 }
 
 export interface Action {

@@ -142,6 +142,7 @@ export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } =
     Catch: ['touches', 'catches'],
     Block: ['blocks'],
     Pickup: ['touches'],
+    Stall: ['stalls'],
     Timeout: [],
     Substitution: [],
     CallOnField: [],
@@ -159,4 +160,5 @@ export const PLAYER_TWO_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } =
     Timeout: [],
     Substitution: ['pointsPlayed'],
     CallOnField: [],
+    Stall: [],
 }
