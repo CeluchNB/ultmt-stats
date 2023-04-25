@@ -22,9 +22,36 @@ afterAll(async () => {
 
 describe('test get team by id', () => {
     it('with found team', async () => {
-        await Team.create({ ...teamOne, ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, wins: 1 }) })
+        await Team.create({
+            ...teamOne,
+            ...getInitialTeamData({
+                goalsFor: 1,
+                goalsAgainst: 1,
+                wins: 1,
+                losses: 1,
+                offensePoints: 5,
+                holds: 4,
+                defensePoints: 5,
+                breaks: 1,
+            }),
+        })
         const team = await getTeamById(teamOne._id.toHexString())
-        expect(team).toMatchObject({ ...teamOne, ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, wins: 1 }) })
+        expect(team).toMatchObject({
+            ...teamOne,
+            ...getInitialTeamData({
+                goalsFor: 1,
+                goalsAgainst: 1,
+                wins: 1,
+                losses: 1,
+                offensePoints: 5,
+                holds: 4,
+                defensePoints: 5,
+                breaks: 1,
+            }),
+            winPercentage: 0.5,
+            offensiveConversion: 0.8,
+            defensiveConversion: 0.2,
+        })
     })
 
     it('with missing team', async () => {

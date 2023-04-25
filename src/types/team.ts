@@ -26,6 +26,9 @@ export interface TeamData {
 interface ITeam extends EmbeddedTeam, TeamData {
     players: Types.ObjectId[]
     games: Types.ObjectId[]
+    winPercentage: number
+    offensiveConversion: number
+    defensiveConversion: number
 }
 
 export default ITeam

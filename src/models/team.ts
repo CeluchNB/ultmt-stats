@@ -15,15 +15,30 @@ export const teamDataSchema = {
     turnoversForced: { type: Number, required: true, default: 0 },
 }
 
-const schema = new Schema<ITeam>({
-    place: { type: String, required: true },
-    name: { type: String, required: true },
-    teamname: { type: String, required: true },
-    seasonStart: { type: Date, required: false },
-    seasonEnd: { type: Date, required: false },
-    players: [SchemaTypes.ObjectId],
-    games: [SchemaTypes.ObjectId],
-    ...teamDataSchema,
+const schema = new Schema<ITeam>(
+    {
+        place: { type: String, required: true },
+        name: { type: String, required: true },
+        teamname: { type: String, required: true },
+        seasonStart: { type: Date, required: false },
+        seasonEnd: { type: Date, required: false },
+        players: [SchemaTypes.ObjectId],
+        games: [SchemaTypes.ObjectId],
+        ...teamDataSchema,
+    },
+    { toJSON: { virtuals: true }, toObject: { virtuals: true } },
+)
+
+schema.virtual('winPercentage').get(function () {
+    return this.wins / (this.wins + this.losses)
+})
+
+schema.virtual('offensiveConversion').get(function () {
+    return this.holds / this.offensePoints
+})
+
+schema.virtual('defensiveConversion').get(function () {
+    return this.breaks / this.defensePoints
 })
 
 const Team = model<ITeam>('Team', schema)

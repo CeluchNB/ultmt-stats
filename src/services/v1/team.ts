@@ -27,5 +27,15 @@ export const filterTeamStats = async (teamId: string, gameIds: string[]): Promis
         data = { ...addTeamData(stat, data) }
     })
 
-    return { _id: team._id, place: team.place, name: team.name, players: team.players, games: team.games, ...data }
+    return {
+        _id: team._id,
+        place: team.place,
+        name: team.name,
+        players: team.players,
+        games: team.games,
+        winPercentage: team.winPercentage,
+        offensiveConversion: team.offensiveConversion,
+        defensiveConversion: team.defensiveConversion,
+        ...data,
+    }
 }
