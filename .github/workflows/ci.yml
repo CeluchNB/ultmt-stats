@@ -25,6 +25,7 @@ jobs:
           mkdir config
           cd config
           touch .env
+          echo MONGOOSE_URL=${{ secrets.DOCKER_MONGOOSE_URL }} >> .env
           cd ..
       
       - name: Run Docker CI container
