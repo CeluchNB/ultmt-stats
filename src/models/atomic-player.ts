@@ -13,6 +13,7 @@ const schema = new Schema<IAtomicPlayer>(
         touches: { type: Number, required: true, default: 0 },
         catches: { type: Number, required: true, default: 0 },
         completedPasses: { type: Number, required: true, default: 0 },
+        droppedPasses: { type: Number, required: true, default: 0 },
         callahans: { type: Number, required: true, default: 0 },
         pointsPlayed: { type: Number, required: true, default: 0 },
         wins: { type: Number, required: true, default: 0 },
