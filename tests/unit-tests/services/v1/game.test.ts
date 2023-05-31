@@ -702,8 +702,8 @@ describe('test get filtered game stats', () => {
     const playerThree = getPlayer(3)
 
     beforeEach(async () => {
-        await Player.create({ ...playerOne })
-        await Player.create({ ...playerTwo })
+        await Player.create({ ...playerOne, goals: 5 })
+        await Player.create({ ...playerTwo, assists: 3 })
         await Player.create({ ...playerThree })
         await AtomicPlayer.create({
             gameId,
@@ -764,6 +764,22 @@ describe('test get filtered game stats', () => {
         expect(result.assistsLeader).toMatchObject({ total: 1, player: playerTwo })
         expect(result.plusMinusLeader).toMatchObject({ total: 1, player: playerOne })
         expect(result.turnoversLeader).toMatchObject({ total: 0 })
+
+        expect(result.players.length).toBe(2)
+        expect(result.players[0]).toMatchObject({
+            firstName: playerOne.firstName,
+            lastName: playerOne.lastName,
+            goals: 1,
+            pointsPlayed: 2,
+            ppGoals: 0.5,
+        })
+        expect(result.players[1]).toMatchObject({
+            firstName: playerTwo.firstName,
+            lastName: playerTwo.lastName,
+            assists: 1,
+            pointsPlayed: 1,
+            ppAssists: 1,
+        })
     })
 
     it('gets team two successfully', async () => {
@@ -775,6 +791,14 @@ describe('test get filtered game stats', () => {
         expect(result.assistsLeader).toMatchObject({ total: 0 })
         expect(result.plusMinusLeader).toMatchObject({ total: -1, player: playerThree })
         expect(result.turnoversLeader).toMatchObject({ total: 1, player: playerThree })
+
+        expect(result.players.length).toBe(1)
+        expect(result.players[0]).toMatchObject({
+            firstName: playerThree.firstName,
+            lastName: playerThree.lastName,
+            throwaways: 1,
+            pointsPlayed: 3,
+        })
     })
 
     it('with unfound game', async () => {
