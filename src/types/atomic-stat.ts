@@ -6,6 +6,7 @@ export interface IAtomicPlayer extends PlayerData, CalculatedPlayerData {
     playerId: Types.ObjectId
     gameId: Types.ObjectId
     teamId: Types.ObjectId
+    toJSON: () => IAtomicPlayer
 }
 
 export interface IAtomicTeam extends TeamData {

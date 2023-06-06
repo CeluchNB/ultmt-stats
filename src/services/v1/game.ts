@@ -1,8 +1,8 @@
+import * as Constants from '../../utils/constants'
 import AtomicPlayer from '../../models/atomic-player'
 import Game from '../../models/game'
 import IGame, { FilteredGameData, FilteredGamePlayer, GameData, GameInput } from '../../types/game'
 import Team from '../../models/team'
-import * as Constants from '../../utils/constants'
 import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
@@ -11,6 +11,7 @@ import ITeam, { TeamData } from '../../types/team'
 import { updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getInitialTeamData } from '../../utils/team-stats'
+import { IAtomicPlayer } from '../../types/atomic-stat'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -203,6 +204,21 @@ export const filterGameStats = async (gameId: string, teamId: string): Promise<F
     }
 
     const stats = await AtomicPlayer.where({ gameId, teamId })
+    const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
+
+    return {
+        _id: game._id,
+        teamOneId: game.teamOneId,
+        teamTwoId: game.teamTwoId,
+        startTime: game.startTime,
+        players,
+        ...leaders,
+    }
+}
+
+export const calculatePlayerDataWithLeaders = async (
+    stats: IAtomicPlayer[],
+): Promise<{ players: FilteredGamePlayer[]; leaders: GameData }> => {
     const leaders: GameData = {
         goalsLeader: { total: 0, player: undefined },
         assistsLeader: { total: 0, player: undefined },
@@ -224,12 +240,5 @@ export const filterGameStats = async (gameId: string, teamId: string): Promise<F
         }
     }
 
-    return {
-        _id: game._id,
-        teamOneId: game.teamOneId,
-        teamTwoId: game.teamTwoId,
-        startTime: game.startTime,
-        players,
-        ...leaders,
-    }
+    return { players, leaders }
 }
