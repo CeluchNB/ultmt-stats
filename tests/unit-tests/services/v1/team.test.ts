@@ -48,6 +48,14 @@ describe('test get team by id', () => {
             assists: 2,
             blocks: 3,
         })
+        await AtomicPlayer.create({
+            teamId: teamOne._id,
+            gameId: new Types.ObjectId(),
+            playerId: new Types.ObjectId(),
+            goals: 99,
+            assists: 99,
+            blocks: 99,
+        })
 
         const team = await getTeamById(teamOne._id.toHexString())
         expect(team).toMatchObject({
@@ -139,6 +147,14 @@ describe('test filter team stats', () => {
             assists: 2,
             blocks: 3,
         })
+        await AtomicPlayer.create({
+            teamId: teamOne._id,
+            gameId: gameTwoId,
+            playerId: player._id,
+            goals: 5,
+            assists: 4,
+            blocks: 3,
+        })
 
         const result = await filterTeamStats(teamOne._id.toHexString(), [
             gameOneId.toHexString(),
@@ -153,19 +169,19 @@ describe('test filter team stats', () => {
             wins: 1,
             losses: 1,
             goalsLeader: {
-                total: 1,
+                total: 6,
                 player: {
                     firstName: player.firstName,
                 },
             },
             assistsLeader: {
-                total: 2,
+                total: 6,
                 player: {
                     firstName: player.firstName,
                 },
             },
             blocksLeader: {
-                total: 3,
+                total: 6,
                 player: {
                     firstName: player.firstName,
                 },
@@ -173,10 +189,10 @@ describe('test filter team stats', () => {
         })
         expect(result.players.length).toBe(1)
         expect(result.players[0]).toMatchObject({
-            goals: 1,
-            assists: 2,
-            blocks: 3,
-            plusMinus: 6,
+            goals: 6,
+            assists: 6,
+            blocks: 6,
+            plusMinus: 18,
             throwaways: 0,
         })
     })

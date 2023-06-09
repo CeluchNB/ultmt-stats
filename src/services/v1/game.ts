@@ -216,7 +216,7 @@ export const filterGameStats = async (gameId: string, teamId: string): Promise<F
     }
 }
 
-export const calculatePlayerDataWithLeaders = async (
+const calculatePlayerDataWithLeaders = async (
     stats: IAtomicPlayer[],
 ): Promise<{ players: FilteredGamePlayer[]; leaders: GameData }> => {
     const leaders: GameData = {
