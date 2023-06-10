@@ -24,8 +24,10 @@ afterAll(async () => {
 
 describe('test get team by id', () => {
     it('with found team', async () => {
+        const gameId = new Types.ObjectId()
         await Team.create({
             ...teamOne,
+            games: [gameId],
             ...getInitialTeamData({
                 goalsFor: 1,
                 goalsAgainst: 1,
@@ -70,6 +72,7 @@ describe('test get team by id', () => {
                 defensePoints: 5,
                 breaks: 1,
             }),
+            games: [gameId],
             winPercentage: 0.5,
             offensiveConversion: 0.8,
             defensiveConversion: 0.2,

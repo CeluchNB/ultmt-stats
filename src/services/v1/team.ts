@@ -29,6 +29,7 @@ export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => 
         winPercentage: team.winPercentage,
         defensiveConversion: team.defensiveConversion,
         offensiveConversion: team.offensiveConversion,
+        games: team.games,
     }
 }
 
@@ -57,6 +58,7 @@ export const filterTeamStats = async (teamId: string, gameIds: string[]): Promis
         winPercentage: team.winPercentage,
         offensiveConversion: team.offensiveConversion,
         defensiveConversion: team.defensiveConversion,
+        games: team.games,
         ...data,
         ...leaders,
     }
