@@ -21,6 +21,7 @@ export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => 
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
 
     return {
+        ...team,
         ...team.toJSON(),
         ...leaders,
         players,

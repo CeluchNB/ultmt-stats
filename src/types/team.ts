@@ -32,7 +32,7 @@ interface ITeam extends EmbeddedTeam, TeamData {
     defensiveConversion: number
 }
 
-export interface FilteredTeamData extends EmbeddedTeam, GameData {
+export interface FilteredTeamData extends EmbeddedTeam, TeamData, GameData {
     players: FilteredGamePlayer[]
     games: Types.ObjectId[]
     winPercentage: number
