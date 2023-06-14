@@ -1,9 +1,10 @@
 import { Types } from 'mongoose'
-import { CalculatedPlayerData, EmbeddedPlayer, PlayerData } from './player'
+import { IAtomicPlayer } from './atomic-stat'
+import IPlayer, { CalculatedPlayerData, EmbeddedPlayer, PlayerData } from './player'
 import { EmbeddedTeam, TeamData } from './team'
 
 export interface Leader {
-    player?: EmbeddedPlayer
+    player?: EmbeddedPlayer | IAtomicPlayer | IPlayer
     total: number
 }
 
