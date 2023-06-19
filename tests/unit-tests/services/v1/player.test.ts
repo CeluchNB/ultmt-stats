@@ -122,6 +122,8 @@ describe('test playerFilter', () => {
         expect(result.length).toBe(2)
         expect(result[0].goals).toBe(1)
         expect(result[1].assists).toBe(1)
+        expect(result[0].plusMinus).toBe(1)
+        expect(result[1].plusMinus).toBe(1)
     })
 
     it('gets accurate stats by team', async () => {
@@ -130,6 +132,10 @@ describe('test playerFilter', () => {
         expect(result[0].goals).toBe(1)
         expect(result[1].assists).toBe(1)
         expect(result[2].throwaways).toBe(1)
+        expect(result[0].plusMinus).toBe(1)
+        expect(result[1].plusMinus).toBe(1)
+        expect(result[2].plusMinus).toBe(-1)
+        expect(result[0].throwingPercentage).toBe(0)
     })
 
     it('gets accurate overlapping stats', async () => {

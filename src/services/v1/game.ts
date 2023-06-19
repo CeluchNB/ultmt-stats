@@ -1,8 +1,8 @@
+import * as Constants from '../../utils/constants'
 import AtomicPlayer from '../../models/atomic-player'
 import Game from '../../models/game'
-import IGame, { GameData, GameInput } from '../../types/game'
+import IGame, { FilteredGameData, FilteredGamePlayer, GameData, GameInput } from '../../types/game'
 import Team from '../../models/team'
-import * as Constants from '../../utils/constants'
 import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
@@ -11,6 +11,7 @@ import ITeam, { TeamData } from '../../types/team'
 import { updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getInitialTeamData } from '../../utils/team-stats'
+import { IAtomicPlayer } from '../../types/atomic-stat'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -196,13 +197,28 @@ export const getGameById = async (gameId: string): Promise<IGame> => {
     return game
 }
 
-export const filterGameStats = async (gameId: string, teamId: string): Promise<IGame> => {
+export const filterGameStats = async (gameId: string, teamId: string): Promise<FilteredGameData> => {
     const game = await Game.findById(gameId)
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
     const stats = await AtomicPlayer.where({ gameId, teamId })
+    const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
+
+    return {
+        _id: game._id,
+        teamOneId: game.teamOneId,
+        teamTwoId: game.teamTwoId,
+        startTime: game.startTime,
+        players,
+        ...leaders,
+    }
+}
+
+const calculatePlayerDataWithLeaders = async (
+    stats: IAtomicPlayer[],
+): Promise<{ players: FilteredGamePlayer[]; leaders: GameData }> => {
     const leaders: GameData = {
         goalsLeader: { total: 0, player: undefined },
         assistsLeader: { total: 0, player: undefined },
@@ -211,18 +227,18 @@ export const filterGameStats = async (gameId: string, teamId: string): Promise<I
         pointsPlayedLeader: { total: 0, player: undefined },
         turnoversLeader: { total: 0, player: undefined },
     }
+    const playerRecords = await Player.where({ _id: { $in: stats.map((s) => s.playerId) } })
+    const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
-        // TODO: get players more efficiently
-        const player = await Player.findById(stat.playerId)
+        // calculate leaders for single team
+        const player = playerRecords.find((p) => p._id.equals(stat.playerId))
         updateGameData(leaders, stat, player)
+
+        // generate player object
+        if (player) {
+            players.push({ ...player.toJSON(), ...stat.toJSON() })
+        }
     }
 
-    return {
-        _id: game._id,
-        teamOneId: game.teamOneId,
-        teamTwoId: game.teamTwoId,
-        startTime: game.startTime,
-        points: game.points,
-        ...leaders,
-    }
+    return { players, leaders }
 }

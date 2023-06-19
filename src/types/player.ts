@@ -28,7 +28,7 @@ export interface PlayerData {
 export type PlayerDataKey = keyof PlayerData
 export type PlayerDataId = PlayerData & { playerId: Types.ObjectId }
 
-interface CalculatedPlayerData {
+export interface CalculatedPlayerData {
     plusMinus: number
     catchingPercentage: number
     throwingPercentage: number

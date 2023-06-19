@@ -319,6 +319,22 @@ describe('/GET filtered game', () => {
         expect(game.plusMinusLeader.total).toBe(1)
         expect(game.plusMinusLeader.player._id).toBe(playerOne._id.toHexString())
         expect(game.turnoversLeader).toMatchObject({ total: 0 })
+
+        expect(game.players.length).toBe(2)
+        expect(game.players[0]).toMatchObject({
+            firstName: playerOne.firstName,
+            lastName: playerOne.lastName,
+            goals: 1,
+            pointsPlayed: 2,
+            ppGoals: 0.5,
+        })
+        expect(game.players[1]).toMatchObject({
+            firstName: playerTwo.firstName,
+            lastName: playerTwo.lastName,
+            assists: 1,
+            pointsPlayed: 1,
+            ppAssists: 1,
+        })
     })
 
     it('with error', async () => {

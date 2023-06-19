@@ -1,6 +1,7 @@
 import { Types } from 'mongoose'
 import Player from '../models/player'
-import IGame, { GameData } from '../types/game'
+import { IAtomicPlayer } from '../types/atomic-stat'
+import IGame, { FilteredGamePlayer, GameData } from '../types/game'
 import { EmbeddedPlayer, PlayerData } from '../types/player'
 import { addPlayerData } from './player-stats'
 import { idEquals } from './team-stats'
