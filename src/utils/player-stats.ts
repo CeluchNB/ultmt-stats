@@ -1,7 +1,8 @@
 import { Types } from 'mongoose'
-import { EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
+import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
 import { isCallahan, isDiscMovementAction } from './action'
+import { createSafeFraction } from './utils'
 
 export const calculatePlayerData = (players: EmbeddedPlayer[], actions: Action[]): PlayerDataId[] => {
     const atomicPlayersMap = new Map<Types.ObjectId, PlayerData>()
@@ -131,6 +132,25 @@ export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): Player
         wins: data1.wins - data2.wins,
         losses: data1.losses - data2.losses,
     }
+}
+
+export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData => {
+    const calcStats: CalculatedPlayerData = {
+        winPercentage: createSafeFraction(stats.wins, stats.wins + stats.losses),
+        plusMinus: stats.goals + stats.assists + stats.blocks - stats.throwaways - stats.drops,
+        catchingPercentage: createSafeFraction(stats.catches, stats.catches + stats.drops),
+        throwingPercentage: createSafeFraction(
+            stats.completedPasses,
+            stats.completedPasses + stats.throwaways + stats.droppedPasses,
+        ),
+        ppGoals: createSafeFraction(stats.goals, stats.pointsPlayed),
+        ppAssists: createSafeFraction(stats.assists, stats.pointsPlayed),
+        ppThrowaways: createSafeFraction(stats.throwaways, stats.pointsPlayed),
+        ppDrops: createSafeFraction(stats.drops, stats.pointsPlayed),
+        ppBlocks: createSafeFraction(stats.blocks, stats.pointsPlayed),
+    }
+
+    return { ...stats, ...calcStats }
 }
 
 export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } = {

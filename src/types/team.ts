@@ -1,4 +1,5 @@
 import { Types } from 'mongoose'
+import { FilteredGamePlayer, GameData } from './game'
 
 export interface EmbeddedTeam {
     _id?: Types.ObjectId
@@ -25,6 +26,14 @@ export interface TeamData {
 
 interface ITeam extends EmbeddedTeam, TeamData {
     players: Types.ObjectId[]
+    games: Types.ObjectId[]
+    winPercentage: number
+    offensiveConversion: number
+    defensiveConversion: number
+}
+
+export interface FilteredTeamData extends EmbeddedTeam, TeamData, GameData {
+    players: FilteredGamePlayer[]
     games: Types.ObjectId[]
     winPercentage: number
     offensiveConversion: number
