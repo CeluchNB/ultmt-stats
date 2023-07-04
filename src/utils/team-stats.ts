@@ -76,7 +76,7 @@ export const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one'
             }
             break
         case ActionType.PICKUP:
-            if (prevAction?.actionType !== ActionType.BLOCK) {
+            if (prevAction && prevAction.actionType !== ActionType.BLOCK) {
                 team.turnoversForced += 1
             }
             break
