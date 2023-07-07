@@ -314,12 +314,12 @@ describe('getGamePlayerData', () => {
 
         expect(result.size).toBe(2)
 
-        const playerOneResult = result.get(playerOne._id)
+        const playerOneResult = result.get(playerOne._id.toString())
         expect(playerOneResult).toMatchObject({
             ...getInitialPlayerData({ goals: 2, pulls: 2, drops: 2, catches: 2, touches: 2 }),
         })
 
-        const playerTwoResult = result.get(playerTwo._id)
+        const playerTwoResult = result.get(playerTwo._id.toString())
         expect(playerTwoResult).toMatchObject({
             ...getInitialPlayerData({ assists: 2, touches: 6, catches: 4 }),
         })
