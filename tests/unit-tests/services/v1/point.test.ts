@@ -38,6 +38,13 @@ describe('test ingest point', () => {
         place: 'Pittsburgh',
         name: 'Hazard',
     }
+    const fullTeamTwo = {
+        ...teamTwo,
+        _id: teamTwoId,
+        teamname: 'team2',
+        seasonStart: new Date(),
+        seasonEnd: new Date(),
+    }
 
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
@@ -84,6 +91,9 @@ describe('test ingest point', () => {
         await AtomicPlayer.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
         await AtomicPlayer.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
         await AtomicTeam.create({ gameId, teamId: teamOne._id })
+
+        await AtomicTeam.create({ gameId, teamId: teamTwoId })
+        await Team.create(fullTeamTwo)
     })
 
     it('handles basic O point', async () => {
@@ -399,15 +409,6 @@ describe('test ingest point', () => {
     })
 
     it('handles turnovers', async () => {
-        const fullTeamTwo = {
-            ...teamTwo,
-            _id: teamTwoId,
-            teamname: 'team2',
-            seasonStart: new Date(),
-            seasonEnd: new Date(),
-        }
-        await AtomicTeam.create({ gameId, teamId: teamTwoId })
-        await Team.create(fullTeamTwo)
         const teamOneActions: Action[] = [
             {
                 actionNumber: 1,
@@ -614,6 +615,216 @@ describe('test ingest point', () => {
                 teamTwoScore: 0,
             }),
         ).rejects.toThrow()
+    })
+
+    it('handles multiple points', async () => {
+        const teamOneActions1: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.CATCH,
+                playerOne,
+                team: teamOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.CATCH,
+                playerOne: playerTwo,
+                playerTwo: playerOne,
+                team: teamOne,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.CATCH,
+                playerOne,
+                playerTwo,
+                team: teamOne,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                playerOne: playerThree,
+                playerTwo: playerOne,
+                team: teamOne,
+            },
+        ]
+
+        await ingestPoint({
+            pointId,
+            gameId,
+            teamOneActions: teamOneActions1,
+            teamTwoActions: [],
+            pullingTeam: teamTwo,
+            receivingTeam: teamOne,
+            scoringTeam: teamOne,
+            teamOnePlayers: [playerOne, playerTwo, playerThree],
+            teamTwoPlayers: [],
+            teamOneScore: 1,
+            teamTwoScore: 0,
+        })
+        const teamOneActions2: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.PULL,
+                team: teamOne,
+                playerOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.BLOCK,
+                team: teamOne,
+                playerOne: playerTwo,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.PICKUP,
+                team: teamOne,
+                playerOne: playerTwo,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+                playerOne,
+                playerTwo,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+                playerOne: playerTwo,
+                playerTwo: playerOne,
+            },
+            {
+                actionNumber: 5,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamOne,
+                playerTwo,
+                playerOne: playerThree,
+            },
+        ]
+
+        const teamTwoActions2: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.CATCH,
+                team: teamTwo,
+                playerOne: playerFour,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.THROWAWAY,
+                team: teamTwo,
+                playerOne: playerFour,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamTwo,
+            },
+        ]
+
+        await ingestPoint({
+            pointId: new Types.ObjectId(),
+            gameId,
+            teamOneActions: teamOneActions2,
+            teamTwoActions: teamTwoActions2,
+            pullingTeam: teamOne,
+            receivingTeam: fullTeamTwo,
+            scoringTeam: fullTeamTwo,
+            teamOnePlayers: [playerOne, playerTwo, playerThree],
+            teamTwoPlayers: [playerFour, playerFive, playerSix],
+            teamOneScore: 0,
+            teamTwoScore: 1,
+        })
+
+        const teamOneActions3: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.PULL,
+                team: teamOne,
+                playerOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.BLOCK,
+                team: teamOne,
+                playerOne: playerTwo,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.PICKUP,
+                team: teamOne,
+                playerOne: playerTwo,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+                playerOne,
+                playerTwo,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+                playerOne: playerTwo,
+                playerTwo: playerOne,
+            },
+            {
+                actionNumber: 5,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamOne,
+                playerTwo,
+                playerOne: playerThree,
+            },
+        ]
+        const teamTwoActions3: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.CATCH,
+                team: teamTwo,
+                playerOne: playerFour,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.THROWAWAY,
+                team: teamTwo,
+                playerOne: playerFour,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamTwo,
+            },
+        ]
+
+        await ingestPoint({
+            pointId: new Types.ObjectId(),
+            gameId,
+            teamOneActions: teamOneActions3,
+            teamTwoActions: teamTwoActions3,
+            pullingTeam: teamOne,
+            receivingTeam: fullTeamTwo,
+            scoringTeam: fullTeamTwo,
+            teamOnePlayers: [playerOne, playerTwo, playerThree],
+            teamTwoPlayers: [playerFour, playerFive, playerSix],
+            teamOneScore: 0,
+            teamTwoScore: 1,
+        })
+
+        const game = await Game.findById(gameId)
+        expect(game?.goalsLeader.total).toBe(3)
+        expect(game?.goalsLeader.player?._id.toString()).toBe(playerThree._id.toString())
+        expect(game?.turnoversLeader.total).toBe(2)
+        expect(game?.turnoversLeader.player?._id.toString()).toBe(playerFour._id.toString())
+        expect(game?.assistsLeader.total).toBe(2)
+        expect(game?.assistsLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.blocksLeader.total).toBe(2)
+        expect(game?.blocksLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.plusMinusLeader.total).toBe(4)
+        expect(game?.plusMinusLeader.player?._id.toString()).toBe(playerTwo._id.toString())
+        expect(game?.pointsPlayedLeader.total).toBe(3)
+        expect(game?.pointsPlayedLeader.player?._id.toString()).toBe(playerOne._id.toString())
     })
 })
 

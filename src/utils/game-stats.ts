@@ -1,20 +1,18 @@
-import { Types } from 'mongoose'
 import Player from '../models/player'
-import { IAtomicPlayer } from '../types/atomic-stat'
-import IGame, { FilteredGamePlayer, GameData } from '../types/game'
+import IGame, { GameData } from '../types/game'
 import { EmbeddedPlayer, PlayerData } from '../types/player'
 import { addPlayerData } from './player-stats'
 import { idEquals } from './team-stats'
 
-export const getGamePlayerData = (game: IGame): Map<Types.ObjectId, PlayerData> => {
-    const playerMap = new Map<Types.ObjectId, PlayerData>()
+export const getGamePlayerData = (game: IGame): Map<string, PlayerData> => {
+    const playerMap = new Map<string, PlayerData>()
     for (const point of game.points) {
         for (const player of point.players) {
-            const playerValues = playerMap.get(player._id)
+            const playerValues = playerMap.get(player._id.toString())
             if (playerValues) {
-                playerMap.set(player._id, addPlayerData(playerValues, player))
+                playerMap.set(player._id.toString(), addPlayerData(playerValues, player))
             } else {
-                playerMap.set(player._id, player)
+                playerMap.set(player._id.toString(), player)
             }
         }
     }
@@ -23,7 +21,7 @@ export const getGamePlayerData = (game: IGame): Map<Types.ObjectId, PlayerData> 
 
 export const updateGameLeaders = async (
     game: IGame,
-    playerMap: Map<Types.ObjectId, PlayerData>,
+    playerMap: Map<string, PlayerData>,
     pointPlayers: EmbeddedPlayer[],
 ) => {
     if (playerMap.size === 0) {
