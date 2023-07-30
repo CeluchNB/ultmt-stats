@@ -168,11 +168,24 @@ describe('updateTeamData', () => {
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 
-    it('with pickup', () => {
+    it('with pickup before any other actions', () => {
         action.actionType = ActionType.PICKUP
         const data = getInitialTeamData({})
 
         updateTeamData(data, action, 'one', undefined)
+        expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 0 }))
+    })
+
+    it('with pickup after action', () => {
+        const prevAction: Action = {
+            actionNumber: 1,
+            actionType: ActionType.PULL,
+            team: teamOne,
+        }
+        action.actionType = ActionType.PICKUP
+        const data = getInitialTeamData({})
+
+        updateTeamData(data, action, 'one', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 1 }))
     })
 })
