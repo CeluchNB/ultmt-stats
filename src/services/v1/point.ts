@@ -21,8 +21,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     }
 
     const { _id: gameId, teamOneId, teamTwoId } = game
-    const teamOnePlayerStats = calculatePlayerData(inputPoint.teamOnePlayers, inputPoint.teamOneActions)
-    const teamTwoPlayerStats = calculatePlayerData(inputPoint.teamTwoPlayers, inputPoint.teamTwoActions)
+    const teamOnePlayerStats = calculatePlayerData(inputPoint.teamOnePlayers, inputPoint.teamOneActions, 'one')
+    const teamTwoPlayerStats = calculatePlayerData(inputPoint.teamTwoPlayers, inputPoint.teamTwoActions, 'two')
 
     await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
     await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)

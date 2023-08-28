@@ -10,6 +10,7 @@ export interface EmbeddedPlayer {
 export interface PlayerData {
     goals: number
     assists: number
+    hockeyAssists: number
     blocks: number
     throwaways: number
     drops: number
@@ -34,6 +35,7 @@ export interface CalculatedPlayerData {
     throwingPercentage: number
     ppGoals: number
     ppAssists: number
+    ppHockeyAssists: number
     ppThrowaways: number
     ppDrops: number
     ppBlocks: number

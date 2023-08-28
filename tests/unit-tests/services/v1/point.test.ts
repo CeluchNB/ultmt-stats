@@ -143,27 +143,36 @@ describe('test ingest point', () => {
 
         const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
-        expect(playerOneStat?.goals).toBe(0)
-        expect(playerOneStat?.assists).toBe(1)
-        expect(playerOneStat?.pointsPlayed).toBe(1)
-        expect(playerOneStat?.touches).toBe(2)
-        expect(playerOneStat?.catches).toBe(2)
+        expect(playerOneStat).toMatchObject({
+            goals: 0,
+            assists: 1,
+            pointsPlayed: 1,
+            touches: 2,
+            catches: 2,
+            hockeyAssists: 0,
+        })
 
         const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
-        expect(playerTwoStat?.goals).toBe(0)
-        expect(playerTwoStat?.assists).toBe(0)
-        expect(playerTwoStat?.pointsPlayed).toBe(1)
-        expect(playerTwoStat?.touches).toBe(1)
-        expect(playerTwoStat?.catches).toBe(1)
+        expect(playerTwoStat).toMatchObject({
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 1,
+            catches: 1,
+            hockeyAssists: 1,
+        })
 
         const playerThreeStatQuery = await AtomicPlayer.find({ playerId: playerThree._id, gameId })
         const playerThreeStat = playerThreeStatQuery[0]
-        expect(playerThreeStat?.goals).toBe(1)
-        expect(playerThreeStat?.assists).toBe(0)
-        expect(playerThreeStat?.pointsPlayed).toBe(1)
-        expect(playerThreeStat?.touches).toBe(1)
-        expect(playerThreeStat?.catches).toBe(1)
+        expect(playerThreeStat).toMatchObject({
+            goals: 1,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 1,
+            catches: 1,
+            hockeyAssists: 0,
+        })
 
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord?.goals).toBe(0)
@@ -235,6 +244,7 @@ describe('test ingest point', () => {
             {
                 actionNumber: 2,
                 actionType: ActionType.TEAM_TWO_SCORE,
+                playerOne,
                 team: teamOne,
             },
         ]
@@ -347,6 +357,7 @@ describe('test ingest point', () => {
         const playerOneResult = {
             goals: 0,
             assists: 0,
+            hockeyAssists: 0,
             pointsPlayed: 1,
             touches: 0,
             catches: 0,
@@ -368,6 +379,7 @@ describe('test ingest point', () => {
             touches: 1,
             catches: 1,
             pulls: 0,
+            hockeyAssists: 0,
         }
         const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
@@ -492,15 +504,36 @@ describe('test ingest point', () => {
 
         const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
-        expect(playerOneStat).toMatchObject({ pulls: 1, touches: 1, throwaways: 1, pointsPlayed: 1, blocks: 0 })
+        expect(playerOneStat).toMatchObject({
+            pulls: 1,
+            touches: 1,
+            throwaways: 1,
+            pointsPlayed: 1,
+            blocks: 0,
+            hockeyAssists: 0,
+        })
 
         const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
-        expect(playerTwoStat).toMatchObject({ blocks: 1, pulls: 0, pointsPlayed: 1, throwaways: 0, touches: 1 })
+        expect(playerTwoStat).toMatchObject({
+            blocks: 1,
+            pulls: 0,
+            pointsPlayed: 1,
+            throwaways: 0,
+            touches: 1,
+            hockeyAssists: 0,
+        })
 
         const playerThreeStatQuery = await AtomicPlayer.find({ playerId: playerThree._id, gameId })
         const playerThreeStat = playerThreeStatQuery[0]
-        expect(playerThreeStat).toMatchObject({ blocks: 0, pulls: 0, pointsPlayed: 1, throwaways: 0, touches: 0 })
+        expect(playerThreeStat).toMatchObject({
+            blocks: 0,
+            pulls: 0,
+            pointsPlayed: 1,
+            throwaways: 0,
+            touches: 0,
+            hockeyAssists: 0,
+        })
 
         const playerFourStatQuery = await AtomicPlayer.find({ playerId: playerFour._id, gameId })
         const playerFourStat = playerFourStatQuery[0]
@@ -511,6 +544,7 @@ describe('test ingest point', () => {
             pointsPlayed: 1,
             goals: 0,
             assists: 0,
+            hockeyAssists: 0,
         })
 
         const playerFiveStatQuery = await AtomicPlayer.find({ playerId: playerFive._id, gameId })
@@ -521,6 +555,7 @@ describe('test ingest point', () => {
             pointsPlayed: 1,
             goals: 0,
             catches: 0,
+            hockeyAssists: 0,
         })
 
         const playerSixStatQuery = await AtomicPlayer.find({ playerId: playerSix._id, gameId })
@@ -532,6 +567,7 @@ describe('test ingest point', () => {
             pointsPlayed: 1,
             assists: 0,
             throwaways: 0,
+            hockeyAssists: 0,
         })
 
         const teamOneRecord = await Team.findById(teamOne._id)

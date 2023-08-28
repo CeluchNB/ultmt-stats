@@ -7,6 +7,7 @@ const pointSchema = new Schema<IPoint>({
             _id: { type: SchemaTypes.ObjectId, required: true },
             goals: { type: Number, required: true, default: 0 },
             assists: { type: Number, required: true, default: 0 },
+            hockeyAssists: { type: Number, required: true, default: 0 },
             blocks: { type: Number, required: true, default: 0 },
             throwaways: { type: Number, required: true, default: 0 },
             drops: { type: Number, required: true, default: 0 },

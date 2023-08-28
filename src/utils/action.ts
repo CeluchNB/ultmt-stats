@@ -9,6 +9,6 @@ export const isCallahan = (action: Action, prevAction?: Action): boolean => {
     )
 }
 
-export const isDiscMovementAction = (action: Action): boolean => {
+export const isNotDiscMovementAction = (action: Action): boolean => {
     return ![ActionType.CALL_ON_FIELD, ActionType.TIMEOUT, ActionType.SUBSTITUTION].includes(action.actionType)
 }
