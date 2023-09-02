@@ -1,5 +1,5 @@
 import { Action, ActionType } from '../../../src/types/point'
-import { isCallahan, isDiscMovementAction } from '../../../src/utils/action'
+import { isCallahan, isNotDiscMovementAction } from '../../../src/utils/action'
 import { teamOne } from '../../fixtures/data'
 
 describe('isCallahan', () => {
@@ -67,33 +67,33 @@ describe('isDiscMovementAction', () => {
 
     it('with timeout', () => {
         action.actionType = ActionType.TIMEOUT
-        const result = isDiscMovementAction(action)
+        const result = isNotDiscMovementAction(action)
         expect(result).toBe(false)
     })
 
     it('with substitution', () => {
         action.actionType = ActionType.SUBSTITUTION
-        const result = isDiscMovementAction(action)
+        const result = isNotDiscMovementAction(action)
         expect(result).toBe(false)
     })
 
     it('with call on field', () => {
         action.actionType = ActionType.CALL_ON_FIELD
-        const result = isDiscMovementAction(action)
+        const result = isNotDiscMovementAction(action)
         expect(result).toBe(false)
     })
 
     it('with other type', () => {
         action.actionType = ActionType.PULL
-        const result1 = isDiscMovementAction(action)
+        const result1 = isNotDiscMovementAction(action)
         expect(result1).toBe(true)
 
         action.actionType = ActionType.DROP
-        const result2 = isDiscMovementAction(action)
+        const result2 = isNotDiscMovementAction(action)
         expect(result2).toBe(true)
 
         action.actionType = ActionType.CATCH
-        const result3 = isDiscMovementAction(action)
+        const result3 = isNotDiscMovementAction(action)
         expect(result3).toBe(true)
     })
 })

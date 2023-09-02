@@ -1,14 +1,18 @@
 import { Types } from 'mongoose'
 import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
-import { isCallahan, isDiscMovementAction } from './action'
+import { isCallahan, isNotDiscMovementAction } from './action'
 import { createSafeFraction } from './utils'
 
-export const calculatePlayerData = (players: EmbeddedPlayer[], actions: Action[]): PlayerDataId[] => {
+export const calculatePlayerData = (
+    players: EmbeddedPlayer[],
+    actions: Action[],
+    teamNumber: 'one' | 'two',
+): PlayerDataId[] => {
     const atomicPlayersMap = new Map<Types.ObjectId, PlayerData>()
 
     initializePlayerMap(atomicPlayersMap, players)
-    populatePlayerMap(atomicPlayersMap, actions)
+    populatePlayerMap(atomicPlayersMap, actions, teamNumber)
 
     return flattenPlayerMap(atomicPlayersMap)
 }
@@ -19,11 +23,16 @@ export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, player
     }
 }
 
-export const populatePlayerMap = (map: Map<Types.ObjectId, PlayerData>, actions: Action[]) => {
+export const populatePlayerMap = (
+    map: Map<Types.ObjectId, PlayerData>,
+    actions: Action[],
+    teamNumber: 'one' | 'two',
+) => {
     let prevAction: Action | undefined = undefined
-    for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
-        updateAtomicPlayer(map, action, prevAction)
-        if (isDiscMovementAction(action)) {
+    const sortedActions = actions.sort((a, b) => a.actionNumber - b.actionNumber)
+    for (const action of sortedActions) {
+        updateAtomicPlayer(map, teamNumber, action, prevAction)
+        if (isNotDiscMovementAction(action)) {
             prevAction = action
         }
     }
@@ -39,9 +48,14 @@ export const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDa
     return atomicPlayers
 }
 
-export const updateAtomicPlayer = (stats: Map<Types.ObjectId, PlayerData>, action: Action, prevAction?: Action) => {
+export const updateAtomicPlayer = (
+    stats: Map<Types.ObjectId, PlayerData>,
+    teamNumber: 'one' | 'two',
+    action: Action,
+    prevAction?: Action,
+) => {
     const playerOneId = action.playerOne?._id
-    if (!playerOneId) {
+    if (!playerOneId || (actionIsScore(action) && !currentTeamScore(action, teamNumber))) {
         return
     }
 
@@ -50,10 +64,25 @@ export const updateAtomicPlayer = (stats: Map<Types.ObjectId, PlayerData>, actio
         incrementMapValue(stats, playerOneId, ['callahans', 'blocks'])
     }
 
+    if (currentTeamScore(action, teamNumber) && prevAction?.playerTwo?._id) {
+        incrementMapValue(stats, prevAction.playerTwo._id, ['hockeyAssists'])
+    }
+
     const playerTwoId = action.playerTwo?._id
     if (playerTwoId) {
         incrementMapValue(stats, playerTwoId, PLAYER_TWO_STAT_UPDATES[action.actionType])
     }
+}
+
+const actionIsScore = (action: Action): boolean => {
+    return action.actionType === ActionType.TEAM_ONE_SCORE || action.actionType === ActionType.TEAM_TWO_SCORE
+}
+
+const currentTeamScore = (action: Action, teamNumber: 'one' | 'two'): boolean => {
+    return (
+        (action.actionType === ActionType.TEAM_ONE_SCORE && teamNumber === 'one') ||
+        (action.actionType === ActionType.TEAM_TWO_SCORE && teamNumber === 'two')
+    )
 }
 
 export const incrementMapValue = (
@@ -77,6 +106,7 @@ export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData
     return {
         goals: 0,
         assists: 0,
+        hockeyAssists: 0,
         blocks: 0,
         throwaways: 0,
         drops: 0,
@@ -98,6 +128,7 @@ export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData 
     return {
         goals: data1.goals + data2.goals,
         assists: data1.assists + data2.assists,
+        hockeyAssists: data1.hockeyAssists + data2.hockeyAssists,
         touches: data1.touches + data2.touches,
         catches: data1.catches + data2.catches,
         callahans: data1.callahans + data2.callahans,
@@ -118,6 +149,7 @@ export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): Player
     return {
         goals: data1.goals - data2.goals,
         assists: data1.assists - data2.assists,
+        hockeyAssists: data1.hockeyAssists - data2.hockeyAssists,
         touches: data1.touches - data2.touches,
         catches: data1.catches - data2.catches,
         callahans: data1.callahans - data2.callahans,
@@ -145,6 +177,7 @@ export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData =>
         ),
         ppGoals: createSafeFraction(stats.goals, stats.pointsPlayed),
         ppAssists: createSafeFraction(stats.assists, stats.pointsPlayed),
+        ppHockeyAssists: createSafeFraction(stats.hockeyAssists, stats.pointsPlayed),
         ppThrowaways: createSafeFraction(stats.throwaways, stats.pointsPlayed),
         ppDrops: createSafeFraction(stats.drops, stats.pointsPlayed),
         ppBlocks: createSafeFraction(stats.blocks, stats.pointsPlayed),
