@@ -1,7 +1,7 @@
 import { Types } from 'mongoose'
 import { Action, ActionType, IngestedPoint } from '../types/point'
 import { TeamData } from '../types/team'
-import { isDiscMovementAction } from './action'
+import { isNotDiscMovementAction } from './action'
 import { isCallahan } from './action'
 
 export const calculateTeamData = (
@@ -22,7 +22,7 @@ export const updateTeamPlayerData = (actions: Action[], teamData: TeamData, team
     let prevAction: Action | undefined = undefined
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
         updateTeamData(teamData, action, teamNumber, prevAction)
-        if (isDiscMovementAction(action)) {
+        if (isNotDiscMovementAction(action)) {
             prevAction = action
         }
     }

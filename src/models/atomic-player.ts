@@ -6,6 +6,7 @@ const schema = new Schema<IAtomicPlayer>(
     {
         goals: { type: Number, required: true, default: 0 },
         assists: { type: Number, required: true, default: 0 },
+        hockeyAssists: { type: Number, required: true, default: 0 },
         blocks: { type: Number, required: true, default: 0 },
         throwaways: { type: Number, required: true, default: 0 },
         drops: { type: Number, required: true, default: 0 },
@@ -46,6 +47,10 @@ schema.virtual('ppGoals').get(function () {
 
 schema.virtual('ppAssists').get(function () {
     return createSafeFraction(this.assists, this.pointsPlayed)
+})
+
+schema.virtual('ppHockeyAssists').get(function () {
+    return createSafeFraction(this.hockeyAssists, this.pointsPlayed)
 })
 
 schema.virtual('ppThrowaways').get(function () {

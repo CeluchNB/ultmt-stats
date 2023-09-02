@@ -88,7 +88,7 @@ describe('updateAtomicPlayers', () => {
     })
 
     it('with no player one', () => {
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
 
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({}))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({}))
@@ -97,7 +97,7 @@ describe('updateAtomicPlayers', () => {
     it('for pull', () => {
         action.actionType = ActionType.PULL
         action.playerOne = playerOne
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
 
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ pulls: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({}))
@@ -106,7 +106,7 @@ describe('updateAtomicPlayers', () => {
     it('for block', () => {
         action.actionType = ActionType.BLOCK
         action.playerOne = playerOne
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
 
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ blocks: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({}))
@@ -115,7 +115,7 @@ describe('updateAtomicPlayers', () => {
     it('for pickup', () => {
         action.actionType = ActionType.PICKUP
         action.playerOne = playerOne
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
 
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ touches: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({}))
@@ -124,7 +124,7 @@ describe('updateAtomicPlayers', () => {
     it('for throwaway', () => {
         action.actionType = ActionType.THROWAWAY
         action.playerOne = playerOne
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
 
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ throwaways: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({}))
@@ -135,7 +135,7 @@ describe('updateAtomicPlayers', () => {
         action.playerOne = playerOne
         action.playerTwo = playerTwo
 
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ catches: 1, touches: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ completedPasses: 1 }))
     })
@@ -145,7 +145,7 @@ describe('updateAtomicPlayers', () => {
         action.playerOne = playerOne
         action.playerTwo = playerTwo
 
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ drops: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ droppedPasses: 1 }))
     })
@@ -155,7 +155,7 @@ describe('updateAtomicPlayers', () => {
         action.playerOne = playerOne
         action.playerTwo = playerTwo
 
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ goals: 1, touches: 1, catches: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ assists: 1, completedPasses: 1 }))
     })
@@ -165,7 +165,7 @@ describe('updateAtomicPlayers', () => {
         action.playerOne = playerOne
         action.playerTwo = playerTwo
 
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'two', action, undefined)
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({ goals: 1, touches: 1, catches: 1 }))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ assists: 1, completedPasses: 1 }))
     })
@@ -181,10 +181,30 @@ describe('updateAtomicPlayers', () => {
             playerOne,
         }
 
-        updateAtomicPlayer(map, action, prevAction)
+        updateAtomicPlayer(map, 'one', action, prevAction)
         expect(map.get(playerOne._id)).toMatchObject(
             getInitialPlayerData({ goals: 1, touches: 1, catches: 1, callahans: 1, blocks: 1 }),
         )
+    })
+
+    it('for hockey assist', () => {
+        action.actionType = ActionType.TEAM_ONE_SCORE
+        action.playerOne = playerOne
+        action.playerTwo = playerTwo
+
+        const prevAction: Action = {
+            actionNumber: 1,
+            actionType: ActionType.CATCH,
+            team: teamOne,
+            playerOne: playerTwo,
+            playerTwo: playerOne,
+        }
+
+        updateAtomicPlayer(map, 'one', action, prevAction)
+        expect(map.get(playerOne._id)).toMatchObject(
+            getInitialPlayerData({ goals: 1, touches: 1, catches: 1, hockeyAssists: 1 }),
+        )
+        expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ assists: 1, completedPasses: 1 }))
     })
 
     it('for substitution', () => {
@@ -192,7 +212,7 @@ describe('updateAtomicPlayers', () => {
         action.playerOne = playerOne
         action.playerTwo = playerTwo
 
-        updateAtomicPlayer(map, action, undefined)
+        updateAtomicPlayer(map, 'one', action, undefined)
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({}))
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ pointsPlayed: 1 }))
     })
@@ -222,12 +242,12 @@ describe('populatePlayerMap', () => {
             { actionNumber: 3, actionType: ActionType.TEAM_ONE_SCORE, team: teamOne, playerOne, playerTwo },
         ]
 
-        populatePlayerMap(map, actions)
+        populatePlayerMap(map, actions, 'one')
         expect(map.get(playerOne._id)).toMatchObject(
-            getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1 }),
+            getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1, hockeyAssists: 0 }),
         )
         expect(map.get(playerTwo._id)).toMatchObject(
-            getInitialPlayerData({ blocks: 1, assists: 1, completedPasses: 1 }),
+            getInitialPlayerData({ blocks: 1, assists: 1, completedPasses: 1, hockeyAssists: 0 }),
         )
     })
 })
@@ -240,16 +260,16 @@ describe('calculatePlayerData', () => {
             { actionNumber: 3, actionType: ActionType.TEAM_ONE_SCORE, team: teamOne, playerOne, playerTwo },
         ]
 
-        const result = calculatePlayerData([playerOne, playerTwo], actions)
+        const result = calculatePlayerData([playerOne, playerTwo], actions, 'one')
 
         expect(result.length).toBe(2)
         expect(result[0]).toMatchObject({
             playerId: playerOne._id,
-            ...getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1, pointsPlayed: 1 }),
+            ...getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1, pointsPlayed: 1, hockeyAssists: 0 }),
         })
         expect(result[1]).toMatchObject({
             playerId: playerTwo._id,
-            ...getInitialPlayerData({ blocks: 1, assists: 1, completedPasses: 1, pointsPlayed: 1 }),
+            ...getInitialPlayerData({ blocks: 1, assists: 1, completedPasses: 1, pointsPlayed: 1, hockeyAssists: 0 }),
         })
     })
 })
