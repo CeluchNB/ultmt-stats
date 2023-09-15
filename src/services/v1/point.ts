@@ -9,7 +9,13 @@ import { TeamData } from '../../types/team'
 import Team from '../../models/team'
 import { addPlayerData, calculatePlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { IPoint } from '../../types/game'
-import { addTeamData, calculateTeamData, idEquals, subtractTeamData } from '../../utils/team-stats'
+import {
+    addTeamData,
+    calculateMomentumData,
+    calculateTeamData,
+    idEquals,
+    subtractTeamData,
+} from '../../utils/team-stats'
 import { getGamePlayerData, updateGameLeaders } from '../../utils/game-stats'
 import { ApiError } from '../../types/error'
 import AtomicTeam from '../../models/atomic-team'
@@ -52,6 +58,11 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
         teamTwo: { _id: teamTwoId, ...teamTwoData },
         players: idPlayerData,
     }
+    const momentumData = calculateMomentumData(
+        inputPoint.teamOneActions,
+        game.momentumData[game.momentumData.length - 1],
+    )
+    game.momentumData.push(...momentumData)
     game.points.push(gamePoint)
 
     const playerMap = getGamePlayerData(game)

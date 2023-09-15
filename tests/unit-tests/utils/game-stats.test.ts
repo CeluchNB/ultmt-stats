@@ -90,6 +90,7 @@ describe('updateGameLeaders', () => {
             player: undefined,
             total: 0,
         },
+        momentumData: [{ x: 0, y: 0 }],
     }
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
@@ -127,6 +128,7 @@ describe('updateGameLeaders', () => {
                 player: undefined,
                 total: 0,
             },
+            momentumData: [{ x: 0, y: 0 }],
         }
         map.clear()
     })
@@ -308,6 +310,7 @@ describe('getGamePlayerData', () => {
             player: undefined,
             total: 0,
         },
+        momentumData: [{ x: 0, y: 0 }],
     }
     it('with data', () => {
         const result = getGamePlayerData(game)

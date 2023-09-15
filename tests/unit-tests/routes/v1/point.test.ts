@@ -71,6 +71,7 @@ describe('POST /point', () => {
                 player: undefined,
                 total: 0,
             },
+            momentumData: [{ x: 0, y: 0 }],
         })
         await Team.create(teamOne)
         await Player.create(playerOne)

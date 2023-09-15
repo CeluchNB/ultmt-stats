@@ -1,5 +1,5 @@
 import { Schema, model, SchemaTypes } from 'mongoose'
-import IGame, { IPoint } from '../types/game'
+import IGame, { IPoint, MomentumPoint } from '../types/game'
 
 const pointSchema = new Schema<IPoint>({
     players: [
@@ -59,6 +59,14 @@ const pointSchema = new Schema<IPoint>({
         required: true,
     },
 })
+
+const momentumDataSchema = new Schema<MomentumPoint>(
+    {
+        x: { type: Number, required: true },
+        y: { type: Number, required: true },
+    },
+    { _id: false },
+)
 
 const schema = new Schema<IGame>({
     startTime: Date,
@@ -144,6 +152,7 @@ const schema = new Schema<IGame>({
     teamTwoId: { type: SchemaTypes.ObjectId, required: false },
     winningTeam: { type: String, enum: ['one', 'two'], required: false },
     points: [pointSchema],
+    momentumData: [momentumDataSchema],
 })
 
 const Game = model<IGame>('Game', schema)

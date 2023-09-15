@@ -139,3 +139,47 @@ export const idEquals = (id1?: Types.ObjectId | string, id2?: Types.ObjectId | s
 
     return id1?.toString() === id2?.toString()
 }
+
+export const calculateMomentumData = (
+    teamOneActions: Action[],
+    lastPoint: { x: number; y: number },
+): { x: number; y: number }[] => {
+    const data: { x: number; y: number }[] = []
+    let xCounter = lastPoint.x
+    let yCounter = lastPoint.y
+    teamOneActions
+        .sort((a, b) => a.actionNumber - b.actionNumber)
+        .forEach((action, index) => {
+            if (action.actionType === ActionType.TEAM_ONE_SCORE) {
+                xCounter += 1
+                yCounter += 10
+                data.push({ x: xCounter, y: yCounter })
+            } else if (action.actionType === ActionType.TEAM_TWO_SCORE) {
+                xCounter += 1
+                yCounter -= 10
+                data.push({ x: xCounter, y: yCounter })
+            } else if (index > 0) {
+                if (isTeamOneTurnover(action)) {
+                    xCounter += 1
+                    yCounter -= 5
+                    data.push({ x: xCounter, y: yCounter })
+                } else if (isTeamTwoTurnover(action, teamOneActions[index - 1])) {
+                    xCounter += 1
+                    yCounter += 5
+                    data.push({ x: xCounter, y: yCounter })
+                }
+            }
+        })
+    return data
+}
+
+export const isTeamOneTurnover = (action: Action): boolean => {
+    return [ActionType.THROWAWAY, ActionType.DROP, ActionType.STALL].includes(action.actionType)
+}
+
+export const isTeamTwoTurnover = (action: Action, prevAction: Action): boolean => {
+    if ([ActionType.PULL, ActionType.THROWAWAY, ActionType.DROP, ActionType.STALL].includes(prevAction.actionType)) {
+        return [ActionType.PICKUP, ActionType.BLOCK].includes(action.actionType)
+    }
+    return false
+}

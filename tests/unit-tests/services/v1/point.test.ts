@@ -83,6 +83,7 @@ describe('test ingest point', () => {
                 player: undefined,
                 total: 0,
             },
+            momentumData: [{ x: 0, y: 0 }],
         })
         await Team.create(teamOne)
         await Player.create(playerOne)
@@ -231,6 +232,9 @@ describe('test ingest point', () => {
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(3)
         expect(game?.points[0].players[0].assists).toBe(1)
+        expect(game?.momentumData.length).toBe(2)
+        expect(game?.momentumData[0]).toMatchObject({ x: 0, y: 0 })
+        expect(game?.momentumData[1]).toMatchObject({ x: 1, y: 10 })
     })
 
     it('handles basic D actions', async () => {
@@ -322,6 +326,9 @@ describe('test ingest point', () => {
         expect(game?.plusMinusLeader.player).toEqual({})
         expect(game?.pointsPlayedLeader.player?._id.toString()).toBe(playerOne._id.toString())
         expect(game?.points.length).toBe(1)
+        expect(game?.momentumData.length).toBe(2)
+        expect(game?.momentumData[0]).toMatchObject({ x: 0, y: 0 })
+        expect(game?.momentumData[1]).toMatchObject({ x: 1, y: -10 })
     })
 
     it('handles callahan point', async () => {
@@ -633,6 +640,11 @@ describe('test ingest point', () => {
         expect(game?.plusMinusLeader.total).toBe(1)
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(6)
+        expect(game?.momentumData.length).toBe(4)
+        expect(game?.momentumData[0]).toMatchObject({ x: 0, y: 0 })
+        expect(game?.momentumData[1]).toMatchObject({ x: 1, y: 5 })
+        expect(game?.momentumData[2]).toMatchObject({ x: 2, y: 0 })
+        expect(game?.momentumData[3]).toMatchObject({ x: 3, y: -10 })
     })
 
     it('with unfound game', async () => {

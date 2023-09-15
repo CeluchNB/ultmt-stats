@@ -63,6 +63,7 @@ export const createGame = async (gameInput: GameInput) => {
             player: undefined,
             total: 0,
         },
+        momentumData: [{ x: 0, y: 0 }],
     })
 
     teamOne.games.push(game._id)

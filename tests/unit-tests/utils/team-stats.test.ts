@@ -7,8 +7,12 @@ import {
     updateTeamPlayerData,
     getInitialTeamData,
     calculateTeamData,
+    calculateMomentumData,
+    isTeamOneTurnover,
+    isTeamTwoTurnover,
 } from '../../../src/utils/team-stats'
 import { teamOne, teamTwo } from '../../fixtures/data'
+import { EmbeddedTeam } from '../../../src/types/team'
 
 describe('updateTeamPointStats', () => {
     const point = {
@@ -260,5 +264,175 @@ describe('calculateTeamData', () => {
 
         const data = calculateTeamData(inputPoint, 'two', new Types.ObjectId())
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+    })
+})
+
+describe('calculateMomentumData', () => {
+    it('handles team one score', () => {
+        const result = calculateMomentumData(
+            [{ actionNumber: 2, actionType: ActionType.TEAM_ONE_SCORE, team: {} as EmbeddedTeam }],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: 10 }])
+    })
+
+    it('handles team two score', () => {
+        const result = calculateMomentumData(
+            [{ actionNumber: 2, actionType: ActionType.TEAM_TWO_SCORE, team: {} as EmbeddedTeam }],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: -10 }])
+    })
+
+    it('handles team one turnover', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.THROWAWAY, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: -5 }])
+    })
+
+    it('handles team two turnover', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.PULL, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.BLOCK, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: 5 }])
+    })
+
+    it('handles team one break', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.PULL, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.BLOCK, team: {} as EmbeddedTeam },
+                { actionNumber: 3, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 4, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 5, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.TEAM_ONE_SCORE, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+        expect(result.length).toBe(2)
+        expect(result).toEqual([
+            { x: 1, y: 5 },
+            { x: 2, y: 15 },
+        ])
+    })
+
+    it('handles team two break', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.PICKUP, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 3, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 4, actionType: ActionType.THROWAWAY, team: {} as EmbeddedTeam },
+                { actionNumber: 5, actionType: ActionType.PICKUP, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.DROP, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.TEAM_TWO_SCORE, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+        expect(result.length).toBe(4)
+        expect(result).toEqual([
+            { x: 1, y: -5 },
+            { x: 2, y: 0 },
+            { x: 3, y: -5 },
+            { x: 4, y: -15 },
+        ])
+    })
+})
+
+describe('isTeamOneTurnover', () => {
+    it('throwaway is turnover', () => {
+        const result = isTeamOneTurnover({
+            actionNumber: 1,
+            actionType: ActionType.THROWAWAY,
+            team: {} as EmbeddedTeam,
+        })
+        expect(result).toBe(true)
+    })
+    it('drop is turnover', () => {
+        const result = isTeamOneTurnover({
+            actionNumber: 1,
+            actionType: ActionType.DROP,
+            team: {} as EmbeddedTeam,
+        })
+        expect(result).toBe(true)
+    })
+    it('stall is turnover', () => {
+        const result = isTeamOneTurnover({
+            actionNumber: 1,
+            actionType: ActionType.STALL,
+            team: {} as EmbeddedTeam,
+        })
+        expect(result).toBe(true)
+    })
+    it('others are not turnover', () => {
+        for (const type of [
+            ActionType.CALL_ON_FIELD,
+            ActionType.CATCH,
+            ActionType.PICKUP,
+            ActionType.PULL,
+            ActionType.SUBSTITUTION,
+            ActionType.TEAM_ONE_SCORE,
+            ActionType.TEAM_TWO_SCORE,
+            ActionType.TIMEOUT,
+        ]) {
+            expect(
+                isTeamOneTurnover({
+                    actionNumber: 1,
+                    actionType: type,
+                    team: {} as EmbeddedTeam,
+                }),
+            ).toBe(false)
+        }
+    })
+})
+
+describe('isTeamTwoTurnover', () => {
+    it('with correct prev action type', () => {
+        for (const type of [ActionType.PULL, ActionType.THROWAWAY, ActionType.DROP, ActionType.STALL]) {
+            expect(
+                isTeamTwoTurnover(
+                    { actionNumber: 2, actionType: ActionType.PICKUP, team: {} as EmbeddedTeam },
+                    { actionNumber: 1, actionType: type, team: {} as EmbeddedTeam },
+                ),
+            ).toBe(true)
+        }
+    })
+
+    it('with correct current action type', () => {
+        for (const type of [ActionType.PICKUP, ActionType.BLOCK]) {
+            expect(
+                isTeamTwoTurnover(
+                    { actionNumber: 2, actionType: type, team: {} as EmbeddedTeam },
+                    { actionNumber: 1, actionType: ActionType.PULL, team: {} as EmbeddedTeam },
+                ),
+            ).toBe(true)
+        }
+    })
+
+    it('returns false with non-turnover combination', () => {
+        expect(
+            isTeamTwoTurnover(
+                { actionNumber: 2, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 1, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+            ),
+        ).toBe(false)
     })
 })
