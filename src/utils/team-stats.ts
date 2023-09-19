@@ -1,8 +1,16 @@
 import { Types } from 'mongoose'
 import { Action, ActionType, IngestedPoint } from '../types/point'
 import { TeamData } from '../types/team'
-import { isNotDiscMovementAction } from './action'
+import {
+    isCompletion,
+    isCurrentTeamScore,
+    isCurrentTeamTurnover,
+    isNotDiscMovementAction,
+    isOpposingTeamTurnover,
+} from './action'
 import { isCallahan } from './action'
+import { MomentumPoint } from '../types/game'
+import { removeElementsFromArray } from './utils'
 
 export const calculateTeamData = (
     inputPoint: IngestedPoint,
@@ -12,18 +20,29 @@ export const calculateTeamData = (
     const teamData = getInitialTeamData({})
 
     const actions = teamNumber === 'one' ? inputPoint.teamOneActions : inputPoint.teamTwoActions
-    updateTeamPlayerData(actions, teamData, teamNumber)
+    updateTeamDataForPoint(actions, teamData, teamNumber)
     updateTeamPointData(inputPoint, teamData, teamId)
 
     return teamData
 }
 
-export const updateTeamPlayerData = (actions: Action[], teamData: TeamData, teamNumber: 'one' | 'two') => {
+export const updateTeamDataForPoint = (actions: Action[], teamData: TeamData, teamNumber: 'one' | 'two') => {
     let prevAction: Action | undefined = undefined
+    let possessionCounter = 0
     for (const action of actions.sort((a, b) => a.actionNumber - b.actionNumber)) {
-        updateTeamData(teamData, action, teamNumber, prevAction)
+        updateTeamDataByAction(teamData, action, teamNumber, prevAction)
         if (isNotDiscMovementAction(action)) {
             prevAction = action
+        }
+        if (isCurrentTeamTurnover(action)) {
+            teamData.completionsToTurnover.push(possessionCounter)
+            possessionCounter = 0
+        } else if (isCurrentTeamScore(action, teamNumber)) {
+            possessionCounter += 1
+            teamData.completionsToScore.push(possessionCounter)
+            possessionCounter = 0
+        } else if (isCompletion(action)) {
+            possessionCounter += 1
         }
     }
 }
@@ -45,7 +64,12 @@ export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamDat
     }
 }
 
-export const updateTeamData = (team: TeamData, action: Action, teamNumber: 'one' | 'two', prevAction?: Action) => {
+export const updateTeamDataByAction = (
+    team: TeamData,
+    action: Action,
+    teamNumber: 'one' | 'two',
+    prevAction?: Action,
+) => {
     // turnover forced could be pickup, block -> pickup
     switch (action.actionType) {
         case ActionType.DROP:
@@ -96,6 +120,8 @@ export const getInitialTeamData = (overrides: Partial<TeamData>): TeamData => {
         defensePoints: 0,
         turnovers: 0,
         turnoversForced: 0,
+        completionsToScore: [],
+        completionsToTurnover: [],
         ...overrides,
     }
 }
@@ -113,6 +139,8 @@ export const addTeamData = (data1: TeamData, data2: TeamData): TeamData => {
         turnoversForced: data1.turnoversForced + data2.turnoversForced,
         offensePoints: data1.offensePoints + data2.offensePoints,
         defensePoints: data1.defensePoints + data2.defensePoints,
+        completionsToScore: [...data1.completionsToScore, ...data2.completionsToScore],
+        completionsToTurnover: [...data1.completionsToTurnover, ...data2.completionsToTurnover],
     }
 }
 
@@ -129,6 +157,8 @@ export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => 
         turnoversForced: data1.turnoversForced - data2.turnoversForced,
         offensePoints: data1.offensePoints - data2.offensePoints,
         defensePoints: data1.defensePoints - data2.defensePoints,
+        completionsToScore: removeElementsFromArray(data1.completionsToScore, data2.completionsToScore),
+        completionsToTurnover: removeElementsFromArray(data1.completionsToTurnover, data2.completionsToTurnover),
     }
 }
 
@@ -140,11 +170,8 @@ export const idEquals = (id1?: Types.ObjectId | string, id2?: Types.ObjectId | s
     return id1?.toString() === id2?.toString()
 }
 
-export const calculateMomentumData = (
-    teamOneActions: Action[],
-    lastPoint: { x: number; y: number },
-): { x: number; y: number }[] => {
-    const data: { x: number; y: number }[] = []
+export const calculateMomentumData = (teamOneActions: Action[], lastPoint: MomentumPoint): MomentumPoint[] => {
+    const data: MomentumPoint[] = []
     let xCounter = lastPoint.x
     let yCounter = lastPoint.y
     teamOneActions
@@ -159,11 +186,11 @@ export const calculateMomentumData = (
                 yCounter -= 10
                 data.push({ x: xCounter, y: yCounter })
             } else if (index > 0) {
-                if (isTeamOneTurnover(action)) {
+                if (isCurrentTeamTurnover(action)) {
                     xCounter += 1
                     yCounter -= 5
                     data.push({ x: xCounter, y: yCounter })
-                } else if (isTeamTwoTurnover(action, teamOneActions[index - 1])) {
+                } else if (isOpposingTeamTurnover(action, teamOneActions[index - 1])) {
                     xCounter += 1
                     yCounter += 5
                     data.push({ x: xCounter, y: yCounter })
@@ -171,15 +198,4 @@ export const calculateMomentumData = (
             }
         })
     return data
-}
-
-export const isTeamOneTurnover = (action: Action): boolean => {
-    return [ActionType.THROWAWAY, ActionType.DROP, ActionType.STALL].includes(action.actionType)
-}
-
-export const isTeamTwoTurnover = (action: Action, prevAction: Action): boolean => {
-    if ([ActionType.PULL, ActionType.THROWAWAY, ActionType.DROP, ActionType.STALL].includes(prevAction.actionType)) {
-        return [ActionType.PICKUP, ActionType.BLOCK].includes(action.actionType)
-    }
-    return false
 }

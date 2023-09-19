@@ -916,6 +916,7 @@ describe('test delete point', () => {
                 player: undefined,
                 total: 0,
             },
+            momentumData: [],
         })
         await Team.create(teamOne)
         await AtomicTeam.create({ gameId: game._id, teamId: teamOne._id, ...getInitialTeamData({}) })

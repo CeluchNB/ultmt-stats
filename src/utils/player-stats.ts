@@ -1,7 +1,7 @@
 import { Types } from 'mongoose'
 import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
-import { isCallahan, isNotDiscMovementAction } from './action'
+import { isCallahan, isCurrentTeamScore, isNotDiscMovementAction } from './action'
 import { createSafeFraction } from './utils'
 
 export const calculatePlayerData = (
@@ -55,7 +55,7 @@ export const updateAtomicPlayer = (
     prevAction?: Action,
 ) => {
     const playerOneId = action.playerOne?._id
-    if (!playerOneId || (actionIsScore(action) && !currentTeamScore(action, teamNumber))) {
+    if (!playerOneId || (actionIsScore(action) && !isCurrentTeamScore(action, teamNumber))) {
         return
     }
 
@@ -64,7 +64,7 @@ export const updateAtomicPlayer = (
         incrementMapValue(stats, playerOneId, ['callahans', 'blocks'])
     }
 
-    if (currentTeamScore(action, teamNumber) && prevAction?.playerTwo?._id) {
+    if (isCurrentTeamScore(action, teamNumber) && prevAction?.playerTwo?._id) {
         incrementMapValue(stats, prevAction.playerTwo._id, ['hockeyAssists'])
     }
 
@@ -76,13 +76,6 @@ export const updateAtomicPlayer = (
 
 const actionIsScore = (action: Action): boolean => {
     return action.actionType === ActionType.TEAM_ONE_SCORE || action.actionType === ActionType.TEAM_TWO_SCORE
-}
-
-const currentTeamScore = (action: Action, teamNumber: 'one' | 'two'): boolean => {
-    return (
-        (action.actionType === ActionType.TEAM_ONE_SCORE && teamNumber === 'one') ||
-        (action.actionType === ActionType.TEAM_TWO_SCORE && teamNumber === 'two')
-    )
 }
 
 export const incrementMapValue = (

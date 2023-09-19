@@ -3,18 +3,16 @@ import { Types } from 'mongoose'
 import { Action, ActionType, IngestedPoint } from '../../../src/types/point'
 import {
     updateTeamPointData,
-    updateTeamData,
-    updateTeamPlayerData,
+    updateTeamDataByAction,
+    updateTeamDataForPoint,
     getInitialTeamData,
     calculateTeamData,
     calculateMomentumData,
-    isTeamOneTurnover,
-    isTeamTwoTurnover,
 } from '../../../src/utils/team-stats'
 import { teamOne, teamTwo } from '../../fixtures/data'
 import { EmbeddedTeam } from '../../../src/types/team'
 
-describe('updateTeamPointStats', () => {
+describe('updateTeamPointData', () => {
     const point = {
         pointId: new Types.ObjectId(),
         gameId: new Types.ObjectId(),
@@ -76,7 +74,7 @@ describe('updateTeamPointStats', () => {
     })
 })
 
-describe('updateTeamData', () => {
+describe('updateTeamDataByAction', () => {
     const action: Action = {
         actionNumber: 1,
         actionType: ActionType.PULL,
@@ -92,7 +90,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.DROP
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnovers: 1 }))
     })
 
@@ -100,7 +98,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.THROWAWAY
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnovers: 1 }))
     })
 
@@ -108,7 +106,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.BLOCK
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 1 }))
     })
 
@@ -116,7 +114,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_ONE_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1 }))
     })
 
@@ -124,7 +122,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_ONE_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'two', undefined)
+        updateTeamDataByAction(data, action, 'two', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsAgainst: 1 }))
     })
 
@@ -138,7 +136,7 @@ describe('updateTeamData', () => {
             team: teamOne,
         }
 
-        updateTeamData(data, action, 'one', prevAction)
+        updateTeamDataByAction(data, action, 'one', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 
@@ -146,7 +144,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_TWO_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsAgainst: 1 }))
     })
 
@@ -154,7 +152,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_TWO_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'two', undefined)
+        updateTeamDataByAction(data, action, 'two', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1 }))
     })
 
@@ -168,7 +166,7 @@ describe('updateTeamData', () => {
             team: teamOne,
         }
 
-        updateTeamData(data, action, 'two', prevAction)
+        updateTeamDataByAction(data, action, 'two', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 
@@ -176,7 +174,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.PICKUP
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 0 }))
     })
 
@@ -189,12 +187,12 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.PICKUP
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', prevAction)
+        updateTeamDataByAction(data, action, 'one', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 1 }))
     })
 })
 
-describe('updateTeamPlayerData', () => {
+describe('updateTeamDataForPoint', () => {
     it('handles complex action list', () => {
         const actions: Action[] = [
             {
@@ -210,8 +208,90 @@ describe('updateTeamPlayerData', () => {
         ]
 
         const data = getInitialTeamData({})
-        updateTeamPlayerData(actions, data, 'one')
-        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+        updateTeamDataForPoint(actions, data, 'one')
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1, completionsToScore: [1] }))
+    })
+
+    it('correctly calculates completions counts', () => {
+        const actions: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.THROWAWAY,
+                team: teamOne,
+            },
+            {
+                actionNumber: 5,
+                actionType: ActionType.BLOCK,
+                team: teamOne,
+            },
+            {
+                actionNumber: 6,
+                actionType: ActionType.PICKUP,
+                team: teamOne,
+            },
+            {
+                actionNumber: 7,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 8,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 9,
+                actionType: ActionType.THROWAWAY,
+                team: teamOne,
+            },
+            {
+                actionNumber: 10,
+                actionType: ActionType.BLOCK,
+                team: teamOne,
+            },
+            {
+                actionNumber: 11,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 12,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 13,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamOne,
+            },
+        ]
+
+        const data = getInitialTeamData({})
+        updateTeamDataForPoint(actions, data, 'one')
+        expect(data).toMatchObject(
+            getInitialTeamData({
+                goalsFor: 1,
+                turnoversForced: 2,
+                turnovers: 2,
+                completionsToTurnover: [2, 2],
+                completionsToScore: [3],
+            }),
+        )
     })
 })
 
@@ -242,7 +322,7 @@ describe('calculateTeamData', () => {
     }
     it('for team one', () => {
         const data = calculateTeamData(inputPoint, 'one', new Types.ObjectId())
-        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1, completionsToScore: [1] }))
     })
 
     it('for team two', () => {
@@ -263,7 +343,7 @@ describe('calculateTeamData', () => {
         ]
 
         const data = calculateTeamData(inputPoint, 'two', new Types.ObjectId())
-        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1, completionsToScore: [1] }))
     })
 })
 
@@ -354,85 +434,5 @@ describe('calculateMomentumData', () => {
             { x: 3, y: -5 },
             { x: 4, y: -15 },
         ])
-    })
-})
-
-describe('isTeamOneTurnover', () => {
-    it('throwaway is turnover', () => {
-        const result = isTeamOneTurnover({
-            actionNumber: 1,
-            actionType: ActionType.THROWAWAY,
-            team: {} as EmbeddedTeam,
-        })
-        expect(result).toBe(true)
-    })
-    it('drop is turnover', () => {
-        const result = isTeamOneTurnover({
-            actionNumber: 1,
-            actionType: ActionType.DROP,
-            team: {} as EmbeddedTeam,
-        })
-        expect(result).toBe(true)
-    })
-    it('stall is turnover', () => {
-        const result = isTeamOneTurnover({
-            actionNumber: 1,
-            actionType: ActionType.STALL,
-            team: {} as EmbeddedTeam,
-        })
-        expect(result).toBe(true)
-    })
-    it('others are not turnover', () => {
-        for (const type of [
-            ActionType.CALL_ON_FIELD,
-            ActionType.CATCH,
-            ActionType.PICKUP,
-            ActionType.PULL,
-            ActionType.SUBSTITUTION,
-            ActionType.TEAM_ONE_SCORE,
-            ActionType.TEAM_TWO_SCORE,
-            ActionType.TIMEOUT,
-        ]) {
-            expect(
-                isTeamOneTurnover({
-                    actionNumber: 1,
-                    actionType: type,
-                    team: {} as EmbeddedTeam,
-                }),
-            ).toBe(false)
-        }
-    })
-})
-
-describe('isTeamTwoTurnover', () => {
-    it('with correct prev action type', () => {
-        for (const type of [ActionType.PULL, ActionType.THROWAWAY, ActionType.DROP, ActionType.STALL]) {
-            expect(
-                isTeamTwoTurnover(
-                    { actionNumber: 2, actionType: ActionType.PICKUP, team: {} as EmbeddedTeam },
-                    { actionNumber: 1, actionType: type, team: {} as EmbeddedTeam },
-                ),
-            ).toBe(true)
-        }
-    })
-
-    it('with correct current action type', () => {
-        for (const type of [ActionType.PICKUP, ActionType.BLOCK]) {
-            expect(
-                isTeamTwoTurnover(
-                    { actionNumber: 2, actionType: type, team: {} as EmbeddedTeam },
-                    { actionNumber: 1, actionType: ActionType.PULL, team: {} as EmbeddedTeam },
-                ),
-            ).toBe(true)
-        }
-    })
-
-    it('returns false with non-turnover combination', () => {
-        expect(
-            isTeamTwoTurnover(
-                { actionNumber: 2, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
-                { actionNumber: 1, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
-            ),
-        ).toBe(false)
     })
 })
