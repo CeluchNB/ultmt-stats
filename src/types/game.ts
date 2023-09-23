@@ -30,7 +30,7 @@ export interface MomentumPoint {
     x: number
     y: number
 }
-interface IGame extends GameData {
+interface IGame {
     _id: Types.ObjectId
     startTime: Date
     teamOneId: Types.ObjectId

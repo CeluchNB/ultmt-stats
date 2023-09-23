@@ -115,30 +115,6 @@ describe('/POST finish game', () => {
             startTime: new Date(),
             teamOneId: teamOne._id,
             teamTwoId: teamTwo?._id,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
         })
 
         await Player.create(playerOne)
@@ -207,30 +183,6 @@ describe('/GET game by id', () => {
             startTime: new Date(),
             teamOneId: teamOne._id,
             teamTwoId: undefined,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
             momentumData: [{ x: 0, y: 0 }],
         })
 
@@ -281,30 +233,6 @@ describe('/GET filtered game', () => {
             startTime: new Date(),
             teamOneId: teamOne._id,
             teamTwoId: teamTwo?._id,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
             momentumData: [{ x: 0, y: 0 }],
         })
     })

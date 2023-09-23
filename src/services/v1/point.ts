@@ -16,7 +16,6 @@ import {
     idEquals,
     subtractTeamData,
 } from '../../utils/team-stats'
-import { getGamePlayerData, updateGameLeaders } from '../../utils/game-stats'
 import { ApiError } from '../../types/error'
 import AtomicTeam from '../../models/atomic-team'
 
@@ -50,7 +49,6 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     })
 
     const idPlayerData = [...idPlayerDataOne, ...idPlayerDataTwo]
-    const pointPlayers = [...inputPoint.teamOnePlayers, ...inputPoint.teamTwoPlayers]
 
     const gamePoint: IPoint = {
         _id: new Types.ObjectId(inputPoint.pointId),
@@ -64,9 +62,6 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     )
     game.momentumData.push(...momentumData)
     game.points.push(gamePoint)
-
-    const playerMap = getGamePlayerData(game)
-    await updateGameLeaders(game, playerMap, pointPlayers)
 
     await game.save()
 }
@@ -164,9 +159,6 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     // delete point from game
     game.points = game.points.filter((p) => !idEquals(p._id, pointId))
 
-    // recalculate game leaders
-    const playerMap = getGamePlayerData(game)
-    await updateGameLeaders(game, playerMap, [])
     await game.save()
 }
 

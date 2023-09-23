@@ -58,7 +58,6 @@ describe('test create game', () => {
 
         const game = await Game.findById(_id)
         expect(game?.teamOneId.toString()).toEqual(teamOne._id!.toString())
-        expect(game?.assistsLeader).toMatchObject({})
         expect(game?.points.length).toBe(0)
 
         const team = await Team.findById(teamOne._id)
@@ -86,7 +85,6 @@ describe('test create game', () => {
         })
         const game = await Game.findById(_id)
         expect(game?.teamOneId.toString()).toEqual(teamOne._id!.toString())
-        expect(game?.assistsLeader.player).toMatchObject({})
         expect(game?.points.length).toBe(0)
 
         const teamOneRecord = await Team.findById(teamOne._id)
@@ -143,30 +141,6 @@ describe('test create game', () => {
             startTime: new Date(),
             teamOneId: new Types.ObjectId(),
             teamTwoId: new Types.ObjectId(),
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
         })
 
         await expect(
@@ -212,30 +186,6 @@ describe('test finish game', () => {
             startTime: new Date(),
             teamOneId: teamOne._id,
             teamTwoId: teamTwo?._id,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
         })
 
         await Player.create(playerOne)
@@ -656,30 +606,6 @@ describe('test get game by id', () => {
             startTime: new Date(),
             teamOneId: teamOne._id,
             teamTwoId: teamTwo?._id,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
         })
 
         const result = await getGameById(gameId.toHexString())
@@ -730,30 +656,6 @@ describe('test get filtered game stats', () => {
             startTime: new Date(),
             teamOneId: teamOne._id,
             teamTwoId: teamTwo?._id,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
         })
     })
 

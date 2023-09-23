@@ -47,30 +47,6 @@ describe('POST /point', () => {
             teamOneId: teamOne._id,
             teamTwoId,
             startTime,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
             momentumData: [{ x: 0, y: 0 }],
         })
         await Team.create(teamOne)
@@ -174,30 +150,6 @@ describe('PUT /point/:id/delete', () => {
             teamOneId: teamOne._id,
             teamTwoId,
             startTime,
-            goalsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            assistsLeader: {
-                player: undefined,
-                total: 0,
-            },
-            blocksLeader: {
-                player: undefined,
-                total: 0,
-            },
-            turnoversLeader: {
-                player: undefined,
-                total: 0,
-            },
-            pointsPlayedLeader: {
-                player: undefined,
-                total: 0,
-            },
-            plusMinusLeader: {
-                player: undefined,
-                total: 0,
-            },
         })
         await Team.create(teamOne)
 

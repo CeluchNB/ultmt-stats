@@ -39,30 +39,6 @@ export const createGame = async (gameInput: GameInput) => {
         startTime: gameInput.startTime,
         teamOneId: teamOne._id,
         teamTwoId: teamTwo?._id,
-        goalsLeader: {
-            player: undefined,
-            total: 0,
-        },
-        assistsLeader: {
-            player: undefined,
-            total: 0,
-        },
-        blocksLeader: {
-            player: undefined,
-            total: 0,
-        },
-        turnoversLeader: {
-            player: undefined,
-            total: 0,
-        },
-        pointsPlayedLeader: {
-            player: undefined,
-            total: 0,
-        },
-        plusMinusLeader: {
-            player: undefined,
-            total: 0,
-        },
         momentumData: [{ x: 0, y: 0 }],
     })
 
@@ -184,7 +160,9 @@ export const getGameById = async (gameId: string): Promise<IGame> => {
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
-    return game
+    const stats = await AtomicPlayer.where({ gameId })
+    const { leaders } = await calculatePlayerDataWithLeaders(stats)
+    return { ...game.toObject(), ...leaders }
 }
 
 export const filterGameStats = async (gameId: string, teamId: string): Promise<FilteredGameData> => {

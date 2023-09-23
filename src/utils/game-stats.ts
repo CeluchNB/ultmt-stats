@@ -1,8 +1,8 @@
-import Player from '../models/player'
+// import Player from '../models/player'
 import IGame, { GameData } from '../types/game'
 import { EmbeddedPlayer, PlayerData } from '../types/player'
 import { addPlayerData } from './player-stats'
-import { idEquals } from './team-stats'
+// import { idEquals } from './team-stats'
 
 export const getGamePlayerData = (game: IGame): Map<string, PlayerData> => {
     const playerMap = new Map<string, PlayerData>()
@@ -17,37 +17,6 @@ export const getGamePlayerData = (game: IGame): Map<string, PlayerData> => {
         }
     }
     return playerMap
-}
-
-export const updateGameLeaders = async (
-    game: IGame,
-    playerMap: Map<string, PlayerData>,
-    pointPlayers: EmbeddedPlayer[],
-) => {
-    if (playerMap.size === 0) {
-        game.goalsLeader.player = undefined
-        game.goalsLeader.total = 0
-        game.assistsLeader.player = undefined
-        game.assistsLeader.total = 0
-        game.pointsPlayedLeader.player = undefined
-        game.pointsPlayedLeader.total = 0
-        game.blocksLeader.player = undefined
-        game.blocksLeader.total = 0
-        game.turnoversLeader.player = undefined
-        game.turnoversLeader.total = 0
-        game.plusMinusLeader.player = undefined
-        game.plusMinusLeader.total = 0
-        return
-    }
-    for (const values of playerMap.entries()) {
-        let player = pointPlayers.find((p) => idEquals(p._id, values[0]))
-        if (!player) {
-            // TODO: get players more efficiently
-            player = (await Player.findById(values[0])) || undefined
-        }
-
-        updateGameData(game, values[1], player)
-    }
 }
 
 export const updateGameData = async (gameData: GameData, playerData: PlayerData, player?: EmbeddedPlayer | null) => {
