@@ -85,3 +85,18 @@ export const calculatePlayerPlusMinus = (player: PlayerData): number => {
 export const calculatePlayerTurnovers = (player: PlayerData): number => {
     return player.drops + player.throwaways + player.stalls
 }
+
+export const calculateWinner = (game: IGame): 'one' | 'two' => {
+    const scores = { teamOne: 0, teamTwo: 0 }
+    for (const point of game.points) {
+        // only using team one stats b/c team one is guaranteed to exist
+        // unlike team two
+        if (point.teamOne.goalsFor === 1) {
+            scores.teamOne += 1
+        } else if (point.teamOne.goalsAgainst === 1) {
+            scores.teamTwo += 1
+        }
+    }
+
+    return scores.teamOne >= scores.teamTwo ? 'one' : 'two'
+}

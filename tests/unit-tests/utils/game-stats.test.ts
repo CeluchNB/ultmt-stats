@@ -5,6 +5,7 @@ import { EmbeddedTeam } from '../../../src/types/team'
 import {
     calculatePlayerPlusMinus,
     calculatePlayerTurnovers,
+    calculateWinner,
     getGamePlayerData,
     updateGameLeaders,
 } from '../../../src/utils/game-stats'
@@ -326,5 +327,29 @@ describe('getGamePlayerData', () => {
         expect(playerTwoResult).toMatchObject({
             ...getInitialPlayerData({ assists: 2, touches: 6, catches: 4 }),
         })
+    })
+})
+
+describe('calculateWinner', () => {
+    it('with team one winning', () => {
+        const result = calculateWinner({
+            points: [
+                { teamOne: { goalsFor: 1 }, teamTwo: { goalsAgainst: 0 } },
+                { teamOne: { goalsAgainst: 1 }, teamTwo: { goalsFor: 0 } },
+                { teamOne: { goalsFor: 1 }, teamTwo: { goalsAgainst: 0 } },
+            ],
+        } as unknown as IGame)
+        expect(result).toBe('one')
+    })
+
+    it('with team two winnning', () => {
+        const result = calculateWinner({
+            points: [
+                { teamOne: { goalsAgainst: 1 }, teamTwo: { goalsFor: 0 } },
+                { teamOne: { goalsAgainst: 1 }, teamTwo: { goalsFor: 0 } },
+                { teamOne: { goalsFor: 1 }, teamTwo: { goalsAgainst: 0 } },
+            ],
+        } as unknown as IGame)
+        expect(result).toBe('two')
     })
 })

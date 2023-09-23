@@ -336,6 +336,7 @@ describe('test finish game', () => {
         const points = [
             createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
             createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, {}),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, {}),
         ]
         game?.points.push(...points)
         game!.winningTeam = 'one'
@@ -438,8 +439,9 @@ describe('test finish game', () => {
         const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
-            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsFor: 1 }, { goalsAgainst: 1 }),
         ]
         game?.points.push(...points)
         await game?.save()
@@ -502,8 +504,8 @@ describe('test finish game', () => {
         const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
-            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, { goalsFor: 1 }),
         ]
         game!.winningTeam = 'two'
         game?.points.push(...points)
@@ -568,8 +570,8 @@ describe('test finish game', () => {
         const [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour] = getIdPlayers()
 
         const points = [
-            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
-            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour], { goalsAgainst: 1 }, { goalsFor: 1 }),
         ]
         game!.winningTeam = 'one'
         game?.points.push(...points)
@@ -607,8 +609,8 @@ describe('test finish game', () => {
         const [idPlayerOne, idPlayerTwo] = getIdPlayers()
 
         const points = [
-            createPoint([idPlayerOne, idPlayerTwo], {}, { goalsFor: 1 }),
-            createPoint([idPlayerOne, idPlayerTwo], {}, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo], { goalsAgainst: 1 }, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo], { goalsAgainst: 1 }, { goalsFor: 1 }),
         ]
         game?.points.push(...points)
         game!.teamTwoId = undefined
