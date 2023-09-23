@@ -1,5 +1,6 @@
 import { Schema, model, SchemaTypes } from 'mongoose'
-import IGame, { IPoint } from '../types/game'
+import IGame, { IPoint, MomentumPoint } from '../types/game'
+import { teamDataSchema } from './team'
 
 const pointSchema = new Schema<IPoint>({
     players: [
@@ -25,125 +26,30 @@ const pointSchema = new Schema<IPoint>({
         },
     ],
     teamOne: {
-        type: {
-            _id: { type: SchemaTypes.ObjectId, required: true },
-            wins: { type: Number, required: true, default: 0 },
-            losses: { type: Number, required: true, default: 0 },
-            goalsFor: { type: Number, required: true, default: 0 },
-            goalsAgainst: { type: Number, required: true, default: 0 },
-            holds: { type: Number, required: true, default: 0 },
-            breaks: { type: Number, required: true, default: 0 },
-            turnoverFreeHolds: { type: Number, required: true, default: 0 },
-            offensePoints: { type: Number, required: true, default: 0 },
-            defensePoints: { type: Number, required: true, default: 0 },
-            turnovers: { type: Number, required: true, default: 0 },
-            turnoversForced: { type: Number, required: true, default: 0 },
-        },
+        type: teamDataSchema,
         required: true,
     },
     teamTwo: {
-        type: {
-            _id: { type: SchemaTypes.ObjectId, required: false },
-            wins: { type: Number, required: true, default: 0 },
-            losses: { type: Number, required: true, default: 0 },
-            goalsFor: { type: Number, required: true, default: 0 },
-            goalsAgainst: { type: Number, required: true, default: 0 },
-            holds: { type: Number, required: true, default: 0 },
-            breaks: { type: Number, required: true, default: 0 },
-            turnoverFreeHolds: { type: Number, required: true, default: 0 },
-            offensePoints: { type: Number, required: true, default: 0 },
-            defensePoints: { type: Number, required: true, default: 0 },
-            turnovers: { type: Number, required: true, default: 0 },
-            turnoversForced: { type: Number, required: true, default: 0 },
-        },
+        type: teamDataSchema,
         required: true,
     },
 })
 
+const momentumDataSchema = new Schema<MomentumPoint>(
+    {
+        x: { type: Number, required: true },
+        y: { type: Number, required: true },
+    },
+    { _id: false },
+)
+
 const schema = new Schema<IGame>({
     startTime: Date,
-    goalsLeader: {
-        type: {
-            player: {
-                _id: SchemaTypes.ObjectId,
-                firstName: String,
-                lastName: String,
-                username: String,
-            },
-            total: Number,
-        },
-        required: true,
-        _id: false,
-    },
-    assistsLeader: {
-        type: {
-            player: {
-                _id: SchemaTypes.ObjectId,
-                firstName: String,
-                lastName: String,
-                username: String,
-            },
-            total: Number,
-        },
-        required: true,
-        _id: false,
-    },
-    blocksLeader: {
-        type: {
-            player: {
-                _id: SchemaTypes.ObjectId,
-                firstName: String,
-                lastName: String,
-                username: String,
-            },
-            total: Number,
-        },
-        required: true,
-        _id: false,
-    },
-    turnoversLeader: {
-        type: {
-            player: {
-                _id: SchemaTypes.ObjectId,
-                firstName: String,
-                lastName: String,
-                username: String,
-            },
-            total: Number,
-        },
-        required: true,
-        _id: false,
-    },
-    plusMinusLeader: {
-        type: {
-            player: {
-                _id: SchemaTypes.ObjectId,
-                firstName: String,
-                lastName: String,
-                username: String,
-            },
-            total: Number,
-        },
-        required: true,
-        _id: false,
-    },
-    pointsPlayedLeader: {
-        type: {
-            player: {
-                _id: SchemaTypes.ObjectId,
-                firstName: String,
-                lastName: String,
-                username: String,
-            },
-            total: Number,
-        },
-        required: true,
-        _id: false,
-    },
     teamOneId: { type: SchemaTypes.ObjectId, required: true },
     teamTwoId: { type: SchemaTypes.ObjectId, required: false },
     winningTeam: { type: String, enum: ['one', 'two'], required: false },
     points: [pointSchema],
+    momentumData: [momentumDataSchema],
 })
 
 const Game = model<IGame>('Game', schema)

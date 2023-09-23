@@ -26,13 +26,18 @@ export interface GameData {
     pointsPlayedLeader: Leader
 }
 
-interface IGame extends GameData {
+export interface MomentumPoint {
+    x: number
+    y: number
+}
+interface IGame {
     _id: Types.ObjectId
     startTime: Date
     teamOneId: Types.ObjectId
     teamTwoId?: Types.ObjectId
     winningTeam?: 'one' | 'two'
     points: IPoint[]
+    momentumData: MomentumPoint[]
 }
 
 export interface GameInput {

@@ -8,7 +8,7 @@ import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
 import ITeam, { TeamData } from '../../types/team'
-import { updateGameData } from '../../utils/game-stats'
+import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getInitialTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
@@ -39,30 +39,7 @@ export const createGame = async (gameInput: GameInput) => {
         startTime: gameInput.startTime,
         teamOneId: teamOne._id,
         teamTwoId: teamTwo?._id,
-        goalsLeader: {
-            player: undefined,
-            total: 0,
-        },
-        assistsLeader: {
-            player: undefined,
-            total: 0,
-        },
-        blocksLeader: {
-            player: undefined,
-            total: 0,
-        },
-        turnoversLeader: {
-            player: undefined,
-            total: 0,
-        },
-        pointsPlayedLeader: {
-            player: undefined,
-            total: 0,
-        },
-        plusMinusLeader: {
-            player: undefined,
-            total: 0,
-        },
+        momentumData: [{ x: 0, y: 0 }],
     })
 
     teamOne.games.push(game._id)
@@ -125,6 +102,7 @@ export const finishGame = async (gameId: string) => {
 
     if (winner === 'one') {
         if (prevWinner === 'two') {
+            // needed when a game is restarted
             updateTeam(1, -1, teamOne)
             updateTeam(-1, 1, teamTwo)
             updateTeam(1, -1, atomicTeamOne)
@@ -141,6 +119,7 @@ export const finishGame = async (gameId: string) => {
         }
     } else {
         if (prevWinner === 'one') {
+            // needed when a game is restarted
             updateTeam(1, -1, teamTwo)
             updateTeam(-1, 1, teamOne)
             updateTeam(1, -1, atomicTeamTwo)
@@ -176,25 +155,14 @@ const updateTeam = async (wins: number, losses: number, team?: TeamData | null) 
     team.losses += losses
 }
 
-const calculateWinner = (game: IGame): 'one' | 'two' => {
-    const scores = { teamOne: 0, teamTwo: 0 }
-    for (const point of game.points) {
-        if (point.teamOne.goalsFor === 1) {
-            scores.teamOne += 1
-        } else if (point.teamTwo.goalsFor === 1) {
-            scores.teamTwo += 1
-        }
-    }
-
-    return scores.teamOne >= scores.teamTwo ? 'one' : 'two'
-}
-
 export const getGameById = async (gameId: string): Promise<IGame> => {
     const game = await Game.findById(gameId)
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
-    return game
+    const stats = await AtomicPlayer.where({ gameId })
+    const { leaders } = await calculatePlayerDataWithLeaders(stats)
+    return { ...game.toObject(), ...leaders }
 }
 
 export const filterGameStats = async (gameId: string, teamId: string): Promise<FilteredGameData> => {
