@@ -22,6 +22,8 @@ export interface TeamData {
     defensePoints: number
     turnovers: number
     turnoversForced: number
+    completionsToTurnover: number[]
+    completionsToScore: number[]
 }
 
 interface ITeam extends EmbeddedTeam, TeamData {

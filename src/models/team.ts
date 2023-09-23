@@ -13,6 +13,8 @@ export const teamDataSchema = {
     defensePoints: { type: Number, required: true, default: 0 },
     turnovers: { type: Number, required: true, default: 0 },
     turnoversForced: { type: Number, required: true, default: 0 },
+    completionsToTurnover: [{ type: Number }],
+    completionsToScore: [{ type: Number }],
 }
 
 const schema = new Schema<ITeam>(

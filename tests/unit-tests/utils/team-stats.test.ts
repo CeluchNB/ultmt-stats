@@ -3,14 +3,16 @@ import { Types } from 'mongoose'
 import { Action, ActionType, IngestedPoint } from '../../../src/types/point'
 import {
     updateTeamPointData,
-    updateTeamData,
-    updateTeamPlayerData,
+    updateTeamDataByAction,
+    updateTeamDataForPoint,
     getInitialTeamData,
     calculateTeamData,
+    calculateMomentumData,
 } from '../../../src/utils/team-stats'
 import { teamOne, teamTwo } from '../../fixtures/data'
+import { EmbeddedTeam } from '../../../src/types/team'
 
-describe('updateTeamPointStats', () => {
+describe('updateTeamPointData', () => {
     const point = {
         pointId: new Types.ObjectId(),
         gameId: new Types.ObjectId(),
@@ -72,7 +74,7 @@ describe('updateTeamPointStats', () => {
     })
 })
 
-describe('updateTeamData', () => {
+describe('updateTeamDataByAction', () => {
     const action: Action = {
         actionNumber: 1,
         actionType: ActionType.PULL,
@@ -88,7 +90,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.DROP
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnovers: 1 }))
     })
 
@@ -96,7 +98,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.THROWAWAY
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnovers: 1 }))
     })
 
@@ -104,7 +106,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.BLOCK
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 1 }))
     })
 
@@ -112,7 +114,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_ONE_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1 }))
     })
 
@@ -120,7 +122,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_ONE_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'two', undefined)
+        updateTeamDataByAction(data, action, 'two', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsAgainst: 1 }))
     })
 
@@ -134,7 +136,7 @@ describe('updateTeamData', () => {
             team: teamOne,
         }
 
-        updateTeamData(data, action, 'one', prevAction)
+        updateTeamDataByAction(data, action, 'one', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 
@@ -142,7 +144,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_TWO_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsAgainst: 1 }))
     })
 
@@ -150,7 +152,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.TEAM_TWO_SCORE
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'two', undefined)
+        updateTeamDataByAction(data, action, 'two', undefined)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1 }))
     })
 
@@ -164,7 +166,7 @@ describe('updateTeamData', () => {
             team: teamOne,
         }
 
-        updateTeamData(data, action, 'two', prevAction)
+        updateTeamDataByAction(data, action, 'two', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
     })
 
@@ -172,7 +174,7 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.PICKUP
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', undefined)
+        updateTeamDataByAction(data, action, 'one', undefined)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 0 }))
     })
 
@@ -185,12 +187,12 @@ describe('updateTeamData', () => {
         action.actionType = ActionType.PICKUP
         const data = getInitialTeamData({})
 
-        updateTeamData(data, action, 'one', prevAction)
+        updateTeamDataByAction(data, action, 'one', prevAction)
         expect(data).toMatchObject(getInitialTeamData({ turnoversForced: 1 }))
     })
 })
 
-describe('updateTeamPlayerData', () => {
+describe('updateTeamDataForPoint', () => {
     it('handles complex action list', () => {
         const actions: Action[] = [
             {
@@ -206,8 +208,90 @@ describe('updateTeamPlayerData', () => {
         ]
 
         const data = getInitialTeamData({})
-        updateTeamPlayerData(actions, data, 'one')
-        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+        updateTeamDataForPoint(actions, data, 'one')
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1, completionsToScore: [1] }))
+    })
+
+    it('correctly calculates completions counts', () => {
+        const actions: Action[] = [
+            {
+                actionNumber: 1,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 2,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 3,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 4,
+                actionType: ActionType.THROWAWAY,
+                team: teamOne,
+            },
+            {
+                actionNumber: 5,
+                actionType: ActionType.BLOCK,
+                team: teamOne,
+            },
+            {
+                actionNumber: 6,
+                actionType: ActionType.PICKUP,
+                team: teamOne,
+            },
+            {
+                actionNumber: 7,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 8,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 9,
+                actionType: ActionType.THROWAWAY,
+                team: teamOne,
+            },
+            {
+                actionNumber: 10,
+                actionType: ActionType.BLOCK,
+                team: teamOne,
+            },
+            {
+                actionNumber: 11,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 12,
+                actionType: ActionType.CATCH,
+                team: teamOne,
+            },
+            {
+                actionNumber: 13,
+                actionType: ActionType.TEAM_ONE_SCORE,
+                team: teamOne,
+            },
+        ]
+
+        const data = getInitialTeamData({})
+        updateTeamDataForPoint(actions, data, 'one')
+        expect(data).toMatchObject(
+            getInitialTeamData({
+                goalsFor: 1,
+                turnoversForced: 2,
+                turnovers: 2,
+                completionsToTurnover: [2, 2],
+                completionsToScore: [3],
+            }),
+        )
     })
 })
 
@@ -238,7 +322,7 @@ describe('calculateTeamData', () => {
     }
     it('for team one', () => {
         const data = calculateTeamData(inputPoint, 'one', new Types.ObjectId())
-        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1, completionsToScore: [1] }))
     })
 
     it('for team two', () => {
@@ -259,6 +343,96 @@ describe('calculateTeamData', () => {
         ]
 
         const data = calculateTeamData(inputPoint, 'two', new Types.ObjectId())
-        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1 }))
+        expect(data).toMatchObject(getInitialTeamData({ goalsFor: 1, turnoversForced: 1, completionsToScore: [1] }))
+    })
+})
+
+describe('calculateMomentumData', () => {
+    it('handles team one score', () => {
+        const result = calculateMomentumData(
+            [{ actionNumber: 2, actionType: ActionType.TEAM_ONE_SCORE, team: {} as EmbeddedTeam }],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: 10 }])
+    })
+
+    it('handles team two score', () => {
+        const result = calculateMomentumData(
+            [{ actionNumber: 2, actionType: ActionType.TEAM_TWO_SCORE, team: {} as EmbeddedTeam }],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: -10 }])
+    })
+
+    it('handles team one turnover', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.THROWAWAY, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: -5 }])
+    })
+
+    it('handles team two turnover', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.PULL, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.BLOCK, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+
+        expect(result.length).toBe(1)
+        expect(result).toEqual([{ x: 1, y: 5 }])
+    })
+
+    it('handles team one break', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.PULL, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.BLOCK, team: {} as EmbeddedTeam },
+                { actionNumber: 3, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 4, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 5, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.TEAM_ONE_SCORE, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+        expect(result.length).toBe(2)
+        expect(result).toEqual([
+            { x: 1, y: 5 },
+            { x: 2, y: 15 },
+        ])
+    })
+
+    it('handles team two break', () => {
+        const result = calculateMomentumData(
+            [
+                { actionNumber: 1, actionType: ActionType.PICKUP, team: {} as EmbeddedTeam },
+                { actionNumber: 2, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 3, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 4, actionType: ActionType.THROWAWAY, team: {} as EmbeddedTeam },
+                { actionNumber: 5, actionType: ActionType.PICKUP, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.CATCH, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.DROP, team: {} as EmbeddedTeam },
+                { actionNumber: 6, actionType: ActionType.TEAM_TWO_SCORE, team: {} as EmbeddedTeam },
+            ],
+            { x: 0, y: 0 },
+        )
+        expect(result.length).toBe(4)
+        expect(result).toEqual([
+            { x: 1, y: -5 },
+            { x: 2, y: 0 },
+            { x: 3, y: -5 },
+            { x: 4, y: -15 },
+        ])
     })
 })
