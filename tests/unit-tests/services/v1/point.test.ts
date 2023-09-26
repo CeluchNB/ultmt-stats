@@ -890,30 +890,6 @@ describe('test delete point', () => {
         await AtomicPlayer.create({
             playerId: playerOne._id,
             teamId: teamOne._id,
-            gameId,
-            goals: 1,
-            touches: 5,
-            catches: 4,
-        })
-        await AtomicPlayer.create({
-            playerId: playerTwo._id,
-            teamId: teamOne._id,
-            gameId,
-            assists: 2,
-            touches: 2,
-            goals: 1,
-        })
-        await AtomicPlayer.create({
-            playerId: playerThree._id,
-            teamId: teamTwoId,
-            gameId,
-            touches: 1,
-            drops: 1,
-            completedPasses: 2,
-        })
-        await AtomicPlayer.create({
-            playerId: playerOne._id,
-            teamId: teamOne._id,
             gameId: new Types.ObjectId(),
             goals: 0,
             touches: 0,
@@ -959,6 +935,30 @@ describe('test delete point', () => {
             touches: 0,
             drops: 0,
             completedPasses: 0,
+        })
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            teamId: teamOne._id,
+            gameId,
+            goals: 1,
+            touches: 5,
+            catches: 4,
+        })
+        await AtomicPlayer.create({
+            playerId: playerTwo._id,
+            teamId: teamOne._id,
+            gameId,
+            assists: 2,
+            touches: 2,
+            goals: 1,
+        })
+        await AtomicPlayer.create({
+            playerId: playerThree._id,
+            teamId: teamTwoId,
+            gameId,
+            touches: 1,
+            drops: 1,
+            completedPasses: 2,
         })
 
         await deletePoint(gameId.toHexString(), pointId.toHexString())

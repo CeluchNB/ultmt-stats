@@ -17,7 +17,7 @@ export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => 
         throw new ApiError(Constants.TEAM_NOT_FOUND, 404)
     }
 
-    const stats = await AtomicPlayer.where({ teamId })
+    const stats = await AtomicPlayer.find({ teamId })
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
 
     return {
@@ -41,14 +41,14 @@ export const filterTeamStats = async (teamId: string, gameIds: string[]): Promis
     }
 
     const filter = { $and: [{ teamId }, { gameId: { $in: gameIds } }] }
-    const teamStats = await AtomicTeam.where({ teamId, ...filter })
+    const teamStats = await AtomicTeam.find({ teamId, ...filter })
     let data: TeamData = getInitialTeamData({})
 
     teamStats.forEach((stat) => {
         data = { ...addTeamData(stat, data) }
     })
 
-    const stats = await AtomicPlayer.where({ teamId, gameId: { $in: gameIds } })
+    const stats = await AtomicPlayer.find({ teamId, gameId: { $in: gameIds } })
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
 
     return {
@@ -76,7 +76,7 @@ const calculatePlayerDataWithLeaders = async (
         pointsPlayedLeader: { total: 0, player: undefined },
         turnoversLeader: { total: 0, player: undefined },
     }
-    const playerRecords = await Player.where({ _id: { $in: stats.map((s) => s.playerId) } })
+    const playerRecords = await Player.find({ _id: { $in: stats.map((s) => s.playerId) } })
     const playerMap = new Map<string, FilteredGamePlayer>()
     for (const stat of stats) {
         // calculate leaders for single team

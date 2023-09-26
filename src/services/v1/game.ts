@@ -160,7 +160,7 @@ export const getGameById = async (gameId: string): Promise<IGame> => {
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
-    const stats = await AtomicPlayer.where({ gameId })
+    const stats = await AtomicPlayer.find({ gameId })
     const { leaders } = await calculatePlayerDataWithLeaders(stats)
     return { ...game.toObject(), ...leaders }
 }
@@ -171,7 +171,7 @@ export const filterGameStats = async (gameId: string, teamId: string): Promise<F
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
-    const stats = await AtomicPlayer.where({ gameId, teamId })
+    const stats = await AtomicPlayer.find({ gameId, teamId })
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
 
     return {
@@ -195,7 +195,7 @@ const calculatePlayerDataWithLeaders = async (
         pointsPlayedLeader: { total: 0, player: undefined },
         turnoversLeader: { total: 0, player: undefined },
     }
-    const playerRecords = await Player.where({ _id: { $in: stats.map((s) => s.playerId) } })
+    const playerRecords = await Player.find({ _id: { $in: stats.map((s) => s.playerId) } })
     const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
         // calculate leaders for single team

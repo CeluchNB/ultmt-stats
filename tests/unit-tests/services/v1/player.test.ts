@@ -150,3 +150,41 @@ describe('test playerFilter', () => {
         expect(result[1].assists).toBe(1)
     })
 })
+
+describe('test rebuildAtomicPlayer', () => {
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const gameOneId = new Types.ObjectId()
+    const gameTwoId = new Types.ObjectId()
+    const gameThreeId = new Types.ObjectId()
+
+    beforeEach(async () => {
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            gameId: gameOneId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ goals: 1 }),
+        })
+
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            gameId: gameTwoId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ assists: 1 }),
+        })
+
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            gameId: gameThreeId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ throwaways: 1 }),
+        })
+
+        await AtomicPlayer.create({
+            playerId: playerTwo._id,
+            gameId: gameTwoId,
+            teamId: teamTwo._id,
+            ...getInitialPlayerData({ blocks: 1 }),
+        })
+    })
+})
