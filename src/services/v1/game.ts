@@ -12,6 +12,7 @@ import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getInitialTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
+import { addPlayerData } from '../../utils/player-stats'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -209,4 +210,44 @@ const calculatePlayerDataWithLeaders = async (
     }
 
     return { players, leaders }
+}
+
+export const rebuildAtomicPlayers = async (gameId: string) => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+
+    // get ids of all players that played in the game
+    const playerIds = game.points.map((point) => point.players.map((p) => p._id)).flat()
+    // get all atomic players in this game
+    const oldAtomicPlayers = await AtomicPlayer.find({ playerId: { $in: playerIds }, gameId: game._id })
+
+    for (const player of oldAtomicPlayers) {
+        const teamId = player.teamId
+        const playerId = player.playerId
+
+        // delete old atomic player with bad data
+        await player.deleteOne()
+
+        // create new atomic player
+        await AtomicPlayer.create({
+            teamId,
+            gameId: game._id,
+            playerId: playerId,
+        })
+    }
+
+    // rebuild atomic players
+    for (const point of game.points) {
+        for (const player of point.players) {
+            const atomicPlayer = await AtomicPlayer.findOne({ gameId: game._id, playerId: player._id })
+            if (!atomicPlayer) continue
+
+            atomicPlayer.set({ ...addPlayerData(atomicPlayer, player) })
+            await atomicPlayer.save()
+        }
+    }
+
+    // not adding new atomic player
 }
