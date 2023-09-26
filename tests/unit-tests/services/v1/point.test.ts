@@ -890,6 +890,55 @@ describe('test delete point', () => {
         await AtomicPlayer.create({
             playerId: playerOne._id,
             teamId: teamOne._id,
+            gameId: new Types.ObjectId(),
+            goals: 0,
+            touches: 0,
+            catches: 0,
+        })
+        await AtomicPlayer.create({
+            playerId: playerTwo._id,
+            teamId: teamOne._id,
+            gameId: new Types.ObjectId(),
+            assists: 0,
+            touches: 0,
+            goals: 0,
+        })
+        await AtomicPlayer.create({
+            playerId: playerThree._id,
+            teamId: teamTwoId,
+            gameId: new Types.ObjectId(),
+            touches: 0,
+            drops: 0,
+            completedPasses: 0,
+        })
+
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            teamId: teamOne._id,
+            gameId: new Types.ObjectId(),
+            goals: 0,
+            touches: 0,
+            catches: 0,
+        })
+        await AtomicPlayer.create({
+            playerId: playerTwo._id,
+            teamId: teamOne._id,
+            gameId: new Types.ObjectId(),
+            assists: 0,
+            touches: 0,
+            goals: 0,
+        })
+        await AtomicPlayer.create({
+            playerId: playerThree._id,
+            teamId: teamTwoId,
+            gameId: new Types.ObjectId(),
+            touches: 0,
+            drops: 0,
+            completedPasses: 0,
+        })
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            teamId: teamOne._id,
             gameId,
             goals: 1,
             touches: 5,
