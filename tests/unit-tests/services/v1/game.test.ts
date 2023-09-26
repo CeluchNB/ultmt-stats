@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as Constants from '../../../../src/utils/constants'
-import { createGame, finishGame, filterGameStats, getGameById } from '../../../../src/services/v1/game'
+import {
+    createGame,
+    finishGame,
+    filterGameStats,
+    getGameById,
+    rebuildAtomicPlayers,
+} from '../../../../src/services/v1/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
@@ -709,5 +715,144 @@ describe('test get filtered game stats', () => {
         await expect(
             filterGameStats(new Types.ObjectId().toHexString(), teamOne._id!.toHexString()),
         ).rejects.toThrowError(new ApiError(Constants.GAME_NOT_FOUND, 404))
+    })
+})
+
+describe('test rebuild atomic players', () => {
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(2)
+    const gameOneId = new Types.ObjectId()
+    const gameTwoId = new Types.ObjectId()
+
+    beforeEach(async () => {
+        await Game.create({
+            _id: gameOneId,
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+            points: [
+                {
+                    players: [
+                        {
+                            _id: playerOne._id,
+                            ...getInitialPlayerData({ goals: 1, catches: 1, touches: 1, pointsPlayed: 1 }),
+                        },
+                        {
+                            _id: playerTwo._id,
+                            ...getInitialPlayerData({ assists: 1, completedPasses: 1, touches: 1, pointsPlayed: 1 }),
+                        },
+                        { _id: playerThree._id, ...getInitialPlayerData({ pointsPlayed: 1 }) },
+                    ],
+                    teamOne: {},
+                    teamTwo: {},
+                },
+                {
+                    players: [
+                        {
+                            _id: playerOne._id,
+                            ...getInitialPlayerData({
+                                goals: 0,
+                                assists: 1,
+                                touches: 1,
+                                completedPasses: 1,
+                                pointsPlayed: 1,
+                            }),
+                        },
+                        {
+                            _id: playerTwo._id,
+                            ...getInitialPlayerData({ goals: 1, touches: 1, catches: 1, pointsPlayed: 1 }),
+                        },
+                        { _id: playerThree._id, ...getInitialPlayerData({ pointsPlayed: 1 }) },
+                    ],
+                    teamOne: {},
+                    teamTwo: {},
+                },
+                {
+                    players: [
+                        {
+                            _id: playerOne._id,
+                            ...getInitialPlayerData({ goals: 1, touches: 1, catches: 1, pointsPlayed: 1 }),
+                        },
+                        { _id: playerTwo._id, ...getInitialPlayerData({ pointsPlayed: 1 }) },
+                        {
+                            _id: playerThree._id,
+                            ...getInitialPlayerData({ assists: 1, completedPasses: 1, pointsPlayed: 1, touches: 1 }),
+                        },
+                    ],
+                    teamOne: {},
+                    teamTwo: {},
+                },
+            ],
+        })
+
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            gameId: gameOneId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ goals: 3, catches: 4, pointsPlayed: 4 }),
+        })
+        await AtomicPlayer.create({
+            playerId: playerTwo._id,
+            gameId: gameOneId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ assists: 2, completedPasses: 2, touches: 2, catches: 1, pointsPlayed: 4 }),
+        })
+        await AtomicPlayer.create({
+            playerId: playerThree._id,
+            gameId: gameOneId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ assists: 1, pointsPlayed: 4 }),
+        })
+
+        await AtomicPlayer.create({
+            playerId: playerOne._id,
+            gameId: gameTwoId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ goals: 1, assists: 1 }),
+        })
+        await AtomicPlayer.create({
+            playerId: playerTwo._id,
+            gameId: gameTwoId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ goals: 1, assists: 1 }),
+        })
+        await AtomicPlayer.create({
+            playerId: playerThree._id,
+            gameId: gameTwoId,
+            teamId: teamOne._id,
+            ...getInitialPlayerData({ goals: 1, assists: 1 }),
+        })
+    })
+
+    it('correctly rebuilds data', async () => {
+        await rebuildAtomicPlayers(gameOneId.toHexString())
+
+        const ap1 = await AtomicPlayer.find({ playerId: playerOne._id, gameId: gameOneId })
+        expect(ap1.length).toBe(1)
+        expect(ap1[0].goals).toBe(2)
+        expect(ap1[0].pointsPlayed).toBe(3)
+        expect(ap1[0].assists).toBe(1)
+        expect(ap1[0].touches).toBe(3)
+
+        const ap2 = await AtomicPlayer.find({ playerId: playerTwo._id, gameId: gameOneId })
+        expect(ap2.length).toBe(1)
+        expect(ap2[0].goals).toBe(1)
+        expect(ap2[0].assists).toBe(1)
+        expect(ap2[0].pointsPlayed).toBe(3)
+        expect(ap2[0].touches).toBe(2)
+
+        const ap3 = await AtomicPlayer.find({ playerId: playerThree._id, gameId: gameOneId })
+        expect(ap3.length).toBe(1)
+        expect(ap3[0].goals).toBe(0)
+        expect(ap3[0].assists).toBe(1)
+        expect(ap3[0].pointsPlayed).toBe(3)
+        expect(ap3[0].touches).toBe(1)
+    })
+
+    it('with unfound game', async () => {
+        await expect(rebuildAtomicPlayers(new Types.ObjectId().toHexString())).rejects.toThrowError(
+            new ApiError(Constants.GAME_NOT_FOUND, 404),
+        )
     })
 })

@@ -113,7 +113,7 @@ const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
 }
 
 const saveAtomicTeam = async (teamData: TeamData, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
-    const query = await AtomicTeam.where({ gameId, teamId })
+    const query = await AtomicTeam.find({ gameId, teamId })
     if (query.length === 1) {
         const record = query[0]
         record.set({ ...addTeamData(record, teamData) })
@@ -137,8 +137,11 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     if (!point) {
         throw new ApiError(Constants.POINT_NOT_FOUND, 404)
     }
-    const players = await Player.where({ _id: { $in: point?.players.map((p) => p._id) } })
-    const atomicPlayers = await AtomicPlayer.where({ playerId: { $in: point?.players.map((p) => p._id) } })
+    const players = await Player.find({ _id: { $in: point.players.map((p) => p._id) } })
+    const atomicPlayers = await AtomicPlayer.find({
+        playerId: { $in: point.players.map((p) => p._id) },
+        gameId: game._id,
+    })
 
     // subtract point stats from players
     // subtract point stats from atomic stats
