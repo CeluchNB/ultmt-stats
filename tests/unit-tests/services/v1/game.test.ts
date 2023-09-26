@@ -849,4 +849,10 @@ describe('test rebuild atomic players', () => {
         expect(ap3[0].pointsPlayed).toBe(3)
         expect(ap3[0].touches).toBe(1)
     })
+
+    it('with unfound game', async () => {
+        await expect(rebuildAtomicPlayers(new Types.ObjectId().toHexString())).rejects.toThrowError(
+            new ApiError(Constants.GAME_NOT_FOUND, 404),
+        )
+    })
 })

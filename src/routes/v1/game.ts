@@ -46,12 +46,12 @@ gameRouter.get(
     },
 )
 
-gameRouter.put('/game/:id/rebuild', param('id').isString(), async (req: Request, res: Response, next) => {
-    try {
-        await rebuildAtomicPlayers(req.params.id)
-    } catch (error) {
-        next(error)
-    }
-})
+// gameRouter.put('/game/:id/rebuild', param('id').isString(), async (req: Request, res: Response, next) => {
+//     try {
+//         await rebuildAtomicPlayers(req.params.id)
+//     } catch (error) {
+//         next(error)
+//     }
+// })
 
 gameRouter.use(errorMiddleware)
