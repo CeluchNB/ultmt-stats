@@ -207,14 +207,14 @@ describe('updateAtomicPlayers', () => {
         expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ assists: 1, completedPasses: 1 }))
     })
 
-    it('for substitution', () => {
+    it('substitution does not add points played', () => {
         action.actionType = ActionType.SUBSTITUTION
         action.playerOne = playerOne
         action.playerTwo = playerTwo
 
         updateAtomicPlayer(map, 'one', action, undefined)
         expect(map.get(playerOne._id)).toMatchObject(getInitialPlayerData({}))
-        expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({ pointsPlayed: 1 }))
+        expect(map.get(playerTwo._id)).toMatchObject(getInitialPlayerData({}))
     })
 })
 
