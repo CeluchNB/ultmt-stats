@@ -721,7 +721,7 @@ describe('test get filtered game stats', () => {
 describe('test rebuild atomic players', () => {
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
-    const playerThree = getPlayer(2)
+    const playerThree = getPlayer(3)
     const gameOneId = new Types.ObjectId()
     const gameTwoId = new Types.ObjectId()
 
