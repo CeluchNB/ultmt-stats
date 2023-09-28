@@ -241,11 +241,11 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
     // rebuild atomic players
     for (const point of game.points) {
         for (const player of point.players) {
+            player.pointsPlayed = 1
             const atomicPlayer = await AtomicPlayer.findOne({ gameId: game._id, playerId: player._id })
             atomicPlayer?.set({ ...addPlayerData(atomicPlayer, player) })
             await atomicPlayer?.save()
         }
     }
-
-    // not adding new atomic player
+    await game.save()
 }
