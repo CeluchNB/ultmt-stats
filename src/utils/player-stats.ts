@@ -204,7 +204,7 @@ export const PLAYER_TWO_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } =
     Block: [],
     Pickup: [],
     Timeout: [],
-    Substitution: ['pointsPlayed'],
+    Substitution: [],
     CallOnField: [],
     Stall: [],
 }

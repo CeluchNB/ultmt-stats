@@ -736,7 +736,7 @@ describe('test rebuild atomic players', () => {
                     players: [
                         {
                             _id: playerOne._id,
-                            ...getInitialPlayerData({ goals: 1, catches: 1, touches: 1, pointsPlayed: 1 }),
+                            ...getInitialPlayerData({ goals: 1, catches: 1, touches: 1, pointsPlayed: 2 }),
                         },
                         {
                             _id: playerTwo._id,
@@ -763,7 +763,7 @@ describe('test rebuild atomic players', () => {
                             _id: playerTwo._id,
                             ...getInitialPlayerData({ goals: 1, touches: 1, catches: 1, pointsPlayed: 1 }),
                         },
-                        { _id: playerThree._id, ...getInitialPlayerData({ pointsPlayed: 1 }) },
+                        { _id: playerThree._id, ...getInitialPlayerData({ pointsPlayed: 2 }) },
                     ],
                     teamOne: {},
                     teamTwo: {},
@@ -774,7 +774,7 @@ describe('test rebuild atomic players', () => {
                             _id: playerOne._id,
                             ...getInitialPlayerData({ goals: 1, touches: 1, catches: 1, pointsPlayed: 1 }),
                         },
-                        { _id: playerTwo._id, ...getInitialPlayerData({ pointsPlayed: 1 }) },
+                        { _id: playerTwo._id, ...getInitialPlayerData({ pointsPlayed: 2 }) },
                         {
                             _id: playerThree._id,
                             ...getInitialPlayerData({ assists: 1, completedPasses: 1, pointsPlayed: 1, touches: 1 }),
@@ -848,6 +848,13 @@ describe('test rebuild atomic players', () => {
         expect(ap3[0].assists).toBe(1)
         expect(ap3[0].pointsPlayed).toBe(3)
         expect(ap3[0].touches).toBe(1)
+
+        const updatedGame = await Game.findById(gameOneId)
+        for (const point of updatedGame!.points) {
+            for (const player of point.players) {
+                expect(player.pointsPlayed).toBe(1)
+            }
+        }
     })
 
     it('with unfound game', async () => {
