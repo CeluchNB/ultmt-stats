@@ -10,7 +10,7 @@ import { ApiError } from '../../types/error'
 import ITeam, { TeamData } from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
-import { getInitialTeamData } from '../../utils/team-stats'
+import { getInitialTeamData, idEquals } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData } from '../../utils/player-stats'
 
@@ -200,7 +200,7 @@ const calculatePlayerDataWithLeaders = async (
     const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
         // calculate leaders for single team
-        const player = playerRecords.find((p) => p._id.equals(stat.playerId))
+        const player = playerRecords.find((p) => idEquals(p._id, stat.playerId))
         updateGameData(leaders, stat, player)
 
         // generate player object

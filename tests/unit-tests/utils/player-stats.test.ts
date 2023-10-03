@@ -242,7 +242,7 @@ describe('populatePlayerMap', () => {
             { actionNumber: 3, actionType: ActionType.TEAM_ONE_SCORE, team: teamOne, playerOne, playerTwo },
         ]
 
-        populatePlayerMap(map, actions, 'one')
+        populatePlayerMap(map, new Map(), actions, 'one')
         expect(map.get(playerOne._id)).toMatchObject(
             getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1, hockeyAssists: 0 }),
         )

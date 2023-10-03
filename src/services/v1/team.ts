@@ -2,7 +2,7 @@ import * as Constants from '../../utils/constants'
 import Team from '../../models/team'
 import { ApiError } from '../../types/error'
 import { FilteredTeamData, TeamData } from '../../types/team'
-import { addTeamData, getInitialTeamData } from '../../utils/team-stats'
+import { addTeamData, getInitialTeamData, idEquals } from '../../utils/team-stats'
 import AtomicTeam from '../../models/atomic-team'
 import AtomicPlayer from '../../models/atomic-player'
 import { FilteredGamePlayer, GameData } from '../../types/game'
@@ -80,7 +80,7 @@ const calculatePlayerDataWithLeaders = async (
     const playerMap = new Map<string, FilteredGamePlayer>()
     for (const stat of stats) {
         // calculate leaders for single team
-        const playerRecord = playerRecords.find((p) => p._id.equals(stat.playerId))
+        const playerRecord = playerRecords.find((p) => idEquals(p._id, stat.playerId))
 
         const playerId = playerRecord?._id?.toHexString()
         const player = playerMap.get(playerId || '')

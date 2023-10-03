@@ -3,6 +3,8 @@ import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerD
 import { Action, ActionType } from '../types/point'
 import { isCallahan, isCurrentTeamScore, isNotDiscMovementAction } from './action'
 import { createSafeFraction } from './utils'
+import { IConnection } from '../types/connection'
+import { initializeConnectionMap, updateAtomicConnections } from './connection-stats'
 
 export const calculatePlayerData = (
     players: EmbeddedPlayer[],
@@ -10,9 +12,11 @@ export const calculatePlayerData = (
     teamNumber: 'one' | 'two',
 ): PlayerDataId[] => {
     const atomicPlayersMap = new Map<Types.ObjectId, PlayerData>()
+    const atomicConnectionsMap = new Map<string, IConnection>()
 
     initializePlayerMap(atomicPlayersMap, players)
-    populatePlayerMap(atomicPlayersMap, actions, teamNumber)
+    initializeConnectionMap(atomicConnectionsMap, players)
+    populatePlayerMap(atomicPlayersMap, atomicConnectionsMap, actions, teamNumber)
 
     return flattenPlayerMap(atomicPlayersMap)
 }
@@ -24,14 +28,16 @@ export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, player
 }
 
 export const populatePlayerMap = (
-    map: Map<Types.ObjectId, PlayerData>,
+    playerMap: Map<Types.ObjectId, PlayerData>,
+    connectionMap: Map<string, IConnection>,
     actions: Action[],
     teamNumber: 'one' | 'two',
 ) => {
     let prevAction: Action | undefined = undefined
     const sortedActions = actions.sort((a, b) => a.actionNumber - b.actionNumber)
     for (const action of sortedActions) {
-        updateAtomicPlayer(map, teamNumber, action, prevAction)
+        updateAtomicPlayer(playerMap, teamNumber, action, prevAction)
+        updateAtomicConnections(connectionMap, action)
         if (isNotDiscMovementAction(action)) {
             prevAction = action
         }
@@ -59,7 +65,9 @@ export const updateAtomicPlayer = (
         return
     }
 
-    incrementMapValue(stats, playerOneId, PLAYER_ONE_STAT_UPDATES[action.actionType])
+    if (Object.keys(PLAYER_ONE_STAT_UPDATES).includes(action.actionType)) {
+        incrementMapValue(stats, playerOneId, PLAYER_ONE_STAT_UPDATES[action.actionType])
+    }
     if (isCallahan(action, prevAction)) {
         incrementMapValue(stats, playerOneId, ['callahans', 'blocks'])
     }
@@ -69,7 +77,7 @@ export const updateAtomicPlayer = (
     }
 
     const playerTwoId = action.playerTwo?._id
-    if (playerTwoId) {
+    if (playerTwoId && Object.keys(PLAYER_TWO_STAT_UPDATES).includes(action.actionType)) {
         incrementMapValue(stats, playerTwoId, PLAYER_TWO_STAT_UPDATES[action.actionType])
     }
 }
