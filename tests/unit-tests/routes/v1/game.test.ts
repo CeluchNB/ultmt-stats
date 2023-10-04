@@ -136,12 +136,14 @@ describe('/POST finish game', () => {
                 players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
                 teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
                 teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                connections: [],
             },
             {
                 _id: new Types.ObjectId(),
                 players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
                 teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
                 teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                connections: [],
             },
         ]
         game?.points.push(...points)

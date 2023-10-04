@@ -2,6 +2,7 @@
 import * as Constants from '../../../../src/utils/constants'
 import { Types } from 'mongoose'
 import AtomicPlayer from '../../../../src/models/atomic-player'
+import Connection from '../../../../src/models/connection'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import Team from '../../../../src/models/team'
@@ -14,6 +15,8 @@ import { IPoint } from '../../../../src/types/game'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import AtomicTeam from '../../../../src/models/atomic-team'
+import AtomicConnection from '../../../../src/models/atomic-connection'
+import { getInitialConnectionData } from '../../../../src/utils/connection-stats'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -117,8 +120,7 @@ describe('test ingest point', () => {
             teamTwoScore: 0,
         })
 
-        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
-        const playerOneStat = playerOneStatQuery[0]
+        const playerOneStat = await AtomicPlayer.findOne({ playerId: playerOne._id, gameId })
         expect(playerOneStat).toMatchObject({
             goals: 0,
             assists: 1,
@@ -128,8 +130,7 @@ describe('test ingest point', () => {
             hockeyAssists: 0,
         })
 
-        const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
-        const playerTwoStat = playerTwoStatQuery[0]
+        const playerTwoStat = await AtomicPlayer.findOne({ playerId: playerTwo._id, gameId })
         expect(playerTwoStat).toMatchObject({
             goals: 0,
             assists: 0,
@@ -139,8 +140,7 @@ describe('test ingest point', () => {
             hockeyAssists: 1,
         })
 
-        const playerThreeStatQuery = await AtomicPlayer.find({ playerId: playerThree._id, gameId })
-        const playerThreeStat = playerThreeStatQuery[0]
+        const playerThreeStat = await AtomicPlayer.findOne({ playerId: playerThree._id, gameId })
         expect(playerThreeStat).toMatchObject({
             goals: 1,
             assists: 0,
@@ -171,6 +171,69 @@ describe('test ingest point', () => {
         expect(playerThreeRecord?.touches).toBe(1)
         expect(playerThreeRecord?.catches).toBe(1)
 
+        const atomicConnectionOne = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerOne._id,
+            receiverId: playerTwo._id,
+        })
+        expect(atomicConnectionOne).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 0,
+        })
+
+        const atomicConnectionTwo = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerOne._id,
+            receiverId: playerThree._id,
+        })
+        expect(atomicConnectionTwo).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 1,
+        })
+
+        const atomicConnectionThree = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerTwo._id,
+            receiverId: playerOne._id,
+        })
+        expect(atomicConnectionThree).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 0,
+        })
+
+        const connectionOne = await Connection.findOne({
+            throwerId: playerOne._id,
+            receiverId: playerTwo._id,
+        })
+        expect(connectionOne).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 0,
+        })
+
+        const connectionTwo = await Connection.findOne({
+            throwerId: playerOne._id,
+            receiverId: playerThree._id,
+        })
+        expect(connectionTwo).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 1,
+        })
+
+        const connectionThree = await Connection.findOne({
+            throwerId: playerTwo._id,
+            receiverId: playerOne._id,
+        })
+        expect(connectionThree).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 0,
+        })
+
         const teamRecord = await Team.findById(teamOne._id)
         expect(teamRecord?.offensePoints).toBe(1)
         expect(teamRecord?.defensePoints).toBe(0)
@@ -197,6 +260,7 @@ describe('test ingest point', () => {
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(3)
         expect(game?.points[0].players[0].assists).toBe(1)
+        expect(game?.points[0].connections.length).toBe(6)
         expect(game?.momentumData.length).toBe(2)
         expect(game?.momentumData[0]).toMatchObject({ x: 0, y: 0 })
         expect(game?.momentumData[1]).toMatchObject({ x: 1, y: 10 })
@@ -460,8 +524,7 @@ describe('test ingest point', () => {
             teamTwoScore: 1,
         })
 
-        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
-        const playerOneStat = playerOneStatQuery[0]
+        const playerOneStat = await AtomicPlayer.findOne({ playerId: playerOne._id, gameId })
         expect(playerOneStat).toMatchObject({
             pulls: 1,
             touches: 1,
@@ -471,8 +534,7 @@ describe('test ingest point', () => {
             hockeyAssists: 0,
         })
 
-        const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
-        const playerTwoStat = playerTwoStatQuery[0]
+        const playerTwoStat = await AtomicPlayer.findOne({ playerId: playerTwo._id, gameId })
         expect(playerTwoStat).toMatchObject({
             blocks: 1,
             pulls: 0,
@@ -482,8 +544,7 @@ describe('test ingest point', () => {
             hockeyAssists: 0,
         })
 
-        const playerThreeStatQuery = await AtomicPlayer.find({ playerId: playerThree._id, gameId })
-        const playerThreeStat = playerThreeStatQuery[0]
+        const playerThreeStat = await AtomicPlayer.findOne({ playerId: playerThree._id, gameId })
         expect(playerThreeStat).toMatchObject({
             blocks: 0,
             pulls: 0,
@@ -493,8 +554,7 @@ describe('test ingest point', () => {
             hockeyAssists: 0,
         })
 
-        const playerFourStatQuery = await AtomicPlayer.find({ playerId: playerFour._id, gameId })
-        const playerFourStat = playerFourStatQuery[0]
+        const playerFourStat = await AtomicPlayer.findOne({ playerId: playerFour._id, gameId })
         expect(playerFourStat).toMatchObject({
             catches: 1,
             touches: 1,
@@ -505,8 +565,7 @@ describe('test ingest point', () => {
             hockeyAssists: 0,
         })
 
-        const playerFiveStatQuery = await AtomicPlayer.find({ playerId: playerFive._id, gameId })
-        const playerFiveStat = playerFiveStatQuery[0]
+        const playerFiveStat = await AtomicPlayer.findOne({ playerId: playerFive._id, gameId })
         expect(playerFiveStat).toMatchObject({
             touches: 1,
             assists: 1,
@@ -516,8 +575,7 @@ describe('test ingest point', () => {
             hockeyAssists: 0,
         })
 
-        const playerSixStatQuery = await AtomicPlayer.find({ playerId: playerSix._id, gameId })
-        const playerSixStat = playerSixStatQuery[0]
+        const playerSixStat = await AtomicPlayer.findOne({ playerId: playerSix._id, gameId })
         expect(playerSixStat).toMatchObject({
             touches: 1,
             catches: 1,
@@ -526,6 +584,28 @@ describe('test ingest point', () => {
             assists: 0,
             throwaways: 0,
             hockeyAssists: 0,
+        })
+
+        const connectionStatOne = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerTwo._id,
+            receiverId: playerOne._id,
+        })
+        expect(connectionStatOne).toMatchObject({
+            catches: 1,
+            scores: 0,
+            drops: 0,
+        })
+
+        const connectionStatTwo = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerFive._id,
+            receiverId: playerSix._id,
+        })
+        expect(connectionStatTwo).toMatchObject({
+            catches: 1,
+            drops: 0,
+            scores: 1,
         })
 
         const teamOneRecord = await Team.findById(teamOne._id)
@@ -581,6 +661,7 @@ describe('test ingest point', () => {
         const game = await Game.findById(gameId)
         expect(game?.points.length).toBe(1)
         expect(game?.points[0].players.length).toBe(6)
+        expect(game?.points[0].connections.length).toBe(12)
         expect(game?.momentumData.length).toBe(4)
         expect(game?.momentumData[0]).toMatchObject({ x: 0, y: 0 })
         expect(game?.momentumData[1]).toMatchObject({ x: 1, y: 5 })
@@ -803,6 +884,9 @@ describe('test ingest point', () => {
 
         const game = await Game.findById(gameId)
         expect(game?.points.length).toBe(3)
+        expect(game?.points[0].connections.length).toBe(6)
+        expect(game?.points[1].connections.length).toBe(12)
+        expect(game?.points[2].connections.length).toBe(12)
     })
 })
 
@@ -851,6 +935,13 @@ describe('test delete point', () => {
                 _id: teamTwoId,
                 ...getInitialTeamData({}),
             },
+            connections: [
+                { ...getInitialConnectionData(playerOne._id, playerTwo._id), catches: 1, drops: 1, scores: 1 },
+                { ...getInitialConnectionData(playerOne._id, playerThree._id), catches: 0, drops: 0, scores: 0 },
+                { ...getInitialConnectionData(playerTwo._id, playerThree._id), catches: 4, drops: 0, scores: 1 },
+                { ...getInitialConnectionData(playerThree._id, playerOne._id), catches: 2, drops: 0, scores: 0 },
+                { ...getInitialConnectionData(playerThree._id, playerTwo._id), catches: 0, drops: 0, scores: 0 },
+            ],
         }
 
         game.points.push(point)
@@ -1011,6 +1102,7 @@ describe('test delete point', () => {
                 _id: teamTwoId,
                 ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 }),
             },
+            connections: [],
         }
 
         const game = await Game.findById(gameId)
@@ -1052,6 +1144,7 @@ describe('test delete point', () => {
                 _id: teamTwoId,
                 ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnoversForced: 2, holds: 1 }),
             },
+            connections: [],
         }
 
         const game = await Game.findById(gameId)
@@ -1080,6 +1173,198 @@ describe('test delete point', () => {
 
         const gameRecord = await Game.findById(gameId)
         expect(gameRecord?.points.length).toBe(0)
+    })
+
+    it('updates connections correctly', async () => {
+        await Connection.create({
+            ...getInitialConnectionData(playerOne._id, playerTwo._id),
+            catches: 10,
+            drops: 2,
+            scores: 4,
+        })
+        await Connection.create({
+            ...getInitialConnectionData(playerOne._id, playerThree._id),
+            catches: 5,
+            drops: 1,
+            scores: 2,
+        })
+        await Connection.create({
+            ...getInitialConnectionData(playerTwo._id, playerOne._id),
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
+        await Connection.create({
+            ...getInitialConnectionData(playerTwo._id, playerThree._id),
+            catches: 7,
+            drops: 0,
+            scores: 3,
+        })
+        await Connection.create({
+            ...getInitialConnectionData(playerThree._id, playerOne._id),
+            catches: 15,
+            drops: 0,
+            scores: 0,
+        })
+        await Connection.create({
+            ...getInitialConnectionData(playerThree._id, playerTwo._id),
+            catches: 0,
+            drops: 1,
+            scores: 0,
+        })
+
+        await AtomicConnection.create({
+            ...getInitialConnectionData(playerOne._id, playerTwo._id),
+            gameId,
+            catches: 4,
+            drops: 1,
+            scores: 1,
+        })
+        await AtomicConnection.create({
+            ...getInitialConnectionData(playerOne._id, playerThree._id),
+            gameId,
+            catches: 4,
+            drops: 1,
+            scores: 2,
+        })
+        await AtomicConnection.create({
+            ...getInitialConnectionData(playerTwo._id, playerOne._id),
+            gameId,
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
+        await AtomicConnection.create({
+            ...getInitialConnectionData(playerTwo._id, playerThree._id),
+            gameId,
+            catches: 4,
+            drops: 0,
+            scores: 1,
+        })
+        await AtomicConnection.create({
+            ...getInitialConnectionData(playerThree._id, playerOne._id),
+            gameId,
+            catches: 7,
+            drops: 0,
+            scores: 0,
+        })
+        await AtomicConnection.create({
+            ...getInitialConnectionData(playerThree._id, playerTwo._id),
+            gameId,
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
+
+        await deletePoint(gameId.toHexString(), pointId.toHexString())
+
+        const connectionOne = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerTwo._id })
+        expect(connectionOne).toMatchObject({
+            catches: 9,
+            drops: 1,
+            scores: 3,
+        })
+
+        const atomicConnectionOne = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerOne._id,
+            receiverId: playerTwo._id,
+        })
+        expect(atomicConnectionOne).toMatchObject({
+            catches: 3,
+            drops: 0,
+            scores: 0,
+        })
+
+        const connectionTwo = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerThree._id })
+        expect(connectionTwo).toMatchObject({
+            catches: 5,
+            drops: 1,
+            scores: 2,
+        })
+
+        const atomicConnectionTwo = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerOne._id,
+            receiverId: playerThree._id,
+        })
+        expect(atomicConnectionTwo).toMatchObject({
+            catches: 4,
+            drops: 1,
+            scores: 2,
+        })
+
+        const connectionThree = await Connection.findOne({ throwerId: playerTwo._id, receiverId: playerOne._id })
+        expect(connectionThree).toMatchObject({
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
+
+        const atomicConnectionThree = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerTwo._id,
+            receiverId: playerOne._id,
+        })
+        expect(atomicConnectionThree).toMatchObject({
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
+
+        const connectionFour = await Connection.findOne({ throwerId: playerTwo._id, receiverId: playerThree._id })
+        expect(connectionFour).toMatchObject({
+            catches: 3,
+            drops: 0,
+            scores: 2,
+        })
+
+        const atomicConnectionFour = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerTwo._id,
+            receiverId: playerThree._id,
+        })
+        expect(atomicConnectionFour).toMatchObject({
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
+
+        const connectionFive = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerOne._id })
+        expect(connectionFive).toMatchObject({
+            catches: 13,
+            drops: 0,
+            scores: 0,
+        })
+
+        const atomicConnectionFive = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerThree._id,
+            receiverId: playerOne._id,
+        })
+        expect(atomicConnectionFive).toMatchObject({
+            catches: 5,
+            drops: 0,
+            scores: 0,
+        })
+
+        const connectionSix = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerTwo._id })
+        expect(connectionSix).toMatchObject({
+            catches: 0,
+            drops: 1,
+            scores: 0,
+        })
+
+        const atomicConnectionSix = await AtomicConnection.findOne({
+            gameId,
+            throwerId: playerThree._id,
+            receiverId: playerTwo._id,
+        })
+        expect(atomicConnectionSix).toMatchObject({
+            catches: 0,
+            drops: 0,
+            scores: 0,
+        })
     })
 
     it('throws error with unfound game', async () => {

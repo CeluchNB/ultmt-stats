@@ -2,6 +2,7 @@ import { Types } from 'mongoose'
 import { IAtomicPlayer } from './atomic-stat'
 import IPlayer, { CalculatedPlayerData, EmbeddedPlayer, PlayerData } from './player'
 import { EmbeddedTeam, TeamData } from './team'
+import { IConnection } from './connection'
 
 export interface Leader {
     player?: EmbeddedPlayer | IAtomicPlayer | IPlayer
@@ -13,6 +14,7 @@ export type IdentifiedTeamData = TeamData & { _id?: Types.ObjectId }
 export interface IPoint {
     _id: Types.ObjectId
     players: IdentifiedPlayerData[]
+    connections: IConnection[]
     teamOne: IdentifiedTeamData
     teamTwo: IdentifiedTeamData
 }

@@ -218,6 +218,7 @@ describe('test finish game', () => {
             players,
             teamOne: { _id: teamOne._id, ...getInitialTeamData(teamOneOverrides) },
             teamTwo: { _id: teamTwo._id, ...getInitialTeamData(teamTwoOverrides) },
+            connections: [],
         }
     }
 

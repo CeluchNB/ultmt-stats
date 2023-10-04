@@ -102,6 +102,7 @@ describe('getGamePlayerData', () => {
                     _id: teamTwo._id,
                     ...getInitialTeamData({}),
                 },
+                connections: [],
             },
             {
                 _id: new Types.ObjectId(),
@@ -114,6 +115,7 @@ describe('getGamePlayerData', () => {
                     _id: teamTwo._id,
                     ...getInitialTeamData({}),
                 },
+                connections: [],
             },
         ],
         momentumData: [{ x: 0, y: 0 }],

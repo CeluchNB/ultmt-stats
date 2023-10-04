@@ -4,12 +4,14 @@ import {
     initializePlayerMap,
     incrementMapValue,
     getInitialPlayerData,
-    populatePlayerMap,
+    populateAtomicMaps,
     updateAtomicPlayer,
     flattenPlayerMap,
     calculatePlayerData,
+    flattenConnectionMap,
 } from '../../../src/utils/player-stats'
 import { teamOne, getPlayer } from '../../fixtures/data'
+import { getInitialConnectionData } from '../../../src/utils/connection-stats'
 
 const playerOne = getPlayer(1)
 const playerTwo = getPlayer(2)
@@ -230,11 +232,26 @@ describe('flattenPlayerMap', () => {
     })
 })
 
+describe('flattenConnectionMap', () => {
+    it('with values', () => {
+        const map = new Map()
+        map.set(`${playerOne._id}${playerTwo._id}`, getInitialConnectionData(playerOne._id, playerTwo._id))
+        const result = flattenConnectionMap(map)
+        expect(result[0]).toMatchObject({
+            ...getInitialConnectionData(playerOne._id, playerTwo._id),
+        })
+    })
+})
+
 describe('populatePlayerMap', () => {
     it('with normal list of actions', () => {
-        const map = new Map()
-        map.set(playerOne._id, getInitialPlayerData({}))
-        map.set(playerTwo._id, getInitialPlayerData({}))
+        const playerMap = new Map()
+        playerMap.set(playerOne._id, getInitialPlayerData({}))
+        playerMap.set(playerTwo._id, getInitialPlayerData({}))
+
+        const connectionMap = new Map()
+        connectionMap.set(`${playerOne._id}${playerTwo._id}`, getInitialConnectionData(playerOne._id, playerTwo._id))
+        connectionMap.set(`${playerTwo._id}${playerOne._id}`, getInitialConnectionData(playerTwo._id, playerOne._id))
 
         const actions: Action[] = [
             { actionNumber: 1, actionType: ActionType.PULL, team: teamOne, playerOne },
@@ -242,13 +259,16 @@ describe('populatePlayerMap', () => {
             { actionNumber: 3, actionType: ActionType.TEAM_ONE_SCORE, team: teamOne, playerOne, playerTwo },
         ]
 
-        populatePlayerMap(map, new Map(), actions, 'one')
-        expect(map.get(playerOne._id)).toMatchObject(
+        populateAtomicMaps(playerMap, connectionMap, actions, 'one')
+        expect(playerMap.get(playerOne._id)).toMatchObject(
             getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1, hockeyAssists: 0 }),
         )
-        expect(map.get(playerTwo._id)).toMatchObject(
+        expect(playerMap.get(playerTwo._id)).toMatchObject(
             getInitialPlayerData({ blocks: 1, assists: 1, completedPasses: 1, hockeyAssists: 0 }),
         )
+
+        expect(connectionMap.get(`${playerOne._id}${playerTwo._id}`)).toMatchObject({ catches: 0, drops: 0, scores: 0 })
+        expect(connectionMap.get(`${playerTwo._id}${playerOne._id}`)).toMatchObject({ catches: 1, drops: 0, scores: 1 })
     })
 })
 
@@ -260,16 +280,20 @@ describe('calculatePlayerData', () => {
             { actionNumber: 3, actionType: ActionType.TEAM_ONE_SCORE, team: teamOne, playerOne, playerTwo },
         ]
 
-        const result = calculatePlayerData([playerOne, playerTwo], actions, 'one')
+        const { players, connections } = calculatePlayerData([playerOne, playerTwo], actions, 'one')
 
-        expect(result.length).toBe(2)
-        expect(result[0]).toMatchObject({
+        expect(players.length).toBe(2)
+        expect(players[0]).toMatchObject({
             playerId: playerOne._id,
             ...getInitialPlayerData({ pulls: 1, goals: 1, catches: 1, touches: 1, pointsPlayed: 1, hockeyAssists: 0 }),
         })
-        expect(result[1]).toMatchObject({
+        expect(players[1]).toMatchObject({
             playerId: playerTwo._id,
             ...getInitialPlayerData({ blocks: 1, assists: 1, completedPasses: 1, pointsPlayed: 1, hockeyAssists: 0 }),
         })
+
+        expect(connections.length).toBe(2)
+        expect(connections[1].scores).toBe(1)
+        expect(connections[1].catches).toBe(1)
     })
 })

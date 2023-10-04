@@ -4,6 +4,7 @@ import {
     getConnectionMapKey,
     initializeConnectionMap,
     updateAtomicConnections,
+    connectionHasValue,
 } from '../../../src/utils/connection-stats'
 import { IConnection } from '../../../src/types/connection'
 
@@ -175,5 +176,33 @@ describe('updateAtomicConnections', () => {
             scores: 1,
         })
         testOtherKeys()
+    })
+})
+
+describe('connectionHasValue', () => {
+    it('returns correct positive', () => {
+        const connection: IConnection = {
+            throwerId: getPlayer(1)._id,
+            receiverId: getPlayer(2)._id,
+            scores: 0,
+            catches: 1,
+            drops: 0,
+        }
+
+        const result = connectionHasValue(connection)
+        expect(result).toBe(true)
+    })
+
+    it('returns correct negative', () => {
+        const connection: IConnection = {
+            throwerId: getPlayer(1)._id,
+            receiverId: getPlayer(2)._id,
+            scores: 0,
+            catches: 0,
+            drops: 0,
+        }
+
+        const result = connectionHasValue(connection)
+        expect(result).toBe(false)
     })
 })

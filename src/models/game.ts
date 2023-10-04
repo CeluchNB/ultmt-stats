@@ -1,6 +1,7 @@
 import { Schema, model, SchemaTypes } from 'mongoose'
 import IGame, { IPoint, MomentumPoint } from '../types/game'
 import { teamDataSchema } from './team'
+import { connectionSchema } from './connection'
 
 const pointSchema = new Schema<IPoint>({
     players: [
@@ -25,6 +26,7 @@ const pointSchema = new Schema<IPoint>({
             losses: { type: Number, required: true, default: 0 },
         },
     ],
+    connections: [connectionSchema],
     teamOne: {
         type: teamDataSchema,
         required: true,

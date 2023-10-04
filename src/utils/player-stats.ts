@@ -10,15 +10,15 @@ export const calculatePlayerData = (
     players: EmbeddedPlayer[],
     actions: Action[],
     teamNumber: 'one' | 'two',
-): PlayerDataId[] => {
+): { players: PlayerDataId[]; connections: IConnection[] } => {
     const atomicPlayersMap = new Map<Types.ObjectId, PlayerData>()
     const atomicConnectionsMap = new Map<string, IConnection>()
 
     initializePlayerMap(atomicPlayersMap, players)
     initializeConnectionMap(atomicConnectionsMap, players)
-    populatePlayerMap(atomicPlayersMap, atomicConnectionsMap, actions, teamNumber)
+    populateAtomicMaps(atomicPlayersMap, atomicConnectionsMap, actions, teamNumber)
 
-    return flattenPlayerMap(atomicPlayersMap)
+    return { players: flattenPlayerMap(atomicPlayersMap), connections: flattenConnectionMap(atomicConnectionsMap) }
 }
 
 export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, players: EmbeddedPlayer[]) => {
@@ -27,7 +27,7 @@ export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, player
     }
 }
 
-export const populatePlayerMap = (
+export const populateAtomicMaps = (
     playerMap: Map<Types.ObjectId, PlayerData>,
     connectionMap: Map<string, IConnection>,
     actions: Action[],
@@ -52,6 +52,12 @@ export const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDa
         }
     })
     return atomicPlayers
+}
+
+export const flattenConnectionMap = (map: Map<string, IConnection>): IConnection[] => {
+    return Array.from(map).map(([, value]) => {
+        return value
+    })
 }
 
 export const updateAtomicPlayer = (
