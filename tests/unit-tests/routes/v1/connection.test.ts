@@ -58,23 +58,28 @@ describe('connection routes', () => {
         const throwerId = new Types.ObjectId()
         const receiverId = new Types.ObjectId()
         const gameId = new Types.ObjectId()
+        const teamId = new Types.ObjectId(0)
 
         it('returns found connection by game', async () => {
             await AtomicConnection.create({
                 gameId,
                 throwerId,
                 receiverId,
+                teamId,
                 catches: 10,
                 drops: 1,
                 scores: 1,
             })
 
             const response = await request(app)
-                .get(`/api/v1/stats/connection/game?thrower=${throwerId}&receiver=${receiverId}&game=${gameId}`)
+                .get(
+                    `/api/v1/stats/filter/connection?thrower=${throwerId}&receiver=${receiverId}&games=${gameId},${teamId}&teams=${teamId},${gameId}`,
+                )
                 .expect(200)
 
-            const { connection } = response.body
-            expect(connection).toMatchObject({
+            const { connections } = response.body
+            expect(connections.length).toBe(1)
+            expect(connections[0]).toMatchObject({
                 catches: 10,
                 drops: 1,
                 scores: 1,
@@ -83,7 +88,7 @@ describe('connection routes', () => {
 
         it('throws error with unfound connection', async () => {
             const response = await request(app)
-                .get(`/api/v1/stats/connection/game?thrower=${receiverId}&receiver=${throwerId}&game=${gameId}`)
+                .get(`/api/v1/stats/filter/connection?thrower=${receiverId}&receiver=${throwerId}`)
                 .expect(404)
 
             const { message } = response.body

@@ -22,17 +22,26 @@ connectionRouter.get(
 )
 
 connectionRouter.get(
-    '/connection/game',
+    '/filter/connection',
     query('thrower').isString(),
     query('receiver').isString(),
-    query('game').isString(),
+    query('games').isString(),
+    query('teams').isString(),
     async (req: Request, res: Response, next) => {
         try {
             const throwerId = req.query.thrower as string
             const receiverId = req.query.receiver as string
-            const gameId = req.query.game as string
-            const connection = await getConnectionByGame(throwerId, receiverId, gameId)
-            return res.json({ connection })
+
+            const teamIds: string[] = []
+            const gameIds: string[] = []
+            if (req.query.teams) {
+                teamIds.push(...(req.query.teams as string).split(','))
+            }
+            if (req.query.games) {
+                gameIds.push(...(req.query.games as string).split(','))
+            }
+            const connections = await getConnectionByGame(throwerId, receiverId, gameIds, teamIds)
+            return res.json({ connections })
         } catch (error) {
             next(error)
         }

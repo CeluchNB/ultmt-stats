@@ -22,7 +22,7 @@ describe('connection services', () => {
         const throwerId = new Types.ObjectId()
         const receiverId = new Types.ObjectId()
 
-        it('returns found connection', async () => {
+        beforeEach(async () => {
             await Connection.create({
                 throwerId,
                 receiverId,
@@ -30,7 +30,9 @@ describe('connection services', () => {
                 drops: 1,
                 scores: 1,
             })
+        })
 
+        it('returns found connection', async () => {
             const result = await getConnection(throwerId.toHexString(), receiverId.toHexString())
             expect(result).toMatchObject({
                 catches: 10,
@@ -50,23 +52,38 @@ describe('connection services', () => {
         const throwerId = new Types.ObjectId()
         const receiverId = new Types.ObjectId()
         const gameId = new Types.ObjectId()
+        const teamId = new Types.ObjectId()
 
-        it('returns found connection', async () => {
+        beforeEach(async () => {
             await AtomicConnection.create({
                 gameId,
+                teamId,
                 throwerId,
                 receiverId,
                 catches: 10,
                 drops: 1,
                 scores: 1,
             })
+        })
 
+        it('returns found connection', async () => {
+            await AtomicConnection.create({
+                gameId,
+                teamId: new Types.ObjectId(),
+                throwerId,
+                receiverId,
+                catches: 4,
+                drops: 0,
+                scores: 0,
+            })
             const result = await getConnectionByGame(
                 throwerId.toHexString(),
                 receiverId.toHexString(),
-                gameId.toHexString(),
+                [gameId.toHexString()],
+                [teamId.toHexString()],
             )
-            expect(result).toMatchObject({
+            expect(result.length).toBe(1)
+            expect(result[0]).toMatchObject({
                 catches: 10,
                 drops: 1,
                 scores: 1,
@@ -75,7 +92,7 @@ describe('connection services', () => {
 
         it('throws error with unfound connection', async () => {
             await expect(
-                getConnectionByGame(receiverId.toHexString(), throwerId.toHexString(), gameId.toHexString()),
+                getConnectionByGame(receiverId.toHexString(), throwerId.toHexString(), [], []),
             ).rejects.toThrowError(Constants.CONNECTION_NOT_FOUND)
         })
     })

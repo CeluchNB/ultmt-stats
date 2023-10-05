@@ -1216,6 +1216,7 @@ describe('test delete point', () => {
         await AtomicConnection.create({
             ...getInitialConnectionData(playerOne._id, playerTwo._id),
             gameId,
+            teamId: teamOne._id,
             catches: 4,
             drops: 1,
             scores: 1,
@@ -1223,6 +1224,7 @@ describe('test delete point', () => {
         await AtomicConnection.create({
             ...getInitialConnectionData(playerOne._id, playerThree._id),
             gameId,
+            teamId: teamOne._id,
             catches: 4,
             drops: 1,
             scores: 2,
@@ -1230,6 +1232,7 @@ describe('test delete point', () => {
         await AtomicConnection.create({
             ...getInitialConnectionData(playerTwo._id, playerOne._id),
             gameId,
+            teamId: teamOne._id,
             catches: 0,
             drops: 0,
             scores: 0,
@@ -1237,6 +1240,7 @@ describe('test delete point', () => {
         await AtomicConnection.create({
             ...getInitialConnectionData(playerTwo._id, playerThree._id),
             gameId,
+            teamId: teamOne._id,
             catches: 4,
             drops: 0,
             scores: 1,
@@ -1244,6 +1248,7 @@ describe('test delete point', () => {
         await AtomicConnection.create({
             ...getInitialConnectionData(playerThree._id, playerOne._id),
             gameId,
+            teamId: teamOne._id,
             catches: 7,
             drops: 0,
             scores: 0,
@@ -1251,6 +1256,7 @@ describe('test delete point', () => {
         await AtomicConnection.create({
             ...getInitialConnectionData(playerThree._id, playerTwo._id),
             gameId,
+            teamId: teamOne._id,
             catches: 0,
             drops: 0,
             scores: 0,

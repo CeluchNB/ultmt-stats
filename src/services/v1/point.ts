@@ -44,8 +44,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
     await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)
 
-    await saveConnectionData(gameId, teamOneConnections)
-    await saveConnectionData(gameId, teamTwoConnections)
+    await saveConnectionData(teamOneConnections, gameId, teamOneId)
+    await saveConnectionData(teamTwoConnections, gameId, teamTwoId)
 
     const teamOneData = calculateTeamData(inputPoint, 'one', teamOneId)
     const teamTwoData = calculateTeamData(inputPoint, 'two', teamTwoId)
@@ -146,20 +146,20 @@ const saveAtomicTeam = async (teamData: TeamData, gameId: Types.ObjectId, teamId
     }
 }
 
-const saveConnectionData = async (gameId: Types.ObjectId, connections: IConnection[]) => {
+const saveConnectionData = async (connections: IConnection[], gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
     const promises = []
     for (const connection of connections) {
         if (!connectionHasValue(connection)) continue
 
-        promises.push(saveAtomicConnection(connection, gameId))
+        promises.push(saveAtomicConnection(connection, gameId, teamId))
         promises.push(saveConnections(connection))
     }
     await Promise.all(promises)
 }
 
-const saveAtomicConnection = async (connection: IConnection, gameId: Types.ObjectId) => {
+const saveAtomicConnection = async (connection: IConnection, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
     await AtomicConnection.findOneAndUpdate(
-        { gameId, throwerId: connection.throwerId, receiverId: connection.receiverId },
+        { gameId, teamId, throwerId: connection.throwerId, receiverId: connection.receiverId },
         {
             $inc: {
                 catches: connection.catches,

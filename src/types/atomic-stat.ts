@@ -18,4 +18,5 @@ export interface IAtomicTeam extends TeamData {
 
 export interface IAtomicConnection extends IConnection {
     gameId: Types.ObjectId
+    teamId: Types.ObjectId
 }
