@@ -1,3 +1,4 @@
+import { connectionRouter } from './connection'
 import { gameRouter } from './game'
 import { playerRouter } from './player'
 import { pointRouter } from './point'
@@ -10,3 +11,4 @@ router.use(gameRouter)
 router.use(pointRouter)
 router.use(playerRouter)
 router.use(teamRouter)
+router.use(connectionRouter)

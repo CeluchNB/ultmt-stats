@@ -37,4 +37,10 @@ describe('error response for middleware', () => {
         expect(result.message).toBe(Constants.TEAM_NOT_FOUND)
         expect(result.code).toBe(404)
     })
+
+    it('with connection not found error', () => {
+        const result = errorResponse(Constants.CONNECTION_NOT_FOUND)
+        expect(result.message).toBe(Constants.CONNECTION_NOT_FOUND)
+        expect(result.code).toBe(404)
+    })
 })
