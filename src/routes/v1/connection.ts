@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express'
 import { query } from 'express-validator'
 import { errorMiddleware } from '../../middleware/errors'
-import { getConnection, getConnectionByGame } from '../../services/v1/connection'
+import { getConnection, filterConnectionStats } from '../../services/v1/connection'
 
 export const connectionRouter = Router()
 
@@ -40,7 +40,7 @@ connectionRouter.get(
             if (req.query.games) {
                 gameIds.push(...(req.query.games as string).split(','))
             }
-            const connections = await getConnectionByGame(throwerId, receiverId, gameIds, teamIds)
+            const connections = await filterConnectionStats(throwerId, receiverId, gameIds, teamIds)
             return res.json({ connections })
         } catch (error) {
             next(error)

@@ -1,6 +1,6 @@
 import * as Constants from '../../../../src/utils/constants'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
-import { getConnection, getConnectionByGame } from '../../../../src/services/v1/connection'
+import { getConnection, filterConnectionStats } from '../../../../src/services/v1/connection'
 import { Types } from 'mongoose'
 import Connection from '../../../../src/models/connection'
 import AtomicConnection from '../../../../src/models/atomic-connection'
@@ -76,7 +76,7 @@ describe('connection services', () => {
                 drops: 0,
                 scores: 0,
             })
-            const result = await getConnectionByGame(
+            const result = await filterConnectionStats(
                 throwerId.toHexString(),
                 receiverId.toHexString(),
                 [gameId.toHexString()],
@@ -92,7 +92,7 @@ describe('connection services', () => {
 
         it('throws error with unfound connection', async () => {
             await expect(
-                getConnectionByGame(receiverId.toHexString(), throwerId.toHexString(), [], []),
+                filterConnectionStats(receiverId.toHexString(), throwerId.toHexString(), [], []),
             ).rejects.toThrowError(Constants.CONNECTION_NOT_FOUND)
         })
     })

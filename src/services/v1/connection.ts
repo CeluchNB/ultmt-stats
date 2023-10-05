@@ -15,7 +15,7 @@ export const getConnection = async (throwerId: string, receiverId: string): Prom
     return connection
 }
 
-export const getConnectionByGame = async (
+export const filterConnectionStats = async (
     throwerId: string,
     receiverId: string,
     gameIds: string[],
