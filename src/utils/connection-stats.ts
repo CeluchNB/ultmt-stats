@@ -2,7 +2,7 @@ import { Types } from 'mongoose'
 import { IConnection } from '../types/connection'
 import { EmbeddedPlayer } from '../types/player'
 import { Action } from '../types/point'
-import { idEquals } from './team-stats'
+import { idEquals } from './utils'
 
 export const initializeConnectionMap = (map: Map<string, IConnection>, players: EmbeddedPlayer[]) => {
     for (const thrower of players) {

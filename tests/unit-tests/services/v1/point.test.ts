@@ -128,6 +128,10 @@ describe('test ingest point', () => {
             touches: 2,
             catches: 2,
             hockeyAssists: 0,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
         })
 
         const playerTwoStat = await AtomicPlayer.findOne({ playerId: playerTwo._id, gameId })
@@ -138,6 +142,10 @@ describe('test ingest point', () => {
             touches: 1,
             catches: 1,
             hockeyAssists: 1,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
         })
 
         const playerThreeStat = await AtomicPlayer.findOne({ playerId: playerThree._id, gameId })
@@ -148,28 +156,50 @@ describe('test ingest point', () => {
             touches: 1,
             catches: 1,
             hockeyAssists: 0,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
         })
 
         const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord?.goals).toBe(0)
-        expect(playerOneRecord?.assists).toBe(1)
-        expect(playerOneRecord?.pointsPlayed).toBe(1)
-        expect(playerOneRecord?.touches).toBe(2)
-        expect(playerOneRecord?.catches).toBe(2)
+        expect(playerOneRecord).toMatchObject({
+            goals: 0,
+            assists: 1,
+            pointsPlayed: 1,
+            touches: 2,
+            catches: 2,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
+        })
 
         const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord?.goals).toBe(0)
-        expect(playerTwoRecord?.assists).toBe(0)
-        expect(playerTwoRecord?.pointsPlayed).toBe(1)
-        expect(playerTwoRecord?.touches).toBe(1)
-        expect(playerTwoRecord?.catches).toBe(1)
+        expect(playerTwoRecord).toMatchObject({
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 1,
+            catches: 1,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
+        })
 
         const playerThreeRecord = await Player.findById(playerThree._id)
-        expect(playerThreeRecord?.goals).toBe(1)
-        expect(playerThreeRecord?.assists).toBe(0)
-        expect(playerThreeRecord?.pointsPlayed).toBe(1)
-        expect(playerThreeRecord?.touches).toBe(1)
-        expect(playerThreeRecord?.catches).toBe(1)
+        expect(playerThreeRecord).toMatchObject({
+            goals: 1,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 1,
+            catches: 1,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
+        })
 
         const atomicConnectionOne = await AtomicConnection.findOne({
             gameId,
@@ -298,30 +328,54 @@ describe('test ingest point', () => {
 
         const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
-        expect(playerOneStat?.goals).toBe(0)
-        expect(playerOneStat?.assists).toBe(0)
-        expect(playerOneStat?.pointsPlayed).toBe(1)
-        expect(playerOneStat?.touches).toBe(0)
-        expect(playerOneStat?.catches).toBe(0)
-        expect(playerOneStat?.pulls).toBe(1)
+        expect(playerOneStat).toMatchObject({
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 0,
+            catches: 0,
+            pulls: 1,
+            defensePoints: 1,
+            breaks: 0,
+            holds: 0,
+            offensePoints: 0,
+        })
 
         const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord?.goals).toBe(0)
-        expect(playerOneRecord?.assists).toBe(0)
-        expect(playerOneRecord?.pointsPlayed).toBe(1)
-        expect(playerOneRecord?.touches).toBe(0)
-        expect(playerOneRecord?.catches).toBe(0)
-        expect(playerOneRecord?.pulls).toBe(1)
+        expect(playerOneRecord).toMatchObject({
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            touches: 0,
+            catches: 0,
+            pulls: 1,
+            defensePoints: 1,
+            breaks: 0,
+            holds: 0,
+            offensePoints: 0,
+        })
 
         const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord?.goals).toBe(0)
-        expect(playerTwoRecord?.assists).toBe(0)
-        expect(playerTwoRecord?.pointsPlayed).toBe(1)
+        expect(playerTwoRecord).toMatchObject({
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            defensePoints: 1,
+            breaks: 0,
+            holds: 0,
+            offensePoints: 0,
+        })
 
         const playerThreeRecord = await Player.findById(playerThree._id)
-        expect(playerThreeRecord?.goals).toBe(0)
-        expect(playerThreeRecord?.assists).toBe(0)
-        expect(playerThreeRecord?.pointsPlayed).toBe(1)
+        expect(playerThreeRecord).toMatchObject({
+            goals: 0,
+            assists: 0,
+            pointsPlayed: 1,
+            defensePoints: 1,
+            breaks: 0,
+            holds: 0,
+            offensePoints: 0,
+        })
 
         const teamRecord = await Team.findById(teamOne._id)
         expect(teamRecord?.defensePoints).toBe(1)
@@ -392,6 +446,10 @@ describe('test ingest point', () => {
             touches: 0,
             catches: 0,
             pulls: 1,
+            defensePoints: 1,
+            breaks: 1,
+            offensePoints: 0,
+            holds: 0,
         }
         const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
         const playerOneStat = playerOneStatQuery[0]
@@ -410,6 +468,10 @@ describe('test ingest point', () => {
             catches: 1,
             pulls: 0,
             hockeyAssists: 0,
+            defensePoints: 1,
+            breaks: 1,
+            offensePoints: 0,
+            holds: 0,
         }
         const playerTwoStatQuery = await AtomicPlayer.find({ playerId: playerTwo._id, gameId })
         const playerTwoStat = playerTwoStatQuery[0]
@@ -532,6 +594,10 @@ describe('test ingest point', () => {
             pointsPlayed: 1,
             blocks: 0,
             hockeyAssists: 0,
+            defensePoints: 1,
+            breaks: 0,
+            offensePoints: 0,
+            holds: 0,
         })
 
         const playerTwoStat = await AtomicPlayer.findOne({ playerId: playerTwo._id, gameId })
@@ -542,6 +608,10 @@ describe('test ingest point', () => {
             throwaways: 0,
             touches: 1,
             hockeyAssists: 0,
+            defensePoints: 1,
+            breaks: 0,
+            offensePoints: 0,
+            holds: 0,
         })
 
         const playerThreeStat = await AtomicPlayer.findOne({ playerId: playerThree._id, gameId })
@@ -552,6 +622,10 @@ describe('test ingest point', () => {
             throwaways: 0,
             touches: 0,
             hockeyAssists: 0,
+            defensePoints: 1,
+            breaks: 0,
+            offensePoints: 0,
+            holds: 0,
         })
 
         const playerFourStat = await AtomicPlayer.findOne({ playerId: playerFour._id, gameId })
@@ -563,6 +637,10 @@ describe('test ingest point', () => {
             goals: 0,
             assists: 0,
             hockeyAssists: 0,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
         })
 
         const playerFiveStat = await AtomicPlayer.findOne({ playerId: playerFive._id, gameId })
@@ -573,6 +651,10 @@ describe('test ingest point', () => {
             goals: 0,
             catches: 0,
             hockeyAssists: 0,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
         })
 
         const playerSixStat = await AtomicPlayer.findOne({ playerId: playerSix._id, gameId })
@@ -584,6 +666,10 @@ describe('test ingest point', () => {
             assists: 0,
             throwaways: 0,
             hockeyAssists: 0,
+            offensePoints: 1,
+            holds: 1,
+            defensePoints: 0,
+            breaks: 0,
         })
 
         const connectionStatOne = await AtomicConnection.findOne({

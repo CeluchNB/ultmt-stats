@@ -8,20 +8,20 @@ import Connection from '../../models/connection'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import Team from '../../models/team'
-import { addPlayerData, calculatePlayerData, subtractPlayerData } from '../../utils/player-stats'
-import { IPoint } from '../../types/game'
 import {
-    addTeamData,
-    calculateMomentumData,
-    calculateTeamData,
-    idEquals,
-    subtractTeamData,
-} from '../../utils/team-stats'
+    addPlayerData,
+    calculatePlayerData,
+    subtractPlayerData,
+    updatePlayerStatsByTeamStats,
+} from '../../utils/player-stats'
+import { IPoint } from '../../types/game'
+import { addTeamData, calculateMomentumData, calculateTeamData, subtractTeamData } from '../../utils/team-stats'
 import { ApiError } from '../../types/error'
 import AtomicTeam from '../../models/atomic-team'
 import { IConnection } from '../../types/connection'
 import AtomicConnection from '../../models/atomic-connection'
 import { connectionHasValue, subtractConnectionData } from '../../utils/connection-stats'
+import { idEquals } from '../../utils/utils'
 
 export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const game = await Game.findById(inputPoint.gameId)
@@ -41,12 +41,6 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
         'two',
     )
 
-    await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
-    await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)
-
-    await saveConnectionData(teamOneConnections, gameId, teamOneId)
-    await saveConnectionData(teamTwoConnections, gameId, teamTwoId)
-
     const teamOneData = calculateTeamData(inputPoint, 'one', teamOneId)
     const teamTwoData = calculateTeamData(inputPoint, 'two', teamTwoId)
 
@@ -54,6 +48,15 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     await saveTeamData(teamTwoData, teamTwoId)
     await saveAtomicTeam(teamOneData, game._id, teamOneId)
     await saveAtomicTeam(teamTwoData, game._id, teamTwoId)
+
+    updatePlayerStatsByTeamStats(teamOnePlayerStats, teamOneData)
+    updatePlayerStatsByTeamStats(teamTwoPlayerStats, teamTwoData)
+
+    await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
+    await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)
+
+    await saveConnectionData(teamOneConnections, gameId, teamOneId)
+    await saveConnectionData(teamTwoConnections, gameId, teamTwoId)
 
     const idPlayerDataOne = teamOnePlayerStats.map((stats) => {
         return { _id: stats.playerId, ...stats }

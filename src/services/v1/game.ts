@@ -10,9 +10,10 @@ import { ApiError } from '../../types/error'
 import ITeam, { TeamData } from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
-import { getInitialTeamData, idEquals } from '../../utils/team-stats'
+import { getInitialTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData } from '../../utils/player-stats'
+import { idEquals } from '../../utils/utils'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)

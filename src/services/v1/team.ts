@@ -2,7 +2,7 @@ import * as Constants from '../../utils/constants'
 import Team from '../../models/team'
 import { ApiError } from '../../types/error'
 import { FilteredTeamData, TeamData } from '../../types/team'
-import { addTeamData, getInitialTeamData, idEquals } from '../../utils/team-stats'
+import { addTeamData, getInitialTeamData } from '../../utils/team-stats'
 import AtomicTeam from '../../models/atomic-team'
 import AtomicPlayer from '../../models/atomic-player'
 import { FilteredGamePlayer, GameData } from '../../types/game'
@@ -10,6 +10,7 @@ import Player from '../../models/player'
 import { updateGameData } from '../../utils/game-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, calculatePlayerStats } from '../../utils/player-stats'
+import { idEquals } from '../../utils/utils'
 
 export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => {
     const team = await Team.findById(teamId)

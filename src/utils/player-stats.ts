@@ -5,6 +5,7 @@ import { isCallahan, isCurrentTeamScore, isNotDiscMovementAction } from './actio
 import { createSafeFraction } from './utils'
 import { IConnection } from '../types/connection'
 import { initializeConnectionMap, updateAtomicConnections } from './connection-stats'
+import { TeamData } from '../types/team'
 
 export const calculatePlayerData = (
     players: EmbeddedPlayer[],
@@ -109,6 +110,15 @@ export const incrementMapValue = (
     map.set(id, currentValue)
 }
 
+export const updatePlayerStatsByTeamStats = (playerData: PlayerData[], teamData: TeamData) => {
+    for (const stats of playerData) {
+        stats.offensePoints = teamData.offensePoints
+        stats.defensePoints = teamData.defensePoints
+        stats.holds = teamData.holds
+        stats.breaks = teamData.breaks
+    }
+}
+
 export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
     return {
         goals: 0,
@@ -127,6 +137,10 @@ export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData
         pulls: 0,
         wins: 0,
         losses: 0,
+        offensePoints: 0,
+        defensePoints: 0,
+        holds: 0,
+        breaks: 0,
         ...overrides,
     }
 }
@@ -147,6 +161,10 @@ export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData 
         droppedPasses: data1.droppedPasses + data2.droppedPasses,
         pointsPlayed: data1.pointsPlayed + data2.pointsPlayed,
         pulls: data1.pulls + data2.pulls,
+        offensePoints: data1.offensePoints + data2.offensePoints,
+        defensePoints: data1.defensePoints + data2.defensePoints,
+        holds: data1.holds + data2.holds,
+        breaks: data1.breaks + data2.breaks,
         wins: data1.wins + data2.wins,
         losses: data1.losses + data2.losses,
     }
@@ -168,6 +186,10 @@ export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): Player
         droppedPasses: data1.droppedPasses - data2.droppedPasses,
         pointsPlayed: data1.pointsPlayed - data2.pointsPlayed,
         pulls: data1.pulls - data2.pulls,
+        offensePoints: data1.offensePoints - data2.offensePoints,
+        defensePoints: data1.defensePoints - data2.defensePoints,
+        holds: data1.holds - data2.holds,
+        breaks: data1.breaks - data2.breaks,
         wins: data1.wins - data2.wins,
         losses: data1.losses - data2.losses,
     }
@@ -188,6 +210,8 @@ export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData =>
         ppThrowaways: createSafeFraction(stats.throwaways, stats.pointsPlayed),
         ppDrops: createSafeFraction(stats.drops, stats.pointsPlayed),
         ppBlocks: createSafeFraction(stats.blocks, stats.pointsPlayed),
+        offensiveEfficiency: createSafeFraction(stats.holds, stats.offensePoints),
+        defensiveEfficiency: createSafeFraction(stats.breaks, stats.defensePoints),
     }
 
     return { ...stats, ...calcStats }
