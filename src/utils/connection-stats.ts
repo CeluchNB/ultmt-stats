@@ -42,13 +42,18 @@ export const updateAtomicConnections = (map: Map<string, IConnection>, action: A
     map.set(key, connection)
 }
 
-export const getInitialConnectionData = (throwerId: Types.ObjectId, receiverId: Types.ObjectId): IConnection => {
+export const getInitialConnectionData = (
+    throwerId: Types.ObjectId,
+    receiverId: Types.ObjectId,
+    overrides?: Partial<IConnection>,
+): IConnection => {
     return {
         throwerId,
         receiverId,
         catches: 0,
         scores: 0,
         drops: 0,
+        ...overrides,
     }
 }
 

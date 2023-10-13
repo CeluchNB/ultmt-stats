@@ -6,6 +6,7 @@ import {
     filterGameStats,
     getGameById,
     rebuildAtomicPlayers,
+    deleteGame,
 } from '../../../../src/services/v1/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { Types } from 'mongoose'
@@ -15,11 +16,16 @@ import AtomicPlayer from '../../../../src/models/atomic-player'
 import { getPlayer } from '../../../fixtures/data'
 import { EmbeddedTeam, TeamData } from '../../../../src/types/team'
 import Player from '../../../../src/models/player'
-import { getInitialPlayerData } from '../../../../src/utils/player-stats'
-import { getInitialTeamData } from '../../../../src/utils/team-stats'
+import { getInitialPlayerData, subtractPlayerData } from '../../../../src/utils/player-stats'
+import { getInitialTeamData, subtractTeamData } from '../../../../src/utils/team-stats'
 import { IdentifiedPlayerData, IPoint } from '../../../../src/types/game'
 import { ApiError } from '../../../../src/types/error'
 import AtomicTeam from '../../../../src/models/atomic-team'
+import { PlayerData } from '../../../../src/types/player'
+import { IConnection } from '../../../../src/types/connection'
+import { getInitialConnectionData, subtractConnectionData } from '../../../../src/utils/connection-stats'
+import AtomicConnection from '../../../../src/models/atomic-connection'
+import Connection from '../../../../src/models/connection'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -46,7 +52,7 @@ const teamTwo: EmbeddedTeam = {
     teamname: 'placename1',
 }
 
-describe('test create game', () => {
+describe('create game', () => {
     const _id = new Types.ObjectId()
     const startTime = new Date()
     const playerOne = getPlayer(1)
@@ -168,7 +174,7 @@ describe('test create game', () => {
     })
 })
 
-describe('test finish game', () => {
+describe('finish game', () => {
     const gameId = new Types.ObjectId()
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
@@ -605,7 +611,161 @@ describe('test finish game', () => {
     })
 })
 
-describe('test get game by id', () => {
+describe('delete game', () => {
+    const gameId = new Types.ObjectId()
+    const playerOne = getPlayer(1)
+    const playerTwo = getPlayer(2)
+    const playerThree = getPlayer(3)
+    const playerFour = getPlayer(4)
+
+    const atomicTeamOneData: TeamData = getInitialTeamData({
+        wins: 1,
+        goalsFor: 10,
+        goalsAgainst: 5,
+    })
+    const atomicTeamTwoData: TeamData = getInitialTeamData({
+        losses: 1,
+        goalsAgainst: 10,
+        goalsFor: 5,
+    })
+
+    const teamOneData: TeamData = getInitialTeamData({
+        wins: 3,
+        losses: 2,
+        goalsAgainst: 20,
+        goalsFor: 30,
+    })
+    const teamTwoData: TeamData = getInitialTeamData({
+        wins: 2,
+        losses: 3,
+        goalsAgainst: 30,
+        goalsFor: 20,
+    })
+
+    const atomicPlayerOneData: PlayerData = getInitialPlayerData({ goals: 5, assists: 4, catches: 10, touches: 10 })
+    const atomicPlayerTwoData: PlayerData = getInitialPlayerData({ goals: 0, assists: 2, catches: 5, touches: 5 })
+    const atomicPlayerThreeData: PlayerData = getInitialPlayerData({ goals: 5, assists: 4, catches: 10, touches: 10 })
+    const atomicPlayerFourData: PlayerData = getInitialPlayerData({ goals: 0, assists: 2, catches: 5, touches: 5 })
+
+    const playerOneData: PlayerData = getInitialPlayerData({ goals: 15, assists: 8, catches: 30, touches: 25 })
+    const playerTwoData: PlayerData = getInitialPlayerData({ goals: 2, assists: 7, catches: 20, touches: 25 })
+    const playerThreeData: PlayerData = getInitialPlayerData({ goals: 15, assists: 8, catches: 30, touches: 25 })
+    const playerFourData: PlayerData = getInitialPlayerData({ goals: 2, assists: 7, catches: 20, touches: 25 })
+
+    const atomicConnectionOneData: IConnection = getInitialConnectionData(playerOne._id, playerTwo._id, {
+        catches: 4,
+        drops: 1,
+        scores: 2,
+    })
+    const atomicConnectionTwoData: IConnection = getInitialConnectionData(playerThree._id, playerFour._id, {
+        catches: 6,
+        drops: 0,
+        scores: 1,
+    })
+
+    const connectionOneData: IConnection = getInitialConnectionData(playerOne._id, playerTwo._id, {
+        catches: 10,
+        drops: 2,
+        scores: 5,
+    })
+    const connectionTwoData: IConnection = getInitialConnectionData(playerThree._id, playerFour._id, {
+        catches: 15,
+        drops: 1,
+        scores: 3,
+    })
+
+    beforeEach(async () => {
+        await Team.create(
+            {
+                ...teamOne,
+                players: [playerOne._id, playerTwo._id],
+                ...teamOneData,
+            },
+            {
+                ...teamTwo,
+                players: [playerThree._id, playerFour._id],
+                ...teamTwoData,
+            },
+        )
+
+        await AtomicTeam.create(
+            { ...teamOne, gameId, teamId: teamOne._id, ...atomicTeamOneData },
+            { ...teamTwo, gameId, teamId: teamTwo._id, ...atomicTeamTwoData },
+        )
+
+        await AtomicPlayer.create(
+            { ...playerOne, teamId: teamOne._id, playerId: playerOne._id, gameId, ...atomicPlayerOneData },
+            { ...playerTwo, teamId: teamOne._id, playerId: playerTwo._id, gameId, ...atomicPlayerTwoData },
+            { ...playerThree, teamId: teamTwo._id, playerId: playerThree._id, gameId, ...atomicPlayerThreeData },
+            { ...playerFour, teamId: teamTwo._id, playerId: playerFour._id, gameId, ...atomicPlayerFourData },
+        )
+        await Player.create(
+            { ...playerOne, ...playerOneData },
+            { ...playerTwo, ...playerTwoData },
+            { ...playerThree, ...playerThreeData },
+            { ...playerFour, ...playerFourData },
+        )
+
+        await AtomicConnection.create(
+            { ...atomicConnectionOneData, gameId, teamId: teamOne._id },
+            { ...atomicConnectionTwoData, gameId, teamId: teamTwo._id },
+        )
+        await Connection.create(connectionOneData, connectionTwoData)
+
+        await Game.create({
+            _id: gameId,
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+        })
+    })
+
+    it('deletes data appropriately', async () => {
+        await deleteGame(gameId.toHexString())
+
+        const atomicPlayers = await AtomicPlayer.find()
+        const atomicTeams = await AtomicTeam.find()
+        const atomicConnections = await AtomicConnection.find()
+
+        expect(atomicPlayers.length).toBe(0)
+        expect(atomicTeams.length).toBe(0)
+        expect(atomicConnections.length).toBe(0)
+
+        const teamOneResult = await Team.findById(teamOne._id)
+        const teamTwoResult = await Team.findById(teamTwo._id)
+
+        expect(teamOneResult).toMatchObject({ ...subtractTeamData(teamOneData, atomicTeamOneData) })
+        expect(teamTwoResult).toMatchObject({ ...subtractTeamData(teamTwoData, atomicTeamTwoData) })
+
+        const playerOneResult = await Player.findById(playerOne._id)
+        const playerTwoResult = await Player.findById(playerTwo._id)
+        const playerThreeResult = await Player.findById(playerThree._id)
+        const playerFourResult = await Player.findById(playerFour._id)
+
+        expect(playerOneResult).toMatchObject({ ...subtractPlayerData(playerOneData, atomicPlayerOneData) })
+        expect(playerTwoResult).toMatchObject({ ...subtractPlayerData(playerTwoData, atomicPlayerTwoData) })
+        expect(playerThreeResult).toMatchObject({ ...subtractPlayerData(playerThreeData, atomicPlayerThreeData) })
+        expect(playerFourResult).toMatchObject({ ...subtractPlayerData(playerFourData, atomicPlayerFourData) })
+
+        const connectionOneResult = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerTwo._id })
+        const connectionTwoResult = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerFour._id })
+
+        expect(connectionOneResult).toMatchObject({
+            ...subtractConnectionData(connectionOneData, atomicConnectionOneData),
+        })
+        expect(connectionTwoResult).toMatchObject({
+            ...subtractConnectionData(connectionTwoData, atomicConnectionTwoData),
+        })
+    })
+
+    it('handles unfound game error', async () => {
+        await expect(deleteGame(new Types.ObjectId().toHexString())).rejects.toThrowError(
+            new ApiError(Constants.GAME_NOT_FOUND, 404),
+        )
+    })
+})
+
+describe('get game by id', () => {
     it('with found game', async () => {
         const gameId = new Types.ObjectId()
         await Game.create({
@@ -630,7 +790,7 @@ describe('test get game by id', () => {
     })
 })
 
-describe('test get filtered game stats', () => {
+describe('get filtered game stats', () => {
     const gameId = new Types.ObjectId()
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
@@ -719,7 +879,7 @@ describe('test get filtered game stats', () => {
     })
 })
 
-describe('test rebuild atomic players', () => {
+describe('rebuild atomic players', () => {
     const playerOne = getPlayer(1)
     const playerTwo = getPlayer(2)
     const playerThree = getPlayer(3)

@@ -10,10 +10,13 @@ import { ApiError } from '../../types/error'
 import ITeam, { TeamData } from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
-import { getInitialTeamData } from '../../utils/team-stats'
+import { getInitialTeamData, subtractTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
-import { addPlayerData } from '../../utils/player-stats'
+import { addPlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { idEquals } from '../../utils/utils'
+import AtomicConnection from '../../models/atomic-connection'
+import Connection from '../../models/connection'
+import { subtractConnectionData } from '../../utils/connection-stats'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -249,4 +252,75 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
         }
     }
     await game.save()
+}
+
+export const deleteGame = async (gameId: string) => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+
+    await updatePlayersOnGameDelete(gameId)
+    await updateTeamsOnGameDelete(gameId)
+    await updateConnectionsOnGameDelete(gameId)
+
+    await game?.deleteOne()
+}
+
+const updatePlayersOnGameDelete = async (gameId: string) => {
+    const atomicPlayers = await AtomicPlayer.find({ gameId })
+    const playerIds = atomicPlayers.map((p) => p.playerId)
+    const players = await Player.find({ _id: { $in: playerIds } })
+
+    const playerPromises = []
+    for (const player of players) {
+        // TODO: can I improve this runtime?
+        const atomicPlayer = atomicPlayers.find((ap) => idEquals(ap.playerId, player._id))
+        if (atomicPlayer) {
+            player?.set({ ...subtractPlayerData(player, atomicPlayer) })
+            playerPromises.push(player?.save())
+        }
+    }
+    await Promise.all(playerPromises)
+    await AtomicPlayer.deleteMany({ gameId })
+}
+
+const updateTeamsOnGameDelete = async (gameId: string) => {
+    const atomicTeams = await AtomicTeam.find({ gameId })
+    const teamIds = atomicTeams.map((t) => t.teamId)
+    const teams = await Team.find({ _id: { $in: teamIds } })
+
+    const teamPromises = []
+    for (const team of teams) {
+        // TODO: can I improve this runtime?
+        const atomicTeam = atomicTeams.find((at) => idEquals(at.teamId, team._id))
+        if (atomicTeam) {
+            team?.set({ ...subtractTeamData(team, atomicTeam) })
+            teamPromises.push(team?.save())
+        }
+    }
+
+    await Promise.all(teamPromises)
+    await AtomicTeam.deleteMany({ gameId })
+}
+
+const updateConnectionsOnGameDelete = async (gameId: string) => {
+    const atomicConnections = await AtomicConnection.find({ gameId })
+    const connectionIds = atomicConnections.map((c) => ({ throwerId: c.throwerId, receiverId: c.receiverId }))
+    const connections = await Connection.find({ $or: connectionIds })
+
+    const connectionPromises = []
+    for (const connection of connections) {
+        // TODO: can I improve this runtime?
+        const atomicConnection = atomicConnections.find(
+            (ac) => idEquals(ac.throwerId, connection.throwerId) && idEquals(ac.receiverId, connection.receiverId),
+        )
+        if (atomicConnection) {
+            connection?.set({ ...subtractConnectionData(connection, atomicConnection) })
+            connectionPromises.push(connection?.save())
+        }
+    }
+
+    await Promise.all(connectionPromises)
+    await AtomicConnection.deleteMany({ gameId })
 }
