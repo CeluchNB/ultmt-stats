@@ -62,7 +62,7 @@ gameRouter.put('/game/rebuild/:id', async (req: Request, res: Response, next) =>
     }
 })
 
-gameRouter.delete('/game/:id', query('team').isString(), async (req: Request, res: Response, next) => {
+gameRouter.put('/game/delete/:id', query('team').isString(), async (req: Request, res: Response, next) => {
     try {
         await deleteGame(req.params.id, req.query.team as string)
         return res.send()

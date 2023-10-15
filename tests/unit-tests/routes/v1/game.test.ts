@@ -417,7 +417,7 @@ describe('/GET rebuild atomic players', () => {
     })
 })
 
-describe('/DELETE game', () => {
+describe('/PUT delete game', () => {
     it('with successful response', async () => {
         const game = await Game.create({
             startTime: new Date(),
@@ -426,12 +426,12 @@ describe('/DELETE game', () => {
             points: [],
         })
 
-        await request(app).delete(`/api/v1/stats/game/${game._id}`).expect(200)
+        await request(app).put(`/api/v1/stats/game/delete/${game._id}`).expect(200)
         const allGames = await Game.find()
         expect(allGames.length).toBe(0)
     })
 
     it('with error response', async () => {
-        await request(app).delete(`/api/v1/stats/game/${new Types.ObjectId()}`).expect(404)
+        await request(app).put(`/api/v1/stats/game/delete/${new Types.ObjectId()}`).expect(404)
     })
 })
