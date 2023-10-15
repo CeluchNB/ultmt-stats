@@ -721,21 +721,21 @@ describe('delete game', () => {
     })
 
     it('deletes data appropriately', async () => {
-        await deleteGame(gameId.toHexString())
+        await deleteGame(gameId.toHexString(), teamOne._id!.toString())
 
         const atomicPlayers = await AtomicPlayer.find()
         const atomicTeams = await AtomicTeam.find()
         const atomicConnections = await AtomicConnection.find()
 
-        expect(atomicPlayers.length).toBe(0)
-        expect(atomicTeams.length).toBe(0)
-        expect(atomicConnections.length).toBe(0)
+        expect(atomicPlayers.length).toBe(2)
+        expect(atomicTeams.length).toBe(1)
+        expect(atomicConnections.length).toBe(1)
 
         const teamOneResult = await Team.findById(teamOne._id)
         const teamTwoResult = await Team.findById(teamTwo._id)
 
         expect(teamOneResult).toMatchObject({ ...subtractTeamData(teamOneData, atomicTeamOneData) })
-        expect(teamTwoResult).toMatchObject({ ...subtractTeamData(teamTwoData, atomicTeamTwoData) })
+        expect(teamTwoResult).toMatchObject(teamTwoData)
 
         const playerOneResult = await Player.findById(playerOne._id)
         const playerTwoResult = await Player.findById(playerTwo._id)
@@ -744,8 +744,8 @@ describe('delete game', () => {
 
         expect(playerOneResult).toMatchObject({ ...subtractPlayerData(playerOneData, atomicPlayerOneData) })
         expect(playerTwoResult).toMatchObject({ ...subtractPlayerData(playerTwoData, atomicPlayerTwoData) })
-        expect(playerThreeResult).toMatchObject({ ...subtractPlayerData(playerThreeData, atomicPlayerThreeData) })
-        expect(playerFourResult).toMatchObject({ ...subtractPlayerData(playerFourData, atomicPlayerFourData) })
+        expect(playerThreeResult).toMatchObject(playerThreeData)
+        expect(playerFourResult).toMatchObject(playerFourData)
 
         const connectionOneResult = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerTwo._id })
         const connectionTwoResult = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerFour._id })
@@ -753,15 +753,13 @@ describe('delete game', () => {
         expect(connectionOneResult).toMatchObject({
             ...subtractConnectionData(connectionOneData, atomicConnectionOneData),
         })
-        expect(connectionTwoResult).toMatchObject({
-            ...subtractConnectionData(connectionTwoData, atomicConnectionTwoData),
-        })
+        expect(connectionTwoResult).toMatchObject(connectionTwoData)
     })
 
     it('handles unfound game error', async () => {
-        await expect(deleteGame(new Types.ObjectId().toHexString())).rejects.toThrowError(
-            new ApiError(Constants.GAME_NOT_FOUND, 404),
-        )
+        await expect(
+            deleteGame(new Types.ObjectId().toHexString(), new Types.ObjectId().toHexString()),
+        ).rejects.toThrowError(new ApiError(Constants.GAME_NOT_FOUND, 404))
     })
 })
 

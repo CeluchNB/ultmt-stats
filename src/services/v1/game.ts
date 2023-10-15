@@ -255,21 +255,21 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
     await game.save()
 }
 
-export const deleteGame = async (gameId: string) => {
+export const deleteGame = async (gameId: string, teamId: string) => {
     const game = await Game.findById(gameId)
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
-    await updatePlayersOnGameDelete(gameId)
-    await updateTeamsOnGameDelete(gameId)
-    await updateConnectionsOnGameDelete(gameId)
+    await updatePlayersOnGameDelete(gameId, teamId)
+    await updateTeamsOnGameDelete(gameId, teamId)
+    await updateConnectionsOnGameDelete(gameId, teamId)
 
     await game?.deleteOne()
 }
 
-const updatePlayersOnGameDelete = async (gameId: string) => {
-    const atomicPlayers = await AtomicPlayer.find({ gameId })
+const updatePlayersOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicPlayers = await AtomicPlayer.find({ gameId, teamId })
     const playerIds = atomicPlayers.map((p) => p.playerId)
     const players = await Player.find({ _id: { $in: playerIds } })
 
@@ -283,11 +283,11 @@ const updatePlayersOnGameDelete = async (gameId: string) => {
         }
     }
     await Promise.all(playerPromises)
-    await AtomicPlayer.deleteMany({ gameId })
+    await AtomicPlayer.deleteMany({ gameId, teamId })
 }
 
-const updateTeamsOnGameDelete = async (gameId: string) => {
-    const atomicTeams = await AtomicTeam.find({ gameId })
+const updateTeamsOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicTeams = await AtomicTeam.find({ gameId, teamId })
     const teamIds = atomicTeams.map((t) => t.teamId)
     const teams = await Team.find({ _id: { $in: teamIds } })
 
@@ -302,11 +302,11 @@ const updateTeamsOnGameDelete = async (gameId: string) => {
     }
 
     await Promise.all(teamPromises)
-    await AtomicTeam.deleteMany({ gameId })
+    await AtomicTeam.deleteMany({ gameId, teamId })
 }
 
-const updateConnectionsOnGameDelete = async (gameId: string) => {
-    const atomicConnections = await AtomicConnection.find({ gameId })
+const updateConnectionsOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicConnections = await AtomicConnection.find({ gameId, teamId })
     const connectionIds = atomicConnections.map((c) => ({ throwerId: c.throwerId, receiverId: c.receiverId }))
     const filter: FilterQuery<IConnection> = {}
     if (connectionIds.length > 0) {
@@ -327,5 +327,5 @@ const updateConnectionsOnGameDelete = async (gameId: string) => {
     }
 
     await Promise.all(connectionPromises)
-    await AtomicConnection.deleteMany({ gameId })
+    await AtomicConnection.deleteMany({ gameId, teamId })
 }
