@@ -113,15 +113,15 @@ export const finishGame = async (gameId: string) => {
             updateTeam(-1, 1, teamTwo)
             updateTeam(1, -1, atomicTeamOne)
             updateTeam(-1, 1, atomicTeamTwo)
-            await updatePlayers({ losses: -1, wins: 1 }, teamOne?.players)
-            await updatePlayers({ losses: 1, wins: -1 }, teamTwo?.players)
+            await updatePlayers({ losses: -1, wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
+            await updatePlayers({ losses: 1, wins: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
         } else if (!prevWinner) {
             updateTeam(1, 0, teamOne)
             updateTeam(0, 1, teamTwo)
             updateTeam(1, 0, atomicTeamOne)
             updateTeam(0, 1, atomicTeamTwo)
-            await updatePlayers({ wins: 1 }, teamOne?.players)
-            await updatePlayers({ losses: 1 }, teamTwo?.players)
+            await updatePlayers({ wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
+            await updatePlayers({ losses: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
         }
     } else {
         if (prevWinner === 'one') {
@@ -130,15 +130,15 @@ export const finishGame = async (gameId: string) => {
             updateTeam(-1, 1, teamOne)
             updateTeam(1, -1, atomicTeamTwo)
             updateTeam(-1, 1, atomicTeamOne)
-            await updatePlayers({ wins: 1, losses: -1 }, teamTwo?.players)
-            await updatePlayers({ wins: -1, losses: 1 }, teamOne?.players)
+            await updatePlayers({ wins: 1, losses: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
+            await updatePlayers({ wins: -1, losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
         } else if (!prevWinner) {
             updateTeam(1, 0, teamTwo)
             updateTeam(0, 1, teamOne)
             updateTeam(1, 0, atomicTeamTwo)
             updateTeam(0, 1, atomicTeamOne)
-            await updatePlayers({ wins: 1 }, teamTwo?.players)
-            await updatePlayers({ losses: 1 }, teamOne?.players)
+            await updatePlayers({ wins: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
+            await updatePlayers({ losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
         }
     }
 
@@ -150,9 +150,15 @@ export const finishGame = async (gameId: string) => {
     await game.save()
 }
 
-const updatePlayers = async (updates: { [x: string]: number }, players?: Types.ObjectId[]) => {
+const updatePlayers = async (
+    updates: { [x: string]: number },
+    gameId: string,
+    teamId = '',
+    players?: Types.ObjectId[],
+) => {
     if (!players || players.length === 0) return
     await Player.updateMany({ _id: { $in: players } }, { $inc: updates })
+    await AtomicPlayer.updateMany({ gameId, teamId }, { $inc: updates })
 }
 
 const updateTeam = async (wins: number, losses: number, team?: TeamData | null) => {
