@@ -416,3 +416,22 @@ describe('/GET rebuild atomic players', () => {
         expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
     })
 })
+
+describe('/DELETE game', () => {
+    it('with successful response', async () => {
+        const game = await Game.create({
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+            points: [],
+        })
+
+        await request(app).delete(`/api/v1/stats/game/${game._id}`).expect(200)
+        const allGames = await Game.find()
+        expect(allGames.length).toBe(0)
+    })
+
+    it('with error response', async () => {
+        await request(app).delete(`/api/v1/stats/game/${new Types.ObjectId()}`).expect(404)
+    })
+})

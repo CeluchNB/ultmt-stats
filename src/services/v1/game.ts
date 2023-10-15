@@ -5,7 +5,7 @@ import IGame, { FilteredGameData, FilteredGamePlayer, GameData, GameInput } from
 import Team from '../../models/team'
 import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
-import { Types } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { ApiError } from '../../types/error'
 import ITeam, { TeamData } from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
@@ -17,6 +17,7 @@ import { idEquals } from '../../utils/utils'
 import AtomicConnection from '../../models/atomic-connection'
 import Connection from '../../models/connection'
 import { subtractConnectionData } from '../../utils/connection-stats'
+import { IConnection } from '../../types/connection'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -274,7 +275,7 @@ const updatePlayersOnGameDelete = async (gameId: string) => {
 
     const playerPromises = []
     for (const player of players) {
-        // TODO: can I improve this runtime?
+        // TODO: can I improve this runtime? - just remove when refactor away from total stats
         const atomicPlayer = atomicPlayers.find((ap) => idEquals(ap.playerId, player._id))
         if (atomicPlayer) {
             player?.set({ ...subtractPlayerData(player, atomicPlayer) })
@@ -292,7 +293,7 @@ const updateTeamsOnGameDelete = async (gameId: string) => {
 
     const teamPromises = []
     for (const team of teams) {
-        // TODO: can I improve this runtime?
+        // TODO: can I improve this runtime? - just remove when refactor away from total stats
         const atomicTeam = atomicTeams.find((at) => idEquals(at.teamId, team._id))
         if (atomicTeam) {
             team?.set({ ...subtractTeamData(team, atomicTeam) })
@@ -307,11 +308,15 @@ const updateTeamsOnGameDelete = async (gameId: string) => {
 const updateConnectionsOnGameDelete = async (gameId: string) => {
     const atomicConnections = await AtomicConnection.find({ gameId })
     const connectionIds = atomicConnections.map((c) => ({ throwerId: c.throwerId, receiverId: c.receiverId }))
-    const connections = await Connection.find({ $or: connectionIds })
+    const filter: FilterQuery<IConnection> = {}
+    if (connectionIds.length > 0) {
+        filter.$or = connectionIds
+    }
+    const connections = await Connection.find(filter)
 
     const connectionPromises = []
     for (const connection of connections) {
-        // TODO: can I improve this runtime?
+        // TODO: can I improve this runtime? - just remove when refactor away from total stats
         const atomicConnection = atomicConnections.find(
             (ac) => idEquals(ac.throwerId, connection.throwerId) && idEquals(ac.receiverId, connection.receiverId),
         )

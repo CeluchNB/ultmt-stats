@@ -1,5 +1,12 @@
 import { Request, Response, Router } from 'express'
-import { createGame, filterGameStats, finishGame, getGameById, rebuildAtomicPlayers } from '../../services/v1/game'
+import {
+    createGame,
+    deleteGame,
+    filterGameStats,
+    finishGame,
+    getGameById,
+    rebuildAtomicPlayers,
+} from '../../services/v1/game'
 import { body, param, query } from 'express-validator'
 import { errorMiddleware } from '../../middleware/errors'
 
@@ -49,6 +56,15 @@ gameRouter.get(
 gameRouter.put('/game/rebuild/:id', async (req: Request, res: Response, next) => {
     try {
         await rebuildAtomicPlayers(req.params.id)
+        return res.send()
+    } catch (error) {
+        next(error)
+    }
+})
+
+gameRouter.delete('/game/:id', async (req: Request, res: Response, next) => {
+    try {
+        await deleteGame(req.params.id)
         return res.send()
     } catch (error) {
         next(error)
