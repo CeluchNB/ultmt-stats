@@ -177,6 +177,7 @@ describe('PUT /point/:id/delete', () => {
                 _id: teamTwoId,
                 ...getInitialTeamData({}),
             },
+            connections: [],
         }
 
         game.points.push(point)

@@ -136,12 +136,14 @@ describe('/POST finish game', () => {
                 players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
                 teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
                 teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                connections: [],
             },
             {
                 _id: new Types.ObjectId(),
                 players: [idPlayerOne, idPlayerTwo, idPlayerThree, idPlayerFour],
                 teamOne: { _id: teamOne._id, ...getInitialTeamData({ goalsFor: 1 }) },
                 teamTwo: { _id: teamTwo._id, ...getInitialTeamData({ goalsFor: 0 }) },
+                connections: [],
             },
         ]
         game?.points.push(...points)
@@ -412,5 +414,24 @@ describe('/GET rebuild atomic players', () => {
     it('handles error response', async () => {
         const response = await request(app).put(`/api/v1/stats/game/rebuild/${new Types.ObjectId()}`).expect(404)
         expect(response.body.message).toBe(Constants.GAME_NOT_FOUND)
+    })
+})
+
+describe('/PUT delete game', () => {
+    it('with successful response', async () => {
+        const game = await Game.create({
+            startTime: new Date(),
+            teamOneId: teamOne._id,
+            teamTwoId: teamTwo?._id,
+            points: [],
+        })
+
+        await request(app).put(`/api/v1/stats/game/delete/${game._id}`).expect(200)
+        const allGames = await Game.find()
+        expect(allGames.length).toBe(0)
+    })
+
+    it('with error response', async () => {
+        await request(app).put(`/api/v1/stats/game/delete/${new Types.ObjectId()}`).expect(404)
     })
 })

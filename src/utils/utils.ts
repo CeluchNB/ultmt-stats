@@ -1,3 +1,5 @@
+import { Types } from 'mongoose'
+
 export const createSafeFraction = (numerator: number, denominator: number): number => {
     if (denominator === 0) {
         return 0
@@ -27,4 +29,12 @@ export const removeElementsFromArray = <T>(superset: T[], subset: T[]): T[] => {
         }
     }
     return superset
+}
+
+export const idEquals = (id1?: Types.ObjectId | string, id2?: Types.ObjectId | string): boolean => {
+    if (!id1 || !id2) {
+        return false
+    }
+
+    return id1?.toString() === id2?.toString()
 }

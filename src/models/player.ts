@@ -23,6 +23,10 @@ const schema = new Schema<IPlayer>(
         pulls: { type: Number, required: true, default: 0 },
         wins: { type: Number, required: true, default: 0 },
         losses: { type: Number, required: true, default: 0 },
+        offensePoints: { type: Number, required: true, default: 0 },
+        defensePoints: { type: Number, required: true, default: 0 },
+        holds: { type: Number, required: true, default: 0 },
+        breaks: { type: Number, required: true, default: 0 },
         games: [SchemaTypes.ObjectId],
         teams: [SchemaTypes.ObjectId],
     },
@@ -70,6 +74,14 @@ schema.virtual('ppBlocks').get(function () {
 
 schema.virtual('winPercentage').get(function () {
     return createSafeFraction(this.wins, this.wins + this.losses)
+})
+
+schema.virtual('offensiveEfficiency').get(function () {
+    return createSafeFraction(this.holds, this.offensePoints)
+})
+
+schema.virtual('defensiveEfficiency').get(function () {
+    return createSafeFraction(this.breaks, this.defensePoints)
 })
 
 const Player = model<IPlayer>('Player', schema)

@@ -43,6 +43,10 @@ describe('test getPlayerById', () => {
                 throwaways: 1,
                 wins: 1,
                 losses: 1,
+                offensePoints: 10,
+                defensePoints: 2,
+                breaks: 1,
+                holds: 8,
             }),
         })
 
@@ -61,6 +65,10 @@ describe('test getPlayerById', () => {
                 throwaways: 1,
                 wins: 1,
                 losses: 1,
+                offensePoints: 10,
+                defensePoints: 2,
+                breaks: 1,
+                holds: 8,
             }),
             plusMinus: 2,
             throwingPercentage: 5 / 7,
@@ -71,6 +79,8 @@ describe('test getPlayerById', () => {
             ppDrops: 0.25,
             ppThrowaways: 0.25,
             winPercentage: 0.5,
+            offensiveEfficiency: 0.8,
+            defensiveEfficiency: 0.5,
         })
     })
 })
@@ -87,21 +97,21 @@ describe('test playerFilter', () => {
             playerId: playerOne._id,
             gameId: gameOneId,
             teamId: teamOne._id,
-            ...getInitialPlayerData({ goals: 1 }),
+            ...getInitialPlayerData({ goals: 1, offensePoints: 5, holds: 3 }),
         })
 
         await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
-            ...getInitialPlayerData({ assists: 1 }),
+            ...getInitialPlayerData({ assists: 1, offensePoints: 7, holds: 6 }),
         })
 
         await AtomicPlayer.create({
             playerId: playerOne._id,
             gameId: gameThreeId,
             teamId: teamOne._id,
-            ...getInitialPlayerData({ throwaways: 1 }),
+            ...getInitialPlayerData({ throwaways: 1, defensePoints: 8, breaks: 2 }),
         })
 
         await AtomicPlayer.create({
@@ -120,10 +130,20 @@ describe('test playerFilter', () => {
         )
 
         expect(result.length).toBe(2)
-        expect(result[0].goals).toBe(1)
+        expect(result[0]).toMatchObject({
+            goals: 1,
+            plusMinus: 1,
+            offensePoints: 5,
+            offensiveEfficiency: 0.6,
+        })
         expect(result[1].assists).toBe(1)
-        expect(result[0].plusMinus).toBe(1)
         expect(result[1].plusMinus).toBe(1)
+        expect(result[1]).toMatchObject({
+            assists: 1,
+            plusMinus: 1,
+            offensePoints: 7,
+            offensiveEfficiency: 6 / 7,
+        })
     })
 
     it('gets accurate stats by team', async () => {

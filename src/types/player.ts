@@ -22,6 +22,10 @@ export interface PlayerData {
     callahans: number
     pointsPlayed: number
     pulls: number
+    defensePoints: number
+    offensePoints: number
+    holds: number
+    breaks: number
     wins: number
     losses: number
 }
@@ -40,6 +44,8 @@ export interface CalculatedPlayerData {
     ppDrops: number
     ppBlocks: number
     winPercentage: number
+    offensiveEfficiency: number
+    defensiveEfficiency: number
 }
 interface IPlayer extends EmbeddedPlayer, PlayerData, CalculatedPlayerData {
     games: Types.ObjectId[]
