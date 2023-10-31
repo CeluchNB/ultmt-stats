@@ -5,14 +5,19 @@ import IGame, { FilteredGameData, FilteredGamePlayer, GameData, GameInput } from
 import Team from '../../models/team'
 import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
-import { Types } from 'mongoose'
+import { FilterQuery, Types } from 'mongoose'
 import { ApiError } from '../../types/error'
 import ITeam, { TeamData } from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
-import { getInitialTeamData } from '../../utils/team-stats'
+import { getInitialTeamData, subtractTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
-import { addPlayerData } from '../../utils/player-stats'
+import { addPlayerData, subtractPlayerData } from '../../utils/player-stats'
+import { idEquals } from '../../utils/utils'
+import AtomicConnection from '../../models/atomic-connection'
+import Connection from '../../models/connection'
+import { subtractConnectionData } from '../../utils/connection-stats'
+import { IConnection } from '../../types/connection'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -108,15 +113,15 @@ export const finishGame = async (gameId: string) => {
             updateTeam(-1, 1, teamTwo)
             updateTeam(1, -1, atomicTeamOne)
             updateTeam(-1, 1, atomicTeamTwo)
-            await updatePlayers({ losses: -1, wins: 1 }, teamOne?.players)
-            await updatePlayers({ losses: 1, wins: -1 }, teamTwo?.players)
+            await updatePlayers({ losses: -1, wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
+            await updatePlayers({ losses: 1, wins: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
         } else if (!prevWinner) {
             updateTeam(1, 0, teamOne)
             updateTeam(0, 1, teamTwo)
             updateTeam(1, 0, atomicTeamOne)
             updateTeam(0, 1, atomicTeamTwo)
-            await updatePlayers({ wins: 1 }, teamOne?.players)
-            await updatePlayers({ losses: 1 }, teamTwo?.players)
+            await updatePlayers({ wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
+            await updatePlayers({ losses: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
         }
     } else {
         if (prevWinner === 'one') {
@@ -125,15 +130,15 @@ export const finishGame = async (gameId: string) => {
             updateTeam(-1, 1, teamOne)
             updateTeam(1, -1, atomicTeamTwo)
             updateTeam(-1, 1, atomicTeamOne)
-            await updatePlayers({ wins: 1, losses: -1 }, teamTwo?.players)
-            await updatePlayers({ wins: -1, losses: 1 }, teamOne?.players)
+            await updatePlayers({ wins: 1, losses: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
+            await updatePlayers({ wins: -1, losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
         } else if (!prevWinner) {
             updateTeam(1, 0, teamTwo)
             updateTeam(0, 1, teamOne)
             updateTeam(1, 0, atomicTeamTwo)
             updateTeam(0, 1, atomicTeamOne)
-            await updatePlayers({ wins: 1 }, teamTwo?.players)
-            await updatePlayers({ losses: 1 }, teamOne?.players)
+            await updatePlayers({ wins: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
+            await updatePlayers({ losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
         }
     }
 
@@ -145,9 +150,15 @@ export const finishGame = async (gameId: string) => {
     await game.save()
 }
 
-const updatePlayers = async (updates: { [x: string]: number }, players?: Types.ObjectId[]) => {
+const updatePlayers = async (
+    updates: { [x: string]: number },
+    gameId: string,
+    teamId = '',
+    players?: Types.ObjectId[],
+) => {
     if (!players || players.length === 0) return
     await Player.updateMany({ _id: { $in: players } }, { $inc: updates })
+    await AtomicPlayer.updateMany({ gameId, teamId }, { $inc: updates })
 }
 
 const updateTeam = async (wins: number, losses: number, team?: TeamData | null) => {
@@ -200,7 +211,7 @@ const calculatePlayerDataWithLeaders = async (
     const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
         // calculate leaders for single team
-        const player = playerRecords.find((p) => p._id.equals(stat.playerId))
+        const player = playerRecords.find((p) => idEquals(p._id, stat.playerId))
         updateGameData(leaders, stat, player)
 
         // generate player object
@@ -248,4 +259,79 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
         }
     }
     await game.save()
+}
+
+export const deleteGame = async (gameId: string, teamId: string) => {
+    const game = await Game.findById(gameId)
+    if (!game) {
+        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+
+    await updatePlayersOnGameDelete(gameId, teamId)
+    await updateTeamsOnGameDelete(gameId, teamId)
+    await updateConnectionsOnGameDelete(gameId, teamId)
+
+    await game?.deleteOne()
+}
+
+const updatePlayersOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicPlayers = await AtomicPlayer.find({ gameId, teamId })
+    const playerIds = atomicPlayers.map((p) => p.playerId)
+    const players = await Player.find({ _id: { $in: playerIds } })
+
+    const playerPromises = []
+    for (const player of players) {
+        // TODO: can I improve this runtime? - just remove when refactor away from total stats
+        const atomicPlayer = atomicPlayers.find((ap) => idEquals(ap.playerId, player._id))
+        if (atomicPlayer) {
+            player?.set({ ...subtractPlayerData(player, atomicPlayer) })
+            playerPromises.push(player?.save())
+        }
+    }
+    await Promise.all(playerPromises)
+    await AtomicPlayer.deleteMany({ gameId, teamId })
+}
+
+const updateTeamsOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicTeams = await AtomicTeam.find({ gameId, teamId })
+    const teamIds = atomicTeams.map((t) => t.teamId)
+    const teams = await Team.find({ _id: { $in: teamIds } })
+
+    const teamPromises = []
+    for (const team of teams) {
+        // TODO: can I improve this runtime? - just remove when refactor away from total stats
+        const atomicTeam = atomicTeams.find((at) => idEquals(at.teamId, team._id))
+        if (atomicTeam) {
+            team?.set({ ...subtractTeamData(team, atomicTeam) })
+            teamPromises.push(team?.save())
+        }
+    }
+
+    await Promise.all(teamPromises)
+    await AtomicTeam.deleteMany({ gameId, teamId })
+}
+
+const updateConnectionsOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicConnections = await AtomicConnection.find({ gameId, teamId })
+    const connectionIds = atomicConnections.map((c) => ({ throwerId: c.throwerId, receiverId: c.receiverId }))
+    const filter: FilterQuery<IConnection> = {}
+    if (connectionIds.length > 0) {
+        filter.$or = connectionIds
+    }
+    const connections = await Connection.find(filter)
+
+    const connectionPromises = []
+    for (const connection of connections) {
+        // TODO: can I improve this runtime? - just remove when refactor away from total stats
+        const atomicConnection = atomicConnections.find(
+            (ac) => idEquals(ac.throwerId, connection.throwerId) && idEquals(ac.receiverId, connection.receiverId),
+        )
+        if (atomicConnection) {
+            connection?.set({ ...subtractConnectionData(connection, atomicConnection) })
+            connectionPromises.push(connection?.save())
+        }
+    }
+
+    await Promise.all(connectionPromises)
+    await AtomicConnection.deleteMany({ gameId, teamId })
 }

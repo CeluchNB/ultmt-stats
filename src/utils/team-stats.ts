@@ -10,7 +10,7 @@ import {
 } from './action'
 import { isCallahan } from './action'
 import { MomentumPoint } from '../types/game'
-import { removeElementsFromArray } from './utils'
+import { removeElementsFromArray, idEquals } from './utils'
 
 export const calculateTeamData = (
     inputPoint: IngestedPoint,
@@ -48,12 +48,12 @@ export const updateTeamDataForPoint = (actions: Action[], teamData: TeamData, te
 }
 
 export const updateTeamPointData = (inputPoint: IngestedPoint, teamData: TeamData, teamId?: Types.ObjectId) => {
-    if (idEquals(inputPoint.pullingTeam._id, teamId)) {
+    if (isDefensivePoint(inputPoint, teamId)) {
         teamData.defensePoints = 1
         if (teamData.goalsFor === 1) {
             teamData.breaks = 1
         }
-    } else if (idEquals(inputPoint.receivingTeam._id, teamId)) {
+    } else if (isOffensivePoint(inputPoint, teamId)) {
         teamData.offensePoints = 1
         if (teamData.goalsFor === 1) {
             teamData.holds = 1
@@ -162,14 +162,6 @@ export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => 
     }
 }
 
-export const idEquals = (id1?: Types.ObjectId | string, id2?: Types.ObjectId | string): boolean => {
-    if (!id1 || !id2) {
-        return false
-    }
-
-    return id1?.toString() === id2?.toString()
-}
-
 export const calculateMomentumData = (teamOneActions: Action[], lastPoint: MomentumPoint): MomentumPoint[] => {
     const data: MomentumPoint[] = []
     let xCounter = lastPoint.x
@@ -198,4 +190,12 @@ export const calculateMomentumData = (teamOneActions: Action[], lastPoint: Momen
             }
         })
     return data
+}
+
+export const isDefensivePoint = (inputPoint: IngestedPoint, teamId?: Types.ObjectId) => {
+    return idEquals(inputPoint.pullingTeam._id, teamId)
+}
+
+export const isOffensivePoint = (inputPoint: IngestedPoint, teamId?: Types.ObjectId) => {
+    return idEquals(inputPoint.receivingTeam._id, teamId)
 }

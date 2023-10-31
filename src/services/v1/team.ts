@@ -10,6 +10,7 @@ import Player from '../../models/player'
 import { updateGameData } from '../../utils/game-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, calculatePlayerStats } from '../../utils/player-stats'
+import { idEquals } from '../../utils/utils'
 
 export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => {
     const team = await Team.findById(teamId)
@@ -80,7 +81,7 @@ const calculatePlayerDataWithLeaders = async (
     const playerMap = new Map<string, FilteredGamePlayer>()
     for (const stat of stats) {
         // calculate leaders for single team
-        const playerRecord = playerRecords.find((p) => p._id.equals(stat.playerId))
+        const playerRecord = playerRecords.find((p) => idEquals(p._id, stat.playerId))
 
         const playerId = playerRecord?._id?.toHexString()
         const player = playerMap.get(playerId || '')

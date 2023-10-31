@@ -3,18 +3,23 @@ import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerD
 import { Action, ActionType } from '../types/point'
 import { isCallahan, isCurrentTeamScore, isNotDiscMovementAction } from './action'
 import { createSafeFraction } from './utils'
+import { IConnection } from '../types/connection'
+import { initializeConnectionMap, updateAtomicConnections } from './connection-stats'
+import { TeamData } from '../types/team'
 
 export const calculatePlayerData = (
     players: EmbeddedPlayer[],
     actions: Action[],
     teamNumber: 'one' | 'two',
-): PlayerDataId[] => {
+): { players: PlayerDataId[]; connections: IConnection[] } => {
     const atomicPlayersMap = new Map<Types.ObjectId, PlayerData>()
+    const atomicConnectionsMap = new Map<string, IConnection>()
 
     initializePlayerMap(atomicPlayersMap, players)
-    populatePlayerMap(atomicPlayersMap, actions, teamNumber)
+    initializeConnectionMap(atomicConnectionsMap, players)
+    populateAtomicMaps(atomicPlayersMap, atomicConnectionsMap, actions, teamNumber)
 
-    return flattenPlayerMap(atomicPlayersMap)
+    return { players: flattenPlayerMap(atomicPlayersMap), connections: flattenConnectionMap(atomicConnectionsMap) }
 }
 
 export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, players: EmbeddedPlayer[]) => {
@@ -23,15 +28,17 @@ export const initializePlayerMap = (map: Map<Types.ObjectId, PlayerData>, player
     }
 }
 
-export const populatePlayerMap = (
-    map: Map<Types.ObjectId, PlayerData>,
+export const populateAtomicMaps = (
+    playerMap: Map<Types.ObjectId, PlayerData>,
+    connectionMap: Map<string, IConnection>,
     actions: Action[],
     teamNumber: 'one' | 'two',
 ) => {
     let prevAction: Action | undefined = undefined
     const sortedActions = actions.sort((a, b) => a.actionNumber - b.actionNumber)
     for (const action of sortedActions) {
-        updateAtomicPlayer(map, teamNumber, action, prevAction)
+        updateAtomicPlayer(playerMap, teamNumber, action, prevAction)
+        updateAtomicConnections(connectionMap, action)
         if (isNotDiscMovementAction(action)) {
             prevAction = action
         }
@@ -48,6 +55,12 @@ export const flattenPlayerMap = (map: Map<Types.ObjectId, PlayerData>): PlayerDa
     return atomicPlayers
 }
 
+export const flattenConnectionMap = (map: Map<string, IConnection>): IConnection[] => {
+    return Array.from(map).map(([, value]) => {
+        return value
+    })
+}
+
 export const updateAtomicPlayer = (
     stats: Map<Types.ObjectId, PlayerData>,
     teamNumber: 'one' | 'two',
@@ -59,7 +72,9 @@ export const updateAtomicPlayer = (
         return
     }
 
-    incrementMapValue(stats, playerOneId, PLAYER_ONE_STAT_UPDATES[action.actionType])
+    if (Object.keys(PLAYER_ONE_STAT_UPDATES).includes(action.actionType)) {
+        incrementMapValue(stats, playerOneId, PLAYER_ONE_STAT_UPDATES[action.actionType])
+    }
     if (isCallahan(action, prevAction)) {
         incrementMapValue(stats, playerOneId, ['callahans', 'blocks'])
     }
@@ -69,7 +84,7 @@ export const updateAtomicPlayer = (
     }
 
     const playerTwoId = action.playerTwo?._id
-    if (playerTwoId) {
+    if (playerTwoId && Object.keys(PLAYER_TWO_STAT_UPDATES).includes(action.actionType)) {
         incrementMapValue(stats, playerTwoId, PLAYER_TWO_STAT_UPDATES[action.actionType])
     }
 }
@@ -95,6 +110,15 @@ export const incrementMapValue = (
     map.set(id, currentValue)
 }
 
+export const updatePlayerStatsByTeamStats = (playerData: PlayerData[], teamData: TeamData) => {
+    for (const stats of playerData) {
+        stats.offensePoints = teamData.offensePoints
+        stats.defensePoints = teamData.defensePoints
+        stats.holds = teamData.holds
+        stats.breaks = teamData.breaks
+    }
+}
+
 export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData => {
     return {
         goals: 0,
@@ -113,6 +137,10 @@ export const getInitialPlayerData = (overrides: Partial<PlayerData>): PlayerData
         pulls: 0,
         wins: 0,
         losses: 0,
+        offensePoints: 0,
+        defensePoints: 0,
+        holds: 0,
+        breaks: 0,
         ...overrides,
     }
 }
@@ -133,6 +161,10 @@ export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData 
         droppedPasses: data1.droppedPasses + data2.droppedPasses,
         pointsPlayed: data1.pointsPlayed + data2.pointsPlayed,
         pulls: data1.pulls + data2.pulls,
+        offensePoints: data1.offensePoints + data2.offensePoints,
+        defensePoints: data1.defensePoints + data2.defensePoints,
+        holds: data1.holds + data2.holds,
+        breaks: data1.breaks + data2.breaks,
         wins: data1.wins + data2.wins,
         losses: data1.losses + data2.losses,
     }
@@ -154,6 +186,10 @@ export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): Player
         droppedPasses: data1.droppedPasses - data2.droppedPasses,
         pointsPlayed: data1.pointsPlayed - data2.pointsPlayed,
         pulls: data1.pulls - data2.pulls,
+        offensePoints: data1.offensePoints - data2.offensePoints,
+        defensePoints: data1.defensePoints - data2.defensePoints,
+        holds: data1.holds - data2.holds,
+        breaks: data1.breaks - data2.breaks,
         wins: data1.wins - data2.wins,
         losses: data1.losses - data2.losses,
     }
@@ -174,6 +210,8 @@ export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData =>
         ppThrowaways: createSafeFraction(stats.throwaways, stats.pointsPlayed),
         ppDrops: createSafeFraction(stats.drops, stats.pointsPlayed),
         ppBlocks: createSafeFraction(stats.blocks, stats.pointsPlayed),
+        offensiveEfficiency: createSafeFraction(stats.holds, stats.offensePoints),
+        defensiveEfficiency: createSafeFraction(stats.breaks, stats.defensePoints),
     }
 
     return { ...stats, ...calcStats }
