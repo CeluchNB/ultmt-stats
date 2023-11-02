@@ -80,9 +80,13 @@ const updateTeamPlayers = (players: EmbeddedPlayer[], team: ITeam | undefined | 
 
 const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
     await upsertPlayerRecord(player, gameId)
-    await AtomicPlayer.findOneAndUpdate({ playerId: player._id, teamId, gameId }, getInitialPlayerData({}), {
-        upsert: true,
-    })
+    await AtomicPlayer.findOneAndUpdate(
+        { playerId: player._id, teamId, gameId },
+        { $inc: getInitialPlayerData({}) },
+        {
+            upsert: true,
+        },
+    )
 }
 
 const upsertPlayerRecord = async (player: EmbeddedPlayer, gameId: Types.ObjectId) => {
