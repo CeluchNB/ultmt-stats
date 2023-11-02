@@ -101,19 +101,15 @@ const savePlayerData = async (
 }
 
 const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
-    const query = await AtomicPlayer.find({ playerId: stats.playerId, gameId })
-    if (query.length === 1) {
-        const record = query[0]
-        record.set({
-            ...addPlayerData(record, stats),
-        })
-        await record.save()
-    } else if (teamId) {
-        await AtomicPlayer.create({
-            ...stats,
-            gameId,
-            teamId,
-        })
+    if (teamId) {
+        const tempStats = JSON.parse(JSON.stringify(stats))
+        delete tempStats.playerId
+
+        await AtomicPlayer.findOneAndUpdate(
+            { playerId: stats.playerId, gameId, teamId },
+            { $inc: { ...tempStats } },
+            { upsert: true },
+        )
     }
 }
 
@@ -135,11 +131,10 @@ const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
 }
 
 const saveAtomicTeam = async (teamData: TeamData, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
-    const query = await AtomicTeam.find({ gameId, teamId })
-    if (query.length === 1) {
-        const record = query[0]
-        record.set({ ...addTeamData(record, teamData) })
-        record.save()
+    const team = await AtomicTeam.findOne({ gameId, teamId })
+    if (team) {
+        team.set({ ...addTeamData(team, teamData) })
+        await team.save()
     } else if (teamId) {
         await AtomicTeam.create({
             ...teamData,

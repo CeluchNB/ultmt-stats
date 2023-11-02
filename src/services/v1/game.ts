@@ -12,7 +12,7 @@ import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getInitialTeamData, subtractTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
-import { addPlayerData, subtractPlayerData } from '../../utils/player-stats'
+import { addPlayerData, getInitialPlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { idEquals } from '../../utils/utils'
 import AtomicConnection from '../../models/atomic-connection'
 import Connection from '../../models/connection'
@@ -80,7 +80,9 @@ const updateTeamPlayers = (players: EmbeddedPlayer[], team: ITeam | undefined | 
 
 const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
     await upsertPlayerRecord(player, gameId)
-    await AtomicPlayer.create({ playerId: player._id, teamId, gameId })
+    await AtomicPlayer.findOneAndUpdate({ playerId: player._id, teamId, gameId }, getInitialPlayerData({}), {
+        upsert: true,
+    })
 }
 
 const upsertPlayerRecord = async (player: EmbeddedPlayer, gameId: Types.ObjectId) => {
