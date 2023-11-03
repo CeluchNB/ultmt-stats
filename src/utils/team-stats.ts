@@ -144,6 +144,45 @@ export const addTeamData = (data1: TeamData, data2: TeamData): TeamData => {
     }
 }
 
+export const getIncTeamData = (data: TeamData): Omit<TeamData, 'completionsToScore' | 'completionsToTurnover'> => {
+    return {
+        goalsFor: data.goalsFor,
+        goalsAgainst: data.goalsAgainst,
+        wins: data.wins,
+        losses: data.losses,
+        holds: data.holds,
+        breaks: data.breaks,
+        turnoverFreeHolds: data.turnoverFreeHolds,
+        turnovers: data.turnovers,
+        turnoversForced: data.turnoversForced,
+        offensePoints: data.offensePoints,
+        defensePoints: data.defensePoints,
+    }
+}
+
+export const getDecTeamData = (data: TeamData): Omit<TeamData, 'completionsToScore' | 'completionsToTurnover'> => {
+    return {
+        goalsFor: -data.goalsFor,
+        goalsAgainst: -data.goalsAgainst,
+        wins: -data.wins,
+        losses: -data.losses,
+        holds: -data.holds,
+        breaks: -data.breaks,
+        turnoverFreeHolds: -data.turnoverFreeHolds,
+        turnovers: -data.turnovers,
+        turnoversForced: -data.turnoversForced,
+        offensePoints: -data.offensePoints,
+        defensePoints: -data.defensePoints,
+    }
+}
+
+export const getPushTeamData = (data: TeamData) => {
+    return {
+        completionsToScore: { $each: data.completionsToScore },
+        completionsToTurnover: { $each: data.completionsToTurnover },
+    }
+}
+
 export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => {
     return {
         goalsFor: data1.goalsFor - data2.goalsFor,
@@ -160,6 +199,14 @@ export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => 
         completionsToScore: removeElementsFromArray(data1.completionsToScore, data2.completionsToScore),
         completionsToTurnover: removeElementsFromArray(data1.completionsToTurnover, data2.completionsToTurnover),
     }
+}
+
+export const getSubtractedTeamValues = (data1: TeamData, data2: TeamData) => {
+    const completionsToScore = removeElementsFromArray(data1.completionsToScore, data2.completionsToScore)
+    const completionsToTurnover = removeElementsFromArray(data1.completionsToTurnover, data2.completionsToTurnover)
+    const incValues = getDecTeamData(data2)
+
+    return { values: incValues, completionsToScore, completionsToTurnover }
 }
 
 export const calculateMomentumData = (teamOneActions: Action[], lastPoint: MomentumPoint): MomentumPoint[] => {

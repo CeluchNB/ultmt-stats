@@ -14,8 +14,15 @@ import {
     subtractPlayerData,
     updatePlayerStatsByTeamStats,
 } from '../../utils/player-stats'
-import { IPoint } from '../../types/game'
-import { addTeamData, calculateMomentumData, calculateTeamData, subtractTeamData } from '../../utils/team-stats'
+import { IPoint, IdentifiedTeamData } from '../../types/game'
+import {
+    addTeamData,
+    calculateMomentumData,
+    calculateTeamData,
+    getIncTeamData,
+    getPushTeamData,
+    getSubtractedTeamValues,
+} from '../../utils/team-stats'
 import { ApiError } from '../../types/error'
 import AtomicTeam from '../../models/atomic-team'
 import { IConnection } from '../../types/connection'
@@ -131,16 +138,18 @@ const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
 }
 
 const saveAtomicTeam = async (teamData: TeamData, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
-    const team = await AtomicTeam.findOne({ gameId, teamId })
-    if (team) {
-        team.set({ ...addTeamData(team, teamData) })
-        await team.save()
-    } else if (teamId) {
-        await AtomicTeam.create({
-            ...teamData,
-            gameId,
-            teamId,
-        })
+    if (teamId) {
+        const incValues = getIncTeamData(teamData)
+        const pushValues = getPushTeamData(teamData)
+
+        await AtomicTeam.findOneAndUpdate(
+            { gameId, teamId },
+            {
+                $inc: incValues,
+                $push: pushValues,
+            },
+            { upsert: true },
+        )
     }
 }
 
@@ -220,7 +229,7 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     await Promise.all(connectionPromises)
 
     // subtract stats from teams
-    await removePointDataFromTeam(point, game._id)
+    await removePointDataFromTeams(point, game._id)
 
     // delete point from game
     game.points = game.points.filter((p) => !idEquals(p._id, pointId))
@@ -228,22 +237,48 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     await game.save()
 }
 
-const removePointDataFromTeam = async (point: IPoint, gameId: Types.ObjectId) => {
-    const teamOne = await Team.findById(point.teamOne._id)
-    teamOne?.set({ ...subtractTeamData(teamOne, point.teamOne) })
-    await teamOne?.save()
+const removePointDataFromTeams = async (point: IPoint, gameId: Types.ObjectId) => {
+    const teamOnePromise = updateSubtractedTeamData(point.teamOne)
+    const teamTwoPromise = updateSubtractedTeamData(point.teamTwo)
 
-    const teamTwo = await Team.findById(point.teamTwo._id)
-    teamTwo?.set({ ...subtractTeamData(teamTwo, point.teamTwo) })
-    await teamTwo?.save()
+    const atomicTeamOnePromise = updateSubtractedAtomicTeamData(gameId, point.teamOne)
+    const atomicTeamTwoPromise = updateSubtractedAtomicTeamData(gameId, point.teamTwo)
 
-    const atomicTeamOne = await AtomicTeam.findOne({ gameId, teamId: point.teamOne._id })
-    atomicTeamOne?.set({ ...subtractTeamData(atomicTeamOne, point.teamOne) })
-    await atomicTeamOne?.save()
+    await Promise.all([teamOnePromise, teamTwoPromise, atomicTeamOnePromise, atomicTeamTwoPromise])
+}
 
-    const atomicTeamTwo = await AtomicTeam.findOne({ gameId, teamId: point.teamTwo._id })
-    atomicTeamTwo?.set({ ...subtractTeamData(atomicTeamTwo, point.teamTwo) })
-    await atomicTeamTwo?.save()
+const updateSubtractedTeamData = async (team?: IdentifiedTeamData) => {
+    if (!team) return
+
+    const teamRecord = await Team.findById(team._id)
+    if (!teamRecord) return
+
+    const { values, completionsToScore, completionsToTurnover } = getSubtractedTeamValues(teamRecord, team)
+
+    await Team.findOneAndUpdate(
+        { _id: team._id },
+        {
+            $inc: values,
+            $set: { completionsToScore, completionsToTurnover },
+        },
+    )
+}
+
+const updateSubtractedAtomicTeamData = async (gameId: Types.ObjectId, team?: IdentifiedTeamData) => {
+    if (!team) return
+
+    const atomicTeam = await AtomicTeam.findOne({ gameId, teamId: team._id })
+    if (!atomicTeam) return
+
+    const { values, completionsToScore, completionsToTurnover } = getSubtractedTeamValues(atomicTeam, team)
+
+    await AtomicTeam.findOneAndUpdate(
+        { gameId, teamId: team._id },
+        {
+            $inc: values,
+            $set: { completionsToScore, completionsToTurnover },
+        },
+    )
 }
 
 const removePointDataFromConnection = async (connection: IConnection, gameId: string) => {

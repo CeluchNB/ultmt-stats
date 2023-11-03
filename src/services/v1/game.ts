@@ -7,10 +7,10 @@ import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { FilterQuery, Types } from 'mongoose'
 import { ApiError } from '../../types/error'
-import ITeam, { TeamData } from '../../types/team'
+import ITeam from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
-import { getInitialTeamData, subtractTeamData } from '../../utils/team-stats'
+import { getIncTeamData, getInitialTeamData, getPushTeamData, subtractTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, getInitialPlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { idEquals } from '../../utils/utils'
@@ -53,9 +53,20 @@ export const createGame = async (gameInput: GameInput) => {
     await teamOne.save()
     await teamTwo?.save()
 
-    await AtomicTeam.create({ gameId: game._id, teamId: teamOne._id, ...getInitialTeamData({}) })
+    const incValues = getIncTeamData(getInitialTeamData({}))
+    const pushValues = getPushTeamData(getInitialTeamData({}))
+
+    await AtomicTeam.findOneAndUpdate(
+        { gameId: game._id, teamId: teamOne._id },
+        { $inc: incValues, $push: pushValues },
+        { upsert: true },
+    )
     if (teamTwo) {
-        await AtomicTeam.create({ gameId: game._id, teamId: teamTwo._id, ...getInitialTeamData({}) })
+        await AtomicTeam.findOneAndUpdate(
+            { gameId: game._id, teamId: teamTwo._id },
+            { $inc: incValues, $push: pushValues },
+            { upsert: true },
+        )
     }
 
     // create players if not exists
@@ -80,6 +91,8 @@ const updateTeamPlayers = (players: EmbeddedPlayer[], team: ITeam | undefined | 
 
 const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
     await upsertPlayerRecord(player, gameId)
+    // cannot take this out b/c some players may not play in a point and they should still exist
+    // but $inc is VITAL here
     await AtomicPlayer.findOneAndUpdate(
         { playerId: player._id, teamId, gameId },
         { $inc: getInitialPlayerData({}) },
@@ -106,52 +119,50 @@ export const finishGame = async (gameId: string) => {
 
     const teamOne = await Team.findById(game.teamOneId)
     const teamTwo = await Team.findById(game.teamTwoId)
-    const atomicTeamOne = await AtomicTeam.findOne({ gameId: game._id, teamId: teamOne?._id })
-    const atomicTeamTwo = await AtomicTeam.findOne({ gameId: game._id, teamId: teamTwo?._id })
+
     const prevWinner = game.winningTeam
 
     const winner = calculateWinner(game)
 
+    const promises = []
     if (winner === 'one') {
         if (prevWinner === 'two') {
             // needed when a game is restarted
-            updateTeam(1, -1, teamOne)
-            updateTeam(-1, 1, teamTwo)
-            updateTeam(1, -1, atomicTeamOne)
-            updateTeam(-1, 1, atomicTeamTwo)
-            await updatePlayers({ losses: -1, wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
-            await updatePlayers({ losses: 1, wins: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
+            promises.push(updateTeam(1, -1, game.teamOneId))
+            promises.push(updateTeam(-1, 1, game.teamTwoId))
+            promises.push(updateAtomicTeam(1, -1, game._id, game.teamOneId))
+            promises.push(updateAtomicTeam(-1, 1, game._id, game.teamTwoId))
+            promises.push(updatePlayers({ losses: -1, wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players))
+            promises.push(updatePlayers({ losses: 1, wins: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players))
         } else if (!prevWinner) {
-            updateTeam(1, 0, teamOne)
-            updateTeam(0, 1, teamTwo)
-            updateTeam(1, 0, atomicTeamOne)
-            updateTeam(0, 1, atomicTeamTwo)
-            await updatePlayers({ wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
-            await updatePlayers({ losses: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
+            promises.push(updateTeam(1, 0, game.teamOneId))
+            promises.push(updateTeam(0, 1, game.teamTwoId))
+            promises.push(updateAtomicTeam(1, 0, game._id, game.teamOneId))
+            promises.push(updateAtomicTeam(0, 1, game._id, game.teamTwoId))
+            promises.push(updatePlayers({ wins: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players))
+            promises.push(updatePlayers({ losses: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players))
         }
     } else {
         if (prevWinner === 'one') {
             // needed when a game is restarted
-            updateTeam(1, -1, teamTwo)
-            updateTeam(-1, 1, teamOne)
-            updateTeam(1, -1, atomicTeamTwo)
-            updateTeam(-1, 1, atomicTeamOne)
-            await updatePlayers({ wins: 1, losses: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
-            await updatePlayers({ wins: -1, losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
+            promises.push(updateTeam(1, -1, game.teamTwoId))
+            promises.push(updateTeam(-1, 1, game.teamOneId))
+            promises.push(updateAtomicTeam(1, -1, game._id, game.teamTwoId))
+            promises.push(updateAtomicTeam(-1, 1, game._id, game.teamOneId))
+            promises.push(updatePlayers({ wins: 1, losses: -1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players))
+            promises.push(updatePlayers({ wins: -1, losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players))
         } else if (!prevWinner) {
-            updateTeam(1, 0, teamTwo)
-            updateTeam(0, 1, teamOne)
-            updateTeam(1, 0, atomicTeamTwo)
-            updateTeam(0, 1, atomicTeamOne)
-            await updatePlayers({ wins: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players)
-            await updatePlayers({ losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players)
+            promises.push(updateTeam(1, 0, game.teamTwoId))
+            promises.push(updateTeam(0, 1, game.teamOneId))
+            promises.push(updateAtomicTeam(1, 0, game._id, game.teamTwoId))
+            promises.push(updateAtomicTeam(0, 1, game._id, game.teamOneId))
+            promises.push(updatePlayers({ wins: 1 }, gameId, teamTwo?._id.toHexString(), teamTwo?.players))
+            promises.push(updatePlayers({ losses: 1 }, gameId, teamOne?._id.toHexString(), teamOne?.players))
         }
     }
 
-    await teamOne?.save()
-    await teamTwo?.save()
-    await atomicTeamOne?.save()
-    await atomicTeamTwo?.save()
+    await Promise.all(promises)
+
     game.winningTeam = winner
     await game.save()
 }
@@ -167,10 +178,16 @@ const updatePlayers = async (
     await AtomicPlayer.updateMany({ gameId, teamId }, { $inc: updates })
 }
 
-const updateTeam = async (wins: number, losses: number, team?: TeamData | null) => {
-    if (!team) return
-    team.wins += wins
-    team.losses += losses
+const updateTeam = async (wins: number, losses: number, teamId?: Types.ObjectId) => {
+    if (!teamId) return
+
+    await Team.findOneAndUpdate({ _id: teamId }, { $inc: { wins, losses } })
+}
+
+const updateAtomicTeam = async (wins: number, losses: number, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
+    if (!teamId) return
+
+    await AtomicTeam.findOneAndUpdate({ gameId, teamId }, { $inc: { wins, losses } })
 }
 
 export const getGameById = async (gameId: string): Promise<IGame> => {
