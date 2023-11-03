@@ -72,7 +72,9 @@ describe('create game', () => {
         expect(game?.teamOneId.toString()).toEqual(teamOne._id!.toString())
         expect(game?.points.length).toBe(0)
 
-        const team = await Team.findById(teamOne._id)
+        const teams = await Team.find({})
+        expect(teams.length).toBe(1)
+        const team = teams[0]
         expect(team).toMatchObject(teamOne)
         expect(team?.games.length).toBe(1)
         expect(team?.games[0].toString()).toBe(_id.toString())

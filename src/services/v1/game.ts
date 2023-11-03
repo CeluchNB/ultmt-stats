@@ -7,10 +7,9 @@ import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { FilterQuery, Types } from 'mongoose'
 import { ApiError } from '../../types/error'
-import ITeam from '../../types/team'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
-import { getIncTeamData, getInitialTeamData, getPushTeamData, subtractTeamData } from '../../utils/team-stats'
+import { getIncTeamData, getInitialTeamData, getPushTeamData, getSubtractedTeamValues } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, getInitialPlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { idEquals } from '../../utils/utils'
@@ -26,65 +25,57 @@ export const createGame = async (gameInput: GameInput) => {
         throw new ApiError(Constants.GAME_ALREADY_EXISTS, 400)
     }
 
-    // create teams if not exists
-    let teamOne = await Team.findById(gameInput.teamOne._id)
-    if (!teamOne) {
-        teamOne = await Team.create({ ...gameInput.teamOne })
-    }
-    updateTeamPlayers(gameInput.teamOnePlayers, teamOne)
-
-    let teamTwo = await Team.findById(gameInput.teamTwo._id)
-    if (!teamTwo && gameInput.teamTwo?._id) {
-        teamTwo = await Team.create({ ...gameInput.teamTwo })
-    }
-    updateTeamPlayers(gameInput.teamTwoPlayers, teamTwo)
-
     // create game
     const game = await Game.create({
         _id: gameInput._id,
         startTime: gameInput.startTime,
-        teamOneId: teamOne._id,
-        teamTwoId: teamTwo?._id,
+        teamOneId: gameInput.teamOne._id,
+        teamTwoId: gameInput.teamTwo?._id,
         momentumData: [{ x: 0, y: 0 }],
     })
-
-    teamOne.games.push(game._id)
-    teamTwo?.games.push(game._id)
-    await teamOne.save()
-    await teamTwo?.save()
 
     const incValues = getIncTeamData(getInitialTeamData({}))
     const pushValues = getPushTeamData(getInitialTeamData({}))
 
+    const teamOne = await Team.findOneAndUpdate(
+        { _id: gameInput.teamOne._id },
+        {
+            $set: { ...gameInput.teamOne },
+            $push: { games: game._id },
+            $addToSet: { players: { $each: gameInput.teamOnePlayers } },
+        },
+        { upsert: true, new: true },
+    )
+
     await AtomicTeam.findOneAndUpdate(
-        { gameId: game._id, teamId: teamOne._id },
+        { gameId: game._id, teamId: teamOne?._id },
         { $inc: incValues, $push: pushValues },
         { upsert: true },
     )
-    if (teamTwo) {
+
+    for (const p of gameInput.teamOnePlayers) {
+        await createPlayerStatRecords(p, game._id, teamOne._id)
+    }
+
+    if (gameInput.teamTwo._id) {
+        const teamTwo = await Team.findOneAndUpdate(
+            { _id: gameInput.teamTwo._id },
+            {
+                $set: { ...gameInput.teamTwo },
+                $push: { games: game._id },
+                $addToSet: { players: { $each: gameInput.teamTwoPlayers } },
+            },
+            { upsert: true, new: true },
+        )
+
         await AtomicTeam.findOneAndUpdate(
             { gameId: game._id, teamId: teamTwo._id },
             { $inc: incValues, $push: pushValues },
             { upsert: true },
         )
-    }
 
-    // create players if not exists
-    for (const p of gameInput.teamOnePlayers) {
-        await createPlayerStatRecords(p, game._id, teamOne._id)
-    }
-
-    for (const p of gameInput.teamTwoPlayers) {
-        if (!teamTwo) break
-        await createPlayerStatRecords(p, game._id, teamTwo._id)
-    }
-}
-
-const updateTeamPlayers = (players: EmbeddedPlayer[], team: ITeam | undefined | null) => {
-    if (!team) return
-    for (const player of players) {
-        if (!team.players.includes(player._id)) {
-            team.players.push(player._id)
+        for (const p of gameInput.teamTwoPlayers) {
+            await createPlayerStatRecords(p, game._id, teamTwo._id)
         }
     }
 }
@@ -290,11 +281,30 @@ export const deleteGame = async (gameId: string, teamId: string) => {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
+    await updateTeamOnGameDelete(gameId, teamId)
     await updatePlayersOnGameDelete(gameId, teamId)
-    await updateTeamsOnGameDelete(gameId, teamId)
     await updateConnectionsOnGameDelete(gameId, teamId)
 
     await game?.deleteOne()
+}
+
+const updateTeamOnGameDelete = async (gameId: string, teamId: string) => {
+    const atomicTeam = await AtomicTeam.findOne({ gameId, teamId })
+    const team = await Team.findById(teamId)
+
+    if (!team || !atomicTeam) return
+
+    const { values, completionsToScore, completionsToTurnover } = getSubtractedTeamValues(team, atomicTeam)
+
+    await Team.findOneAndUpdate(
+        { _id: teamId },
+        {
+            $inc: values,
+            $set: { completionsToScore, completionsToTurnover },
+        },
+    )
+
+    await AtomicTeam.deleteMany({ gameId, teamId })
 }
 
 const updatePlayersOnGameDelete = async (gameId: string, teamId: string) => {
@@ -313,25 +323,6 @@ const updatePlayersOnGameDelete = async (gameId: string, teamId: string) => {
     }
     await Promise.all(playerPromises)
     await AtomicPlayer.deleteMany({ gameId, teamId })
-}
-
-const updateTeamsOnGameDelete = async (gameId: string, teamId: string) => {
-    const atomicTeams = await AtomicTeam.find({ gameId, teamId })
-    const teamIds = atomicTeams.map((t) => t.teamId)
-    const teams = await Team.find({ _id: { $in: teamIds } })
-
-    const teamPromises = []
-    for (const team of teams) {
-        // TODO: can I improve this runtime? - just remove when refactor away from total stats
-        const atomicTeam = atomicTeams.find((at) => idEquals(at.teamId, team._id))
-        if (atomicTeam) {
-            team?.set({ ...subtractTeamData(team, atomicTeam) })
-            teamPromises.push(team?.save())
-        }
-    }
-
-    await Promise.all(teamPromises)
-    await AtomicTeam.deleteMany({ gameId, teamId })
 }
 
 const updateConnectionsOnGameDelete = async (gameId: string, teamId: string) => {

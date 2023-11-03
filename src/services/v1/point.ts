@@ -16,7 +16,6 @@ import {
 } from '../../utils/player-stats'
 import { IPoint, IdentifiedTeamData } from '../../types/game'
 import {
-    addTeamData,
     calculateMomentumData,
     calculateTeamData,
     getIncTeamData,
@@ -132,9 +131,18 @@ const savePlayerStats = async (stats: PlayerDataId, players: EmbeddedPlayer[]) =
 }
 
 const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
-    const teamRecord = await Team.findById(teamId)
-    teamRecord?.set({ ...addTeamData(teamRecord, teamData) })
-    await teamRecord?.save()
+    if (!teamId) return
+
+    const values = getIncTeamData(teamData)
+    const pushData = getPushTeamData(teamData)
+
+    await Team.findOneAndUpdate(
+        { _id: teamId },
+        {
+            $inc: values,
+            $push: pushData,
+        },
+    )
 }
 
 const saveAtomicTeam = async (teamData: TeamData, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {

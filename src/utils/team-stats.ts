@@ -204,9 +204,9 @@ export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => 
 export const getSubtractedTeamValues = (data1: TeamData, data2: TeamData) => {
     const completionsToScore = removeElementsFromArray(data1.completionsToScore, data2.completionsToScore)
     const completionsToTurnover = removeElementsFromArray(data1.completionsToTurnover, data2.completionsToTurnover)
-    const incValues = getDecTeamData(data2)
+    const decValues = getDecTeamData(data2)
 
-    return { values: incValues, completionsToScore, completionsToTurnover }
+    return { values: decValues, completionsToScore, completionsToTurnover }
 }
 
 export const calculateMomentumData = (teamOneActions: Action[], lastPoint: MomentumPoint): MomentumPoint[] => {
