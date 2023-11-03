@@ -170,9 +170,7 @@ const updatePlayers = async (
 }
 
 const updateTeam = async (wins: number, losses: number, teamId?: Types.ObjectId) => {
-    if (!teamId) return
-
-    await Team.findOneAndUpdate({ _id: teamId }, { $inc: { wins, losses } })
+    await Team.findByIdAndUpdate(teamId, { $inc: { wins, losses } })
 }
 
 const updateAtomicTeam = async (wins: number, losses: number, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
