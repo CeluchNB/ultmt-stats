@@ -1,19 +1,14 @@
 import * as Constants from '../../utils/constants'
 import { IngestedPoint } from '../../types/point'
 import { Types } from 'mongoose'
-import { EmbeddedPlayer, PlayerDataId } from '../../types/player'
+import { PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicPlayer from '../../models/atomic-player'
 import Connection from '../../models/connection'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import Team from '../../models/team'
-import {
-    addPlayerData,
-    calculatePlayerData,
-    subtractPlayerData,
-    updatePlayerStatsByTeamStats,
-} from '../../utils/player-stats'
+import { calculatePlayerData, getDecPlayerData, updatePlayerStatsByTeamStats } from '../../utils/player-stats'
 import { IPoint, IdentifiedTeamData } from '../../types/game'
 import {
     calculateMomentumData,
@@ -58,8 +53,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     updatePlayerStatsByTeamStats(teamOnePlayerStats, teamOneData)
     updatePlayerStatsByTeamStats(teamTwoPlayerStats, teamTwoData)
 
-    await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
-    await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)
+    await savePlayerData(teamOnePlayerStats, gameId, teamOneId)
+    await savePlayerData(teamTwoPlayerStats, gameId, teamTwoId)
 
     await saveConnectionData(teamOneConnections, gameId, teamOneId)
     await saveConnectionData(teamTwoConnections, gameId, teamTwoId)
@@ -98,13 +93,13 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
 const savePlayerData = async (
     playerStats: PlayerDataId[],
     gameId: Types.ObjectId,
-    players: EmbeddedPlayer[],
+    // players: EmbeddedPlayer[],
     teamId?: Types.ObjectId,
 ) => {
     const promises = []
     for (const stats of playerStats) {
         promises.push(saveAtomicPlayer(stats, gameId, teamId))
-        promises.push(savePlayerStats(stats, players))
+        promises.push(savePlayerStats(stats))
     }
     await Promise.all(promises)
 }
@@ -122,15 +117,14 @@ const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, tea
     }
 }
 
-const savePlayerStats = async (stats: PlayerDataId, players: EmbeddedPlayer[]) => {
-    const player = await Player.findById(stats.playerId)
-    if (player) {
-        player.set({ ...addPlayerData(player, stats) })
-        await player.save()
-    } else {
-        const embeddedPlayer = players.find((p) => idEquals(p._id, stats.playerId))
-        await Player.create({ ...stats, ...embeddedPlayer })
-    }
+const savePlayerStats = async (stats: PlayerDataId) => {
+    await Player.findOneAndUpdate(
+        { _id: stats.playerId },
+        {
+            $inc: stats,
+        },
+        { upsert: true },
+    )
 }
 
 const saveTeamData = async (teamData: TeamData, teamId?: Types.ObjectId) => {
@@ -213,25 +207,20 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     if (!point) {
         throw new ApiError(Constants.POINT_NOT_FOUND, 404)
     }
-    const players = await Player.find({ _id: { $in: point.players.map((p) => p._id) } })
-    const atomicPlayers = await AtomicPlayer.find({
-        playerId: { $in: point.players.map((p) => p._id) },
-        gameId: game._id,
-    })
 
     // subtract point stats from players
     // subtract point stats from atomic stats
+    const playerPromises = []
     for (const player of point.players) {
-        // records are fetched in build and found in this manner to improve performance
-        const playerRecord = players.find((p) => idEquals(p._id, player._id))
-        const atomicPlayerRecord = atomicPlayers.find((a) => idEquals(a.playerId, player._id))
-
-        playerRecord?.set({ ...subtractPlayerData(playerRecord, player) })
-        atomicPlayerRecord?.set({ ...subtractPlayerData(atomicPlayerRecord, player) })
-
-        await playerRecord?.save()
-        await atomicPlayerRecord?.save()
+        playerPromises.push(Player.findOneAndUpdate({ _id: player._id }, { $inc: getDecPlayerData(player) }))
+        playerPromises.push(
+            AtomicPlayer.findOneAndUpdate(
+                { playerId: player._id, gameId: game._id },
+                { $inc: getDecPlayerData(player) },
+            ),
+        )
     }
+    await Promise.all(playerPromises)
 
     const connectionPromises = []
     for (const connection of point.connections) {

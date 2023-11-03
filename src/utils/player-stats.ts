@@ -217,6 +217,31 @@ export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData =>
     return { ...stats, ...calcStats }
 }
 
+export const getDecPlayerData = (data: PlayerData): PlayerData => {
+    return {
+        goals: -data.goals,
+        assists: -data.assists,
+        hockeyAssists: -data.hockeyAssists,
+        touches: -data.touches,
+        catches: -data.catches,
+        callahans: -data.callahans,
+        throwaways: -data.throwaways,
+        blocks: -data.blocks,
+        drops: -data.drops,
+        stalls: -data.stalls,
+        completedPasses: -data.completedPasses,
+        droppedPasses: -data.droppedPasses,
+        pointsPlayed: -data.pointsPlayed,
+        pulls: -data.pulls,
+        offensePoints: -data.offensePoints,
+        defensePoints: -data.defensePoints,
+        holds: -data.holds,
+        breaks: -data.breaks,
+        wins: -data.wins,
+        losses: -data.losses,
+    }
+}
+
 export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } = {
     Drop: ['drops'],
     Throwaway: ['throwaways'],

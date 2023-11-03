@@ -81,25 +81,20 @@ export const createGame = async (gameInput: GameInput) => {
 }
 
 const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
-    await upsertPlayerRecord(player, gameId)
-    // cannot take this out b/c some players may not play in a point and they should still exist
-    // but $inc is VITAL here
+    await Player.findOneAndUpdate(
+        { _id: player._id },
+        { $set: { ...player }, $push: { games: gameId } },
+        { upsert: true },
+    )
+
+    // cannot take this out b/c some players may not play in a point
     await AtomicPlayer.findOneAndUpdate(
         { playerId: player._id, teamId, gameId },
-        { $inc: getInitialPlayerData({}) },
+        {},
         {
             upsert: true,
         },
     )
-}
-
-const upsertPlayerRecord = async (player: EmbeddedPlayer, gameId: Types.ObjectId) => {
-    let playerRecord = await Player.findById(player._id)
-    if (!playerRecord) {
-        playerRecord = await Player.create({ ...player })
-    }
-    playerRecord.games.push(gameId)
-    await playerRecord.save()
 }
 
 export const finishGame = async (gameId: string) => {
@@ -265,9 +260,10 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
     for (const point of game.points) {
         for (const player of point.players) {
             player.pointsPlayed = 1
-            const atomicPlayer = await AtomicPlayer.findOne({ gameId: game._id, playerId: player._id })
-            atomicPlayer?.set({ ...addPlayerData(atomicPlayer, player) })
-            await atomicPlayer?.save()
+            await AtomicPlayer.findOneAndUpdate(
+                { gameId: game._id, playerId: player._id },
+                { $inc: addPlayerData(getInitialPlayerData({}), player) },
+            )
         }
     }
     await game.save()
