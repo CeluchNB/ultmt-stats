@@ -73,3 +73,11 @@ export const subtractConnectionData = (data1: IConnection, data2: IConnection): 
         scores: data1.scores - data2.scores,
     }
 }
+
+export const getDecConnectionValues = (data: IConnection) => {
+    return {
+        catches: -data.catches,
+        drops: -data.drops,
+        scores: -data.scores,
+    }
+}

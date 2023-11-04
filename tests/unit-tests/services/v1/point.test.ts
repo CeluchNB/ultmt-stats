@@ -6,7 +6,14 @@ import Connection from '../../../../src/models/connection'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import Team from '../../../../src/models/team'
-import { deletePoint, ingestPoint } from '../../../../src/services/v1/point'
+import {
+    deletePoint,
+    ingestPoint,
+    updateAddedAtomicTeamStats,
+    updateAddedTeamStats,
+    updateSubtractedAtomicTeamStats,
+    updateSubtractedTeamStats,
+} from '../../../../src/services/v1/point'
 import { Action, ActionType } from '../../../../src/types/point'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import { setUpDatabase, tearDownDatabase, resetDatabase } from '../../../fixtures/setup-db'
@@ -1469,5 +1476,120 @@ describe('test delete point', () => {
         await expect(deletePoint(gameId.toHexString(), new Types.ObjectId().toHexString())).rejects.toThrowError(
             Constants.POINT_NOT_FOUND,
         )
+    })
+})
+
+describe('database utils', () => {
+    describe('update added team stats', () => {
+        it('handles valid update', async () => {
+            const team = await Team.create({ ...teamOne, ...getInitialTeamData({}) })
+
+            const overrides = { goalsAgainst: 3, goalsFor: 1, turnovers: 2 }
+            await updateAddedTeamStats(getInitialTeamData(overrides), team._id)
+
+            const result = await Team.findById(team._id)
+            expect(result).toMatchObject(overrides)
+        })
+
+        it('does not update if team id missing', async () => {
+            const team = await Team.create({ ...teamOne, ...getInitialTeamData({}) })
+
+            const overrides = { goalsAgainst: 3, goalsFor: 1, turnovers: 2 }
+            await updateAddedTeamStats(getInitialTeamData(overrides))
+
+            const result = await Team.findById(team._id)
+            expect(result).not.toMatchObject(overrides)
+        })
+    })
+
+    describe('update added atomic team stats', () => {
+        const gameId = new Types.ObjectId()
+        const teamId = new Types.ObjectId()
+        it('handles valid update', async () => {
+            await AtomicTeam.create({ gameId, teamId, ...getInitialTeamData({}) })
+
+            const overrides = { goalsAgainst: 3, goalsFor: 1, turnovers: 2 }
+            await updateAddedAtomicTeamStats(getInitialTeamData(overrides), gameId, teamId)
+
+            const result = await AtomicTeam.findOne({ teamId, gameId })
+            expect(result).toMatchObject(overrides)
+        })
+
+        it('does not update if team id missing', async () => {
+            await AtomicTeam.create({ gameId, teamId, ...getInitialTeamData({}) })
+
+            const overrides = { goalsAgainst: 3, goalsFor: 1, turnovers: 2 }
+            await updateAddedAtomicTeamStats(getInitialTeamData(overrides), gameId)
+
+            const result = await AtomicTeam.findOne({ gameId, teamId })
+            expect(result).not.toMatchObject(overrides)
+        })
+    })
+
+    describe('update subtracted team stats', () => {
+        it('handles valid update', async () => {
+            const team = await Team.create({
+                ...teamOne,
+                ...getInitialTeamData({ goalsFor: 2, goalsAgainst: 3, turnovers: 1, completionsToScore: [1, 2, 3] }),
+            })
+
+            await updateSubtractedTeamStats({
+                _id: team._id,
+                ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnovers: 1, completionsToScore: [2] }),
+            })
+
+            const result = await Team.findById(team._id)
+            expect(result).toMatchObject({ goalsFor: 1, goalsAgainst: 2, turnovers: 0, completionsToScore: [1, 3] })
+        })
+
+        it('does not update if team missing id', async () => {
+            const team = await Team.create({
+                ...teamOne,
+                ...getInitialTeamData({ goalsFor: 2, goalsAgainst: 3, turnovers: 1, completionsToScore: [1, 2, 3] }),
+            })
+
+            await updateSubtractedTeamStats({
+                ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnovers: 1, completionsToScore: [2] }),
+            })
+
+            const result = await Team.findById(team._id)
+            expect(result).not.toMatchObject({ goalsFor: 1, goalsAgainst: 2, turnovers: 0, completionsToScore: [1, 3] })
+        })
+    })
+
+    describe('update subtracted atomic team stats', () => {
+        const teamId = new Types.ObjectId()
+        const gameId = new Types.ObjectId()
+
+        it('handles valid update', async () => {
+            await AtomicTeam.create({
+                teamId,
+                gameId,
+                ...getInitialTeamData({ goalsFor: 2, goalsAgainst: 3, turnovers: 1, completionsToScore: [1, 2, 3] }),
+            })
+
+            await updateSubtractedAtomicTeamStats(gameId, {
+                _id: teamId,
+                ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnovers: 1, completionsToScore: [2] }),
+            })
+
+            const result = await AtomicTeam.findOne({ gameId, teamId })
+            expect(result).toMatchObject({ goalsFor: 1, goalsAgainst: 2, turnovers: 0, completionsToScore: [1, 3] })
+        })
+
+        it('does not update if team missing id', async () => {
+            await AtomicTeam.create({
+                teamId,
+                gameId,
+                ...getInitialTeamData({ goalsFor: 2, goalsAgainst: 3, turnovers: 1, completionsToScore: [1, 2, 3] }),
+            })
+
+            await updateSubtractedAtomicTeamStats(gameId, {
+                ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, turnovers: 1, completionsToScore: [2] }),
+            })
+
+            const result = await AtomicTeam.findOne({ gameId, teamId })
+            expect(result).not.toMatchObject({ goalsFor: 1, goalsAgainst: 2, turnovers: 0, completionsToScore: [1, 3] })
+        })
     })
 })
