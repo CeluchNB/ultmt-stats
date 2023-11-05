@@ -2,7 +2,7 @@ import { Types } from 'mongoose'
 import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
 import { isCallahan, isCurrentTeamScore, isNotDiscMovementAction } from './action'
-import { createSafeFraction } from './utils'
+import { safeFraction } from './utils'
 import { IConnection } from '../types/connection'
 import { initializeConnectionMap, updateAtomicConnections } from './connection-stats'
 import { TeamData } from '../types/team'
@@ -197,21 +197,21 @@ export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): Player
 
 export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData => {
     const calcStats: CalculatedPlayerData = {
-        winPercentage: createSafeFraction(stats.wins, stats.wins + stats.losses),
+        winPercentage: safeFraction(stats.wins, stats.wins + stats.losses),
         plusMinus: stats.goals + stats.assists + stats.blocks - stats.throwaways - stats.drops,
-        catchingPercentage: createSafeFraction(stats.catches, stats.catches + stats.drops),
-        throwingPercentage: createSafeFraction(
+        catchingPercentage: safeFraction(stats.catches, stats.catches + stats.drops),
+        throwingPercentage: safeFraction(
             stats.completedPasses,
             stats.completedPasses + stats.throwaways + stats.droppedPasses,
         ),
-        ppGoals: createSafeFraction(stats.goals, stats.pointsPlayed),
-        ppAssists: createSafeFraction(stats.assists, stats.pointsPlayed),
-        ppHockeyAssists: createSafeFraction(stats.hockeyAssists, stats.pointsPlayed),
-        ppThrowaways: createSafeFraction(stats.throwaways, stats.pointsPlayed),
-        ppDrops: createSafeFraction(stats.drops, stats.pointsPlayed),
-        ppBlocks: createSafeFraction(stats.blocks, stats.pointsPlayed),
-        offensiveEfficiency: createSafeFraction(stats.holds, stats.offensePoints),
-        defensiveEfficiency: createSafeFraction(stats.breaks, stats.defensePoints),
+        ppGoals: safeFraction(stats.goals, stats.pointsPlayed),
+        ppAssists: safeFraction(stats.assists, stats.pointsPlayed),
+        ppHockeyAssists: safeFraction(stats.hockeyAssists, stats.pointsPlayed),
+        ppThrowaways: safeFraction(stats.throwaways, stats.pointsPlayed),
+        ppDrops: safeFraction(stats.drops, stats.pointsPlayed),
+        ppBlocks: safeFraction(stats.blocks, stats.pointsPlayed),
+        offensiveEfficiency: safeFraction(stats.holds, stats.offensePoints),
+        defensiveEfficiency: safeFraction(stats.breaks, stats.defensePoints),
     }
 
     return { ...stats, ...calcStats }

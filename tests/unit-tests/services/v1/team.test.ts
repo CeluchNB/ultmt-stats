@@ -1,4 +1,3 @@
-import Team from '../../../../src/models/team'
 import * as Constants from '../../../../src/utils/constants'
 import { setUpDatabase, tearDownDatabase, resetDatabase } from '../../../fixtures/setup-db'
 import { getPlayer, teamOne } from '../../../fixtures/data'
@@ -25,9 +24,10 @@ afterAll(async () => {
 describe('test get team by id', () => {
     it('with found team', async () => {
         const gameId = new Types.ObjectId()
-        await Team.create({
+        await AtomicTeam.create({
             ...teamOne,
-            games: [gameId],
+            gameId,
+            teamId: teamOne._id,
             ...getInitialTeamData({
                 goalsFor: 1,
                 goalsAgainst: 1,
@@ -118,23 +118,24 @@ describe('test filter team stats', () => {
         const gameTwoId = new Types.ObjectId()
         const gameThreeId = new Types.ObjectId()
 
-        await Team.create({
-            ...teamOne,
-            ...getInitialTeamData({ goalsFor: 11, goalsAgainst: 11, wins: 17, losses: 4 }),
-        })
-
         await AtomicTeam.create({
+            ...teamOne,
+            _id: new Types.ObjectId(),
             teamId: teamOne._id,
             gameId: gameOneId,
             ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 2, wins: 0, losses: 1 }),
         })
         await AtomicTeam.create({
+            ...teamOne,
+            _id: new Types.ObjectId(),
             teamId: teamOne._id,
             gameId: gameTwoId,
             ...getInitialTeamData({ goalsFor: 5, goalsAgainst: 4, wins: 1, losses: 0 }),
         })
 
         await AtomicTeam.create({
+            ...teamOne,
+            _id: new Types.ObjectId(),
             teamId: teamOne._id,
             gameId: gameThreeId,
             ...getInitialTeamData({ goalsFor: 5, goalsAgainst: 4, wins: 1, losses: 0 }),

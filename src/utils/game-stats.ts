@@ -22,28 +22,37 @@ export const getGamePlayerData = (game: IGame): Map<string, PlayerData> => {
 export const updateGameData = async (gameData: GameData, playerData: PlayerData, player?: EmbeddedPlayer | null) => {
     if (!player) return
     if (playerData.goals > gameData.goalsLeader.total) {
-        gameData.goalsLeader.player = player
+        gameData.goalsLeader.player = parsePlayer(player)
         gameData.goalsLeader.total = playerData.goals
     }
     if (playerData.assists > gameData.assistsLeader.total) {
-        gameData.assistsLeader.player = player
+        gameData.assistsLeader.player = parsePlayer(player)
         gameData.assistsLeader.total = playerData.assists
     }
     if (playerData.pointsPlayed > gameData.pointsPlayedLeader.total) {
-        gameData.pointsPlayedLeader.player = player
+        gameData.pointsPlayedLeader.player = parsePlayer(player)
         gameData.pointsPlayedLeader.total = playerData.pointsPlayed
     }
     if (playerData.blocks > gameData.blocksLeader.total) {
-        gameData.blocksLeader.player = player
+        gameData.blocksLeader.player = parsePlayer(player)
         gameData.blocksLeader.total = playerData.blocks
     }
     if (calculatePlayerTurnovers(playerData) > gameData.turnoversLeader.total) {
-        gameData.turnoversLeader.player = player
+        gameData.turnoversLeader.player = parsePlayer(player)
         gameData.turnoversLeader.total = calculatePlayerTurnovers(playerData)
     }
     if (!gameData.plusMinusLeader.player || calculatePlayerPlusMinus(playerData) > gameData.plusMinusLeader.total) {
-        gameData.plusMinusLeader.player = player
+        gameData.plusMinusLeader.player = parsePlayer(player)
         gameData.plusMinusLeader.total = calculatePlayerPlusMinus(playerData)
+    }
+}
+
+const parsePlayer = (player: EmbeddedPlayer): EmbeddedPlayer => {
+    return {
+        _id: player._id,
+        firstName: player.firstName,
+        lastName: player.lastName,
+        username: player.username,
     }
 }
 

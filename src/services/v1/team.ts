@@ -1,8 +1,13 @@
 import * as Constants from '../../utils/constants'
-import Team from '../../models/team'
 import { ApiError } from '../../types/error'
 import { FilteredTeamData, TeamData } from '../../types/team'
-import { addTeamData, getInitialTeamData } from '../../utils/team-stats'
+import {
+    addTeamData,
+    caclculateWinPercentage,
+    calculateDefensiveConversion,
+    calculateOffensiveConversion,
+    getInitialTeamData,
+} from '../../utils/team-stats'
 import AtomicTeam from '../../models/atomic-team'
 import AtomicPlayer from '../../models/atomic-player'
 import { FilteredGamePlayer, GameData } from '../../types/game'
@@ -13,10 +18,18 @@ import { addPlayerData, calculatePlayerStats } from '../../utils/player-stats'
 import { idEquals } from '../../utils/utils'
 
 export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => {
-    const team = await Team.findById(teamId)
-    if (!team) {
+    const atomicTeams = await AtomicTeam.find({ teamId })
+    if (atomicTeams.length === 0) {
         throw new ApiError(Constants.TEAM_NOT_FOUND, 404)
     }
+
+    const team = atomicTeams[atomicTeams.length - 1]
+    const games = atomicTeams.map((team) => team.gameId)
+
+    let data: TeamData = getInitialTeamData({})
+    atomicTeams.forEach((stat) => {
+        data = { ...addTeamData(stat, data) }
+    })
 
     const stats = await AtomicPlayer.find({ teamId })
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
@@ -24,43 +37,45 @@ export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => 
     return {
         ...team,
         ...team.toJSON(),
+        ...data,
         ...leaders,
+        _id: team._id,
         players,
-        place: team.place,
-        name: team.name,
-        winPercentage: team.winPercentage,
-        defensiveConversion: team.defensiveConversion,
-        offensiveConversion: team.offensiveConversion,
-        games: team.games,
+        games,
+        winPercentage: caclculateWinPercentage(data),
+        defensiveConversion: calculateDefensiveConversion(data),
+        offensiveConversion: calculateOffensiveConversion(data),
     }
 }
 
 export const filterTeamStats = async (teamId: string, gameIds: string[]): Promise<FilteredTeamData> => {
-    const team = await Team.findById(teamId)
-    if (!team) {
+    const filter = { $and: [{ teamId }, { gameId: { $in: gameIds } }] }
+    const atomicTeams = await AtomicTeam.find({ teamId, ...filter })
+
+    if (atomicTeams.length === 0) {
         throw new ApiError(Constants.TEAM_NOT_FOUND, 404)
     }
 
-    const filter = { $and: [{ teamId }, { gameId: { $in: gameIds } }] }
-    const teamStats = await AtomicTeam.find({ teamId, ...filter })
+    const team = atomicTeams[atomicTeams.length - 1]
     let data: TeamData = getInitialTeamData({})
 
-    teamStats.forEach((stat) => {
+    atomicTeams.forEach((stat) => {
         data = { ...addTeamData(stat, data) }
     })
 
     const stats = await AtomicPlayer.find({ teamId, gameId: { $in: gameIds } })
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
+    const games = atomicTeams.map((team) => team.gameId)
 
     return {
-        _id: team._id,
+        _id: team.teamId,
         place: team.place,
         name: team.name,
         players,
-        winPercentage: team.winPercentage,
-        offensiveConversion: team.offensiveConversion,
-        defensiveConversion: team.defensiveConversion,
-        games: team.games,
+        winPercentage: caclculateWinPercentage(data),
+        offensiveConversion: calculateOffensiveConversion(data),
+        defensiveConversion: calculateDefensiveConversion(data),
+        games: games,
         ...data,
         ...leaders,
     }

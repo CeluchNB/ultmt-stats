@@ -1,6 +1,6 @@
 import { Schema, model, SchemaTypes } from 'mongoose'
 import IGame, { IPoint, MomentumPoint } from '../types/game'
-import { teamDataSchema } from './team'
+import { teamDataSchema } from './atomic-team'
 import { connectionSchema } from './connection'
 
 const pointSchema = new Schema<IPoint>({

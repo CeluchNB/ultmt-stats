@@ -6,7 +6,6 @@ import { getPlayer, teamOne } from '../../../fixtures/data'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
-import Team from '../../../../src/models/team'
 import AtomicPlayer from '../../../../src/models/atomic-player'
 import { Action, ActionType } from '../../../../src/types/point'
 import app from '../../../../src/app'
@@ -49,7 +48,7 @@ describe('POST /point', () => {
             startTime,
             momentumData: [{ x: 0, y: 0 }],
         })
-        await Team.create(teamOne)
+
         await Player.create(playerOne)
         await Player.create(playerTwo)
         await Player.create(playerThree)
@@ -151,7 +150,6 @@ describe('PUT /point/:id/delete', () => {
             teamTwoId,
             startTime,
         })
-        await Team.create(teamOne)
 
         const point: IPoint = {
             _id: pointId,

@@ -5,12 +5,12 @@ import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { getPlayer, teamOne, teamTwo } from '../../../fixtures/data'
-import Team from '../../../../src/models/team'
 import Player from '../../../../src/models/player'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import AtomicPlayer from '../../../../src/models/atomic-player'
+import AtomicTeam from '../../../../src/models/atomic-team'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -101,12 +101,18 @@ describe('/POST finish game', () => {
     }
 
     beforeEach(async () => {
-        await Team.create({
+        await AtomicTeam.create({
             ...teamOne,
+            teamId: teamOne._id,
+            gameId,
+            _id: new Types.ObjectId(),
             players: [playerOne._id, playerTwo._id],
         })
-        await Team.create({
+        await AtomicTeam.create({
             ...teamTwo,
+            teamId: teamTwo._id,
+            gameId,
+            _id: new Types.ObjectId(),
             players: [playerThree._id, playerFour._id],
         })
 
@@ -150,12 +156,6 @@ describe('/POST finish game', () => {
         await game?.save()
 
         await request(app).put(`/api/v1/stats/game/finish/${gameId}`).send().expect(200)
-
-        const teamOneRecord = await Team.findById(teamOne._id)
-        expect(teamOneRecord).toMatchObject({ wins: 1, losses: 0 })
-
-        const teamTwoRecord = await Team.findById(teamTwo._id)
-        expect(teamTwoRecord).toMatchObject({ wins: 0, losses: 1 })
 
         const playerOneRecord = await Player.findById(playerOne._id)
         expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
