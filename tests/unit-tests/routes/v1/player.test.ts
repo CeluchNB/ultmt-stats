@@ -2,7 +2,7 @@ import * as Constants from '../../../../src/utils/constants'
 import request from 'supertest'
 import app from '../../../../src/app'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
-import Player from '../../../../src/models/player'
+// import Player from '../../../../src/models/player'
 import { getPlayer, teamOne } from '../../../fixtures/data'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { Types } from 'mongoose'
@@ -22,17 +22,32 @@ afterAll(async () => {
 
 describe('/GET player by id', () => {
     it('with found player', async () => {
+        const gameOneId = new Types.ObjectId()
+        const gameTwoId = new Types.ObjectId()
         const player = getPlayer(1)
-        await Player.create({
+
+        await AtomicPlayer.create({
             ...player,
+            playerId: player._id,
+            teamId: teamOne._id,
+            gameId: gameOneId,
+            _id: new Types.ObjectId(),
+            ...getInitialPlayerData({ goals: 1 }),
+        })
+        await AtomicPlayer.create({
+            ...player,
+            playerId: player._id,
+            teamId: teamOne._id,
+            gameId: gameTwoId,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 1 }),
         })
         const response = await request(app).get(`/api/v1/stats/player/${player._id}`).expect(200)
         const result = response.body.player
 
         expect(result).toMatchObject({
-            goals: 1,
-            plusMinus: 1,
+            goals: 2,
+            plusMinus: 2,
         })
     })
 
@@ -53,6 +68,8 @@ describe('/GET filtered player stats', () => {
             playerId: playerOne._id,
             gameId: gameOneId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 1 }),
         })
 
@@ -60,6 +77,8 @@ describe('/GET filtered player stats', () => {
             playerId: playerOne._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ assists: 1 }),
         })
     })

@@ -11,11 +11,10 @@ import {
 import AtomicTeam from '../../models/atomic-team'
 import AtomicPlayer from '../../models/atomic-player'
 import { FilteredGamePlayer, GameData } from '../../types/game'
-import Player from '../../models/player'
+// import Player from '../../models/player'
 import { updateGameData } from '../../utils/game-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, calculatePlayerStats } from '../../utils/player-stats'
-import { idEquals } from '../../utils/utils'
 
 export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => {
     const atomicTeams = await AtomicTeam.find({ teamId })
@@ -92,21 +91,21 @@ const calculatePlayerDataWithLeaders = async (
         pointsPlayedLeader: { total: 0, player: undefined },
         turnoversLeader: { total: 0, player: undefined },
     }
-    const playerRecords = await Player.find({ _id: { $in: stats.map((s) => s.playerId) } })
+    // const playerRecords = await Player.find({ _id: { $in: stats.map((s) => s.playerId) } })
     const playerMap = new Map<string, FilteredGamePlayer>()
     for (const stat of stats) {
         // calculate leaders for single team
-        const playerRecord = playerRecords.find((p) => idEquals(p._id, stat.playerId))
+        // const playerRecord = playerRecords.find((p) => idEquals(p._id, stat.playerId))
 
-        const playerId = playerRecord?._id?.toHexString()
+        const playerId = stat.playerId.toHexString()
         const player = playerMap.get(playerId || '')
-        if (!playerId || !playerRecord) continue
+        if (!playerId) continue
 
         // generate player object
         if (player) {
             playerMap.set(playerId, { ...player, ...stat.toJSON(), ...addPlayerData(player, stat) })
         } else {
-            playerMap.set(playerId, { ...playerRecord.toJSON(), ...stat.toJSON() })
+            playerMap.set(playerId, { ...stat.toJSON() })
         }
     }
 

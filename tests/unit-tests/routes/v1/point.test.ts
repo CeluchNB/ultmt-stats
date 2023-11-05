@@ -5,7 +5,7 @@ import { Types } from 'mongoose'
 import { getPlayer, teamOne } from '../../../fixtures/data'
 import { EmbeddedTeam } from '../../../../src/types/team'
 import Game from '../../../../src/models/game'
-import Player from '../../../../src/models/player'
+// import Player from '../../../../src/models/player'
 import AtomicPlayer from '../../../../src/models/atomic-player'
 import { Action, ActionType } from '../../../../src/types/point'
 import app from '../../../../src/app'
@@ -49,9 +49,9 @@ describe('POST /point', () => {
             momentumData: [{ x: 0, y: 0 }],
         })
 
-        await Player.create(playerOne)
-        await Player.create(playerTwo)
-        await Player.create(playerThree)
+        // await Player.create(playerOne)
+        // await Player.create(playerTwo)
+        // await Player.create(playerThree)
         await AtomicPlayer.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
         await AtomicPlayer.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
     })

@@ -5,7 +5,7 @@ import { Types } from 'mongoose'
 import Game from '../../../../src/models/game'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { getPlayer, teamOne, teamTwo } from '../../../fixtures/data'
-import Player from '../../../../src/models/player'
+// import Player from '../../../../src/models/player'
 import { getInitialTeamData } from '../../../../src/utils/team-stats'
 import { getInitialPlayerData } from '../../../../src/utils/player-stats'
 import { EmbeddedTeam } from '../../../../src/types/team'
@@ -123,10 +123,34 @@ describe('/POST finish game', () => {
             teamTwoId: teamTwo?._id,
         })
 
-        await Player.create(playerOne)
-        await Player.create(playerTwo)
-        await Player.create(playerThree)
-        await Player.create(playerFour)
+        await AtomicPlayer.create({
+            ...playerOne,
+            playerId: playerOne._id,
+            gameId,
+            teamId: teamOne._id,
+            _id: new Types.ObjectId(),
+        })
+        await AtomicPlayer.create({
+            ...playerTwo,
+            playerId: playerTwo._id,
+            gameId,
+            teamId: teamOne._id,
+            _id: new Types.ObjectId(),
+        })
+        await AtomicPlayer.create({
+            ...playerThree,
+            playerId: playerThree._id,
+            gameId,
+            teamId: teamTwo._id,
+            _id: new Types.ObjectId(),
+        })
+        await AtomicPlayer.create({
+            ...playerFour,
+            playerId: playerFour._id,
+            gameId,
+            teamId: teamTwo._id,
+            _id: new Types.ObjectId(),
+        })
     })
 
     it('with team one winning', async () => {
@@ -157,16 +181,16 @@ describe('/POST finish game', () => {
 
         await request(app).put(`/api/v1/stats/game/finish/${gameId}`).send().expect(200)
 
-        const playerOneRecord = await Player.findById(playerOne._id)
+        const playerOneRecord = await AtomicPlayer.findOne({ playerId: playerOne._id })
         expect(playerOneRecord).toMatchObject({ wins: 1, losses: 0 })
 
-        const playerTwoRecord = await Player.findById(playerTwo._id)
+        const playerTwoRecord = await AtomicPlayer.findOne({ playerId: playerTwo._id })
         expect(playerTwoRecord).toMatchObject({ wins: 1, losses: 0 })
 
-        const playerThreeRecord = await Player.findById(playerThree._id)
+        const playerThreeRecord = await AtomicPlayer.findOne({ playerId: playerThree._id })
         expect(playerThreeRecord).toMatchObject({ wins: 0, losses: 1 })
 
-        const playerFourRecord = await Player.findById(playerFour._id)
+        const playerFourRecord = await AtomicPlayer.findOne({ playerId: playerFour._id })
         expect(playerFourRecord).toMatchObject({ wins: 0, losses: 1 })
     })
 
@@ -209,25 +233,25 @@ describe('/GET filtered game', () => {
     const playerThree = getPlayer(3)
 
     beforeEach(async () => {
-        await Player.create({ ...playerOne })
-        await Player.create({ ...playerTwo })
-        await Player.create({ ...playerThree })
         await AtomicPlayer.create({
             gameId,
             teamId: teamOne._id,
             playerId: playerOne._id,
+            ...playerOne,
             ...getInitialPlayerData({ goals: 1, pointsPlayed: 2 }),
         })
         await AtomicPlayer.create({
             gameId,
             teamId: teamOne._id,
             playerId: playerTwo._id,
+            ...playerTwo,
             ...getInitialPlayerData({ assists: 1, pointsPlayed: 1 }),
         })
         await AtomicPlayer.create({
             gameId,
             teamId: teamTwo._id,
             playerId: playerThree._id,
+            ...playerThree,
             ...getInitialPlayerData({ throwaways: 1, pointsPlayed: 3 }),
         })
         await Game.create({
@@ -351,18 +375,24 @@ describe('/GET rebuild atomic players', () => {
             playerId: playerOne._id,
             gameId: gameOneId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 3, catches: 4, pointsPlayed: 4 }),
         })
         await AtomicPlayer.create({
             playerId: playerTwo._id,
             gameId: gameOneId,
             teamId: teamOne._id,
+            ...playerTwo,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ assists: 2, completedPasses: 2, touches: 2, catches: 1, pointsPlayed: 4 }),
         })
         await AtomicPlayer.create({
             playerId: playerThree._id,
             gameId: gameOneId,
             teamId: teamOne._id,
+            ...playerThree,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ assists: 1, pointsPlayed: 4 }),
         })
 
@@ -370,18 +400,24 @@ describe('/GET rebuild atomic players', () => {
             playerId: playerOne._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 1, assists: 1 }),
         })
         await AtomicPlayer.create({
             playerId: playerTwo._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
+            ...playerTwo,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 1, assists: 1 }),
         })
         await AtomicPlayer.create({
             playerId: playerThree._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
+            ...playerThree,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 1, assists: 1 }),
         })
     })

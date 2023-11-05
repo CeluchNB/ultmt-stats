@@ -1,8 +1,6 @@
-// import Player from '../models/player'
 import IGame, { GameData } from '../types/game'
 import { EmbeddedPlayer, PlayerData } from '../types/player'
 import { addPlayerData } from './player-stats'
-// import { idEquals } from './team-stats'
 
 export const getGamePlayerData = (game: IGame): Map<string, PlayerData> => {
     const playerMap = new Map<string, PlayerData>()

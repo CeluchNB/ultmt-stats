@@ -3,7 +3,7 @@ import * as Constants from '../../../../src/utils/constants'
 import { Types } from 'mongoose'
 import AtomicPlayer from '../../../../src/models/atomic-player'
 import Game from '../../../../src/models/game'
-import Player from '../../../../src/models/player'
+// import Player from '../../../../src/models/player'
 import {
     deletePoint,
     ingestPoint,
@@ -67,9 +67,9 @@ describe('test ingest point', () => {
             momentumData: [{ x: 0, y: 0 }],
         })
 
-        await Player.create(playerOne)
-        await Player.create(playerTwo)
-        await Player.create(playerThree)
+        // await Player.create(playerOne)
+        // await Player.create(playerTwo)
+        // await Player.create(playerThree)
         await AtomicPlayer.create({ gameId, playerId: playerOne._id, teamId: teamOne._id })
         await AtomicPlayer.create({ gameId, playerId: playerTwo._id, teamId: teamOne._id })
 
@@ -164,44 +164,44 @@ describe('test ingest point', () => {
             breaks: 0,
         })
 
-        const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord).toMatchObject({
-            goals: 0,
-            assists: 1,
-            pointsPlayed: 1,
-            touches: 2,
-            catches: 2,
-            offensePoints: 1,
-            holds: 1,
-            defensePoints: 0,
-            breaks: 0,
-        })
+        // const playerOneRecord = await Player.findById(playerOne._id)
+        // expect(playerOneRecord).toMatchObject({
+        //     goals: 0,
+        //     assists: 1,
+        //     pointsPlayed: 1,
+        //     touches: 2,
+        //     catches: 2,
+        //     offensePoints: 1,
+        //     holds: 1,
+        //     defensePoints: 0,
+        //     breaks: 0,
+        // })
 
-        const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord).toMatchObject({
-            goals: 0,
-            assists: 0,
-            pointsPlayed: 1,
-            touches: 1,
-            catches: 1,
-            offensePoints: 1,
-            holds: 1,
-            defensePoints: 0,
-            breaks: 0,
-        })
+        // const playerTwoRecord = await Player.findById(playerTwo._id)
+        // expect(playerTwoRecord).toMatchObject({
+        //     goals: 0,
+        //     assists: 0,
+        //     pointsPlayed: 1,
+        //     touches: 1,
+        //     catches: 1,
+        //     offensePoints: 1,
+        //     holds: 1,
+        //     defensePoints: 0,
+        //     breaks: 0,
+        // })
 
-        const playerThreeRecord = await Player.findById(playerThree._id)
-        expect(playerThreeRecord).toMatchObject({
-            goals: 1,
-            assists: 0,
-            pointsPlayed: 1,
-            touches: 1,
-            catches: 1,
-            offensePoints: 1,
-            holds: 1,
-            defensePoints: 0,
-            breaks: 0,
-        })
+        // const playerThreeRecord = await Player.findById(playerThree._id)
+        // expect(playerThreeRecord).toMatchObject({
+        //     goals: 1,
+        //     assists: 0,
+        //     pointsPlayed: 1,
+        //     touches: 1,
+        //     catches: 1,
+        //     offensePoints: 1,
+        //     holds: 1,
+        //     defensePoints: 0,
+        //     breaks: 0,
+        // })
 
         const atomicConnectionOne = await AtomicConnection.findOne({
             gameId,
@@ -287,8 +287,7 @@ describe('test ingest point', () => {
             teamTwoScore: 0,
         })
 
-        const playerOneStatQuery = await AtomicPlayer.find({ playerId: playerOne._id, gameId })
-        const playerOneStat = playerOneStatQuery[0]
+        const playerOneStat = await AtomicPlayer.findOne({ playerId: playerOne._id, gameId })
         expect(playerOneStat).toMatchObject({
             goals: 0,
             assists: 0,
@@ -302,41 +301,41 @@ describe('test ingest point', () => {
             offensePoints: 0,
         })
 
-        const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord).toMatchObject({
-            goals: 0,
-            assists: 0,
-            pointsPlayed: 1,
-            touches: 0,
-            catches: 0,
-            pulls: 1,
-            defensePoints: 1,
-            breaks: 0,
-            holds: 0,
-            offensePoints: 0,
-        })
+        // const playerOneRecord = await Player.findById(playerOne._id)
+        // expect(playerOneRecord).toMatchObject({
+        //     goals: 0,
+        //     assists: 0,
+        //     pointsPlayed: 1,
+        //     touches: 0,
+        //     catches: 0,
+        //     pulls: 1,
+        //     defensePoints: 1,
+        //     breaks: 0,
+        //     holds: 0,
+        //     offensePoints: 0,
+        // })
 
-        const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord).toMatchObject({
-            goals: 0,
-            assists: 0,
-            pointsPlayed: 1,
-            defensePoints: 1,
-            breaks: 0,
-            holds: 0,
-            offensePoints: 0,
-        })
+        // const playerTwoRecord = await Player.findById(playerTwo._id)
+        // expect(playerTwoRecord).toMatchObject({
+        //     goals: 0,
+        //     assists: 0,
+        //     pointsPlayed: 1,
+        //     defensePoints: 1,
+        //     breaks: 0,
+        //     holds: 0,
+        //     offensePoints: 0,
+        // })
 
-        const playerThreeRecord = await Player.findById(playerThree._id)
-        expect(playerThreeRecord).toMatchObject({
-            goals: 0,
-            assists: 0,
-            pointsPlayed: 1,
-            defensePoints: 1,
-            breaks: 0,
-            holds: 0,
-            offensePoints: 0,
-        })
+        // const playerThreeRecord = await Player.findById(playerThree._id)
+        // expect(playerThreeRecord).toMatchObject({
+        //     goals: 0,
+        //     assists: 0,
+        //     pointsPlayed: 1,
+        //     defensePoints: 1,
+        //     breaks: 0,
+        //     holds: 0,
+        //     offensePoints: 0,
+        // })
 
         const atomicTeamRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamRecord?.defensePoints).toBe(1)
@@ -404,8 +403,8 @@ describe('test ingest point', () => {
         const playerOneStat = playerOneStatQuery[0]
         expect(playerOneStat).toMatchObject(playerOneResult)
 
-        const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord).toMatchObject(playerOneResult)
+        // const playerOneRecord = await Player.findById(playerOne._id)
+        // expect(playerOneRecord).toMatchObject(playerOneResult)
 
         const playerTwoResult = {
             goals: 1,
@@ -426,8 +425,8 @@ describe('test ingest point', () => {
         const playerTwoStat = playerTwoStatQuery[0]
         expect(playerTwoStat).toMatchObject(playerTwoResult)
 
-        const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord).toMatchObject(playerTwoResult)
+        // const playerTwoRecord = await Player.findById(playerTwo._id)
+        // expect(playerTwoRecord).toMatchObject(playerTwoResult)
 
         const atomicTeamRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamRecord).toMatchObject({
@@ -948,32 +947,32 @@ describe('test delete point', () => {
     })
 
     it('updates player stats correctly', async () => {
-        await Player.create({ ...playerOne, goals: 1, touches: 5, catches: 4 })
-        await Player.create({ ...playerTwo, assists: 2, touches: 2, goals: 1 })
-        await Player.create({ ...playerThree, touches: 1, drops: 1, completedPasses: 2 })
+        // await Player.create({ ...playerOne, goals: 1, touches: 5, catches: 4 })
+        // await Player.create({ ...playerTwo, assists: 2, touches: 2, goals: 1 })
+        // await Player.create({ ...playerThree, touches: 1, drops: 1, completedPasses: 2 })
 
         await deletePoint(gameId.toHexString(), pointId.toHexString())
 
-        const playerOneRecord = await Player.findById(playerOne._id)
-        expect(playerOneRecord).toMatchObject({
-            goals: 0,
-            touches: 3,
-            catches: 2,
-        })
+        // const playerOneRecord = await Player.findById(playerOne._id)
+        // expect(playerOneRecord).toMatchObject({
+        //     goals: 0,
+        //     touches: 3,
+        //     catches: 2,
+        // })
 
-        const playerTwoRecord = await Player.findById(playerTwo._id)
-        expect(playerTwoRecord).toMatchObject({
-            assists: 1,
-            touches: 1,
-            goals: 1,
-        })
+        // const playerTwoRecord = await Player.findById(playerTwo._id)
+        // expect(playerTwoRecord).toMatchObject({
+        //     assists: 1,
+        //     touches: 1,
+        //     goals: 1,
+        // })
 
-        const playerThreeRecord = await Player.findById(playerThree._id)
-        expect(playerThreeRecord).toMatchObject({
-            touches: 1,
-            drops: 0,
-            completedPasses: 2,
-        })
+        // const playerThreeRecord = await Player.findById(playerThree._id)
+        // expect(playerThreeRecord).toMatchObject({
+        //     touches: 1,
+        //     drops: 0,
+        //     completedPasses: 2,
+        // })
     })
 
     it('updates atomic player correctly', async () => {
@@ -1141,9 +1140,9 @@ describe('test delete point', () => {
     })
 
     it('updates game correctly', async () => {
-        await Player.create({ ...playerOne })
-        await Player.create({ ...playerTwo })
-        await Player.create({ ...playerThree })
+        // await Player.create({ ...playerOne })
+        // await Player.create({ ...playerTwo })
+        // await Player.create({ ...playerThree })
 
         const game = await Game.findById(gameId)
 

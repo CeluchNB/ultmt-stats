@@ -2,7 +2,6 @@ import * as Constants from '../../utils/constants'
 import AtomicPlayer from '../../models/atomic-player'
 import Game from '../../models/game'
 import IGame, { FilteredGameData, FilteredGamePlayer, GameData, GameInput } from '../../types/game'
-import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
@@ -10,8 +9,7 @@ import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
 import { getIncTeamData, getInitialTeamData, getPushTeamData } from '../../utils/team-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
-import { addPlayerData, getInitialPlayerData, subtractPlayerData } from '../../utils/player-stats'
-import { idEquals } from '../../utils/utils'
+import { addPlayerData, getInitialPlayerData } from '../../utils/player-stats'
 import AtomicConnection from '../../models/atomic-connection'
 
 export const createGame = async (gameInput: GameInput) => {
@@ -63,12 +61,6 @@ export const createGame = async (gameInput: GameInput) => {
 }
 
 const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.ObjectId, teamId: Types.ObjectId) => {
-    await Player.findOneAndUpdate(
-        { _id: player._id },
-        { $set: { ...player }, $push: { games: gameId } },
-        { upsert: true },
-    )
-
     // cannot take this out b/c some players may not play in a point
     await AtomicPlayer.findOneAndUpdate(
         { playerId: player._id, teamId, gameId },
@@ -142,7 +134,7 @@ const updatePlayers = async (
     players?: Types.ObjectId[],
 ) => {
     if (!players || players.length === 0) return
-    await Player.updateMany({ _id: { $in: players } }, { $inc: updates })
+
     await AtomicPlayer.updateMany({ gameId, teamId }, { $inc: updates })
 }
 
@@ -192,17 +184,19 @@ const calculatePlayerDataWithLeaders = async (
         pointsPlayedLeader: { total: 0, player: undefined },
         turnoversLeader: { total: 0, player: undefined },
     }
-    const playerRecords = await Player.find({ _id: { $in: stats.map((s) => s.playerId) } })
+
     const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
         // calculate leaders for single team
-        const player = playerRecords.find((p) => idEquals(p._id, stat.playerId))
-        updateGameData(leaders, stat, player)
+        updateGameData(leaders, stat, {
+            _id: stat.playerId,
+            firstName: stat.firstName,
+            lastName: stat.lastName,
+            username: stat.username,
+        })
 
         // generate player object
-        if (player) {
-            players.push({ ...player.toJSON(), ...stat.toJSON() })
-        }
+        players.push({ ...stat.toJSON() })
     }
 
     return { players, leaders }
@@ -222,6 +216,7 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
     for (const player of oldAtomicPlayers) {
         const teamId = player.teamId
         const playerId = player.playerId
+        const { firstName, lastName, username } = player
 
         // delete old atomic player with bad data
         await player.deleteOne()
@@ -231,6 +226,9 @@ export const rebuildAtomicPlayers = async (gameId: string) => {
             teamId,
             gameId: game._id,
             playerId: playerId,
+            firstName,
+            lastName,
+            username,
         })
     }
 
@@ -265,20 +263,6 @@ const updateTeamOnGameDelete = async (gameId: string, teamId: string) => {
 }
 
 const updatePlayersOnGameDelete = async (gameId: string, teamId: string) => {
-    const atomicPlayers = await AtomicPlayer.find({ gameId, teamId })
-    const playerIds = atomicPlayers.map((p) => p.playerId)
-    const players = await Player.find({ _id: { $in: playerIds } })
-
-    const playerPromises = []
-    for (const player of players) {
-        // TODO: can I improve this runtime? - just remove when refactor away from total stats
-        const atomicPlayer = atomicPlayers.find((ap) => idEquals(ap.playerId, player._id))
-        if (atomicPlayer) {
-            player?.set({ ...subtractPlayerData(player, atomicPlayer) })
-            playerPromises.push(player?.save())
-        }
-    }
-    await Promise.all(playerPromises)
     await AtomicPlayer.deleteMany({ gameId, teamId })
 }
 

@@ -1,9 +1,9 @@
 import { Types } from 'mongoose'
-import { CalculatedPlayerData, PlayerData } from './player'
+import { CalculatedPlayerData, EmbeddedPlayer, PlayerData } from './player'
 import { EmbeddedTeam, TeamData } from './team'
 import { IConnection } from './connection'
 
-export interface IAtomicPlayer extends PlayerData, CalculatedPlayerData {
+export interface IAtomicPlayer extends EmbeddedPlayer, PlayerData, CalculatedPlayerData {
     _id: Types.ObjectId
     playerId: Types.ObjectId
     gameId: Types.ObjectId

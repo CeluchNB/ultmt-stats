@@ -4,6 +4,9 @@ import { safeFraction } from '../utils/utils'
 
 const schema = new Schema<IAtomicPlayer>(
     {
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
+        username: { type: String, required: true },
         goals: { type: Number, required: true, default: 0 },
         assists: { type: Number, required: true, default: 0 },
         hockeyAssists: { type: Number, required: true, default: 0 },

@@ -4,7 +4,7 @@ import { Types } from 'mongoose'
 import { PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicPlayer from '../../models/atomic-player'
-import Player from '../../models/player'
+// import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import { calculatePlayerData, getDecPlayerData, updatePlayerStatsByTeamStats } from '../../utils/player-stats'
 import { IPoint, IdentifiedTeamData } from '../../types/game'
@@ -97,7 +97,7 @@ const savePlayerData = async (
     const promises = []
     for (const stats of playerStats) {
         promises.push(saveAtomicPlayer(stats, gameId, teamId))
-        promises.push(savePlayerStats(stats))
+        // promises.push(savePlayerStats(stats))
     }
     await Promise.all(promises)
 }
@@ -115,15 +115,15 @@ const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, tea
     }
 }
 
-const savePlayerStats = async (stats: PlayerDataId) => {
-    await Player.findOneAndUpdate(
-        { _id: stats.playerId },
-        {
-            $inc: stats,
-        },
-        { upsert: true },
-    )
-}
+// const savePlayerStats = async (stats: PlayerDataId) => {
+//     await Player.findOneAndUpdate(
+//         { _id: stats.playerId },
+//         {
+//             $inc: stats,
+//         },
+//         { upsert: true },
+//     )
+// }
 
 export const updateAddedAtomicTeamStats = async (
     teamData: TeamData,
@@ -184,7 +184,7 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     // subtract point stats from atomic stats
     const playerPromises = []
     for (const player of point.players) {
-        playerPromises.push(Player.findOneAndUpdate({ _id: player._id }, { $inc: getDecPlayerData(player) }))
+        // playerPromises.push(Player.findOneAndUpdate({ _id: player._id }, { $inc: getDecPlayerData(player) }))
         playerPromises.push(
             AtomicPlayer.findOneAndUpdate(
                 { playerId: player._id, gameId: game._id },
