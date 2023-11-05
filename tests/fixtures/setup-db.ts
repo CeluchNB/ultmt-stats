@@ -1,5 +1,4 @@
 import { connect, connection } from 'mongoose'
-import Connection from '../../src/models/connection'
 import Game from '../../src/models/game'
 import Player from '../../src/models/player'
 import AtomicPlayer from '../../src/models/atomic-player'
@@ -15,7 +14,6 @@ export const resetDatabase = async () => {
     await Player.deleteMany({})
     await AtomicPlayer.deleteMany({})
     await AtomicTeam.deleteMany({})
-    await Connection.deleteMany({})
     await AtomicConnection.deleteMany({})
 }
 

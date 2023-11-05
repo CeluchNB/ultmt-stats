@@ -2,7 +2,6 @@
 import * as Constants from '../../../../src/utils/constants'
 import { Types } from 'mongoose'
 import AtomicPlayer from '../../../../src/models/atomic-player'
-import Connection from '../../../../src/models/connection'
 import Game from '../../../../src/models/game'
 import Player from '../../../../src/models/player'
 import {
@@ -232,36 +231,6 @@ describe('test ingest point', () => {
             receiverId: playerOne._id,
         })
         expect(atomicConnectionThree).toMatchObject({
-            catches: 1,
-            drops: 0,
-            scores: 0,
-        })
-
-        const connectionOne = await Connection.findOne({
-            throwerId: playerOne._id,
-            receiverId: playerTwo._id,
-        })
-        expect(connectionOne).toMatchObject({
-            catches: 1,
-            drops: 0,
-            scores: 0,
-        })
-
-        const connectionTwo = await Connection.findOne({
-            throwerId: playerOne._id,
-            receiverId: playerThree._id,
-        })
-        expect(connectionTwo).toMatchObject({
-            catches: 1,
-            drops: 0,
-            scores: 1,
-        })
-
-        const connectionThree = await Connection.findOne({
-            throwerId: playerTwo._id,
-            receiverId: playerOne._id,
-        })
-        expect(connectionThree).toMatchObject({
             catches: 1,
             drops: 0,
             scores: 0,
@@ -1187,43 +1156,6 @@ describe('test delete point', () => {
     })
 
     it('updates connections correctly', async () => {
-        await Connection.create({
-            ...getInitialConnectionData(playerOne._id, playerTwo._id),
-            catches: 10,
-            drops: 2,
-            scores: 4,
-        })
-        await Connection.create({
-            ...getInitialConnectionData(playerOne._id, playerThree._id),
-            catches: 5,
-            drops: 1,
-            scores: 2,
-        })
-        await Connection.create({
-            ...getInitialConnectionData(playerTwo._id, playerOne._id),
-            catches: 0,
-            drops: 0,
-            scores: 0,
-        })
-        await Connection.create({
-            ...getInitialConnectionData(playerTwo._id, playerThree._id),
-            catches: 7,
-            drops: 0,
-            scores: 3,
-        })
-        await Connection.create({
-            ...getInitialConnectionData(playerThree._id, playerOne._id),
-            catches: 15,
-            drops: 0,
-            scores: 0,
-        })
-        await Connection.create({
-            ...getInitialConnectionData(playerThree._id, playerTwo._id),
-            catches: 0,
-            drops: 1,
-            scores: 0,
-        })
-
         await AtomicConnection.create({
             ...getInitialConnectionData(playerOne._id, playerTwo._id),
             gameId,
@@ -1275,13 +1207,6 @@ describe('test delete point', () => {
 
         await deletePoint(gameId.toHexString(), pointId.toHexString())
 
-        const connectionOne = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerTwo._id })
-        expect(connectionOne).toMatchObject({
-            catches: 9,
-            drops: 1,
-            scores: 3,
-        })
-
         const atomicConnectionOne = await AtomicConnection.findOne({
             gameId,
             throwerId: playerOne._id,
@@ -1291,13 +1216,6 @@ describe('test delete point', () => {
             catches: 3,
             drops: 0,
             scores: 0,
-        })
-
-        const connectionTwo = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerThree._id })
-        expect(connectionTwo).toMatchObject({
-            catches: 5,
-            drops: 1,
-            scores: 2,
         })
 
         const atomicConnectionTwo = await AtomicConnection.findOne({
@@ -1311,13 +1229,6 @@ describe('test delete point', () => {
             scores: 2,
         })
 
-        const connectionThree = await Connection.findOne({ throwerId: playerTwo._id, receiverId: playerOne._id })
-        expect(connectionThree).toMatchObject({
-            catches: 0,
-            drops: 0,
-            scores: 0,
-        })
-
         const atomicConnectionThree = await AtomicConnection.findOne({
             gameId,
             throwerId: playerTwo._id,
@@ -1327,13 +1238,6 @@ describe('test delete point', () => {
             catches: 0,
             drops: 0,
             scores: 0,
-        })
-
-        const connectionFour = await Connection.findOne({ throwerId: playerTwo._id, receiverId: playerThree._id })
-        expect(connectionFour).toMatchObject({
-            catches: 3,
-            drops: 0,
-            scores: 2,
         })
 
         const atomicConnectionFour = await AtomicConnection.findOne({
@@ -1347,13 +1251,6 @@ describe('test delete point', () => {
             scores: 0,
         })
 
-        const connectionFive = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerOne._id })
-        expect(connectionFive).toMatchObject({
-            catches: 13,
-            drops: 0,
-            scores: 0,
-        })
-
         const atomicConnectionFive = await AtomicConnection.findOne({
             gameId,
             throwerId: playerThree._id,
@@ -1362,13 +1259,6 @@ describe('test delete point', () => {
         expect(atomicConnectionFive).toMatchObject({
             catches: 5,
             drops: 0,
-            scores: 0,
-        })
-
-        const connectionSix = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerTwo._id })
-        expect(connectionSix).toMatchObject({
-            catches: 0,
-            drops: 1,
             scores: 0,
         })
 

@@ -3,7 +3,6 @@ import request from 'supertest'
 import app from '../../../../src/app'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { Types } from 'mongoose'
-import Connection from '../../../../src/models/connection'
 import AtomicConnection from '../../../../src/models/atomic-connection'
 
 beforeAll(async () => {
@@ -24,9 +23,11 @@ describe('connection routes', () => {
         const receiverId = new Types.ObjectId()
 
         it('returns found connection', async () => {
-            await Connection.create({
+            await AtomicConnection.create({
                 throwerId,
                 receiverId,
+                gameId: new Types.ObjectId(),
+                teamId: new Types.ObjectId(),
                 catches: 10,
                 drops: 1,
                 scores: 1,

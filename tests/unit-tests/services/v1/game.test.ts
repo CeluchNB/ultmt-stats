@@ -22,9 +22,8 @@ import { ApiError } from '../../../../src/types/error'
 import AtomicTeam from '../../../../src/models/atomic-team'
 import { PlayerData } from '../../../../src/types/player'
 import { IConnection } from '../../../../src/types/connection'
-import { getInitialConnectionData, subtractConnectionData } from '../../../../src/utils/connection-stats'
+import { getInitialConnectionData } from '../../../../src/utils/connection-stats'
 import AtomicConnection from '../../../../src/models/atomic-connection'
-import Connection from '../../../../src/models/connection'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -277,8 +276,6 @@ describe('finish game', () => {
         apPlayerThreeModify!.losses = 1
         await apPlayerThreeModify?.save()
 
-        // await teamOneModify?.save()
-        // await teamTwoModify?.save()
         await atomicTeamOneModify?.save()
         await atomicTeamTwoModify?.save()
         await playerOneModify?.save()
@@ -348,8 +345,6 @@ describe('finish game', () => {
         apPlayerThreeModify!.wins = 1
         await apPlayerThreeModify?.save()
 
-        // await teamOneModify?.save()
-        // await teamTwoModify?.save()
         await atomicTeamOneModify?.save()
         await atomicTeamTwoModify?.save()
         await playerOneModify?.save()
@@ -456,8 +451,6 @@ describe('finish game', () => {
         apPlayerThreeModify!.wins = 1
         await apPlayerThreeModify?.save()
 
-        // await teamOneModify?.save()
-        // await teamTwoModify?.save()
         await playerOneModify?.save()
         await playerTwoModify?.save()
         await playerThreeModify?.save()
@@ -526,8 +519,6 @@ describe('finish game', () => {
         apPlayerThreeModify!.losses = 1
         await apPlayerThreeModify?.save()
 
-        // await teamOneModify?.save()
-        // await teamTwoModify?.save()
         await atomicTeamOneModify?.save()
         await atomicTeamTwoModify?.save()
         await playerOneModify?.save()
@@ -655,17 +646,6 @@ describe('delete game', () => {
         scores: 1,
     })
 
-    const connectionOneData: IConnection = getInitialConnectionData(playerOne._id, playerTwo._id, {
-        catches: 10,
-        drops: 2,
-        scores: 5,
-    })
-    const connectionTwoData: IConnection = getInitialConnectionData(playerThree._id, playerFour._id, {
-        catches: 15,
-        drops: 1,
-        scores: 3,
-    })
-
     beforeEach(async () => {
         await AtomicTeam.create(
             { ...teamOne, gameId, teamId: teamOne._id, ...atomicTeamOneData },
@@ -689,7 +669,6 @@ describe('delete game', () => {
             { ...atomicConnectionOneData, gameId, teamId: teamOne._id },
             { ...atomicConnectionTwoData, gameId, teamId: teamTwo._id },
         )
-        await Connection.create(connectionOneData, connectionTwoData)
 
         await Game.create({
             _id: gameId,
@@ -719,14 +698,6 @@ describe('delete game', () => {
         expect(playerTwoResult).toMatchObject({ ...subtractPlayerData(playerTwoData, atomicPlayerTwoData) })
         expect(playerThreeResult).toMatchObject(playerThreeData)
         expect(playerFourResult).toMatchObject(playerFourData)
-
-        const connectionOneResult = await Connection.findOne({ throwerId: playerOne._id, receiverId: playerTwo._id })
-        const connectionTwoResult = await Connection.findOne({ throwerId: playerThree._id, receiverId: playerFour._id })
-
-        expect(connectionOneResult).toMatchObject({
-            ...subtractConnectionData(connectionOneData, atomicConnectionOneData),
-        })
-        expect(connectionTwoResult).toMatchObject(connectionTwoData)
     })
 
     it('handles unfound game error', async () => {

@@ -4,7 +4,7 @@ import Game from '../../models/game'
 import IGame, { FilteredGameData, FilteredGamePlayer, GameData, GameInput } from '../../types/game'
 import Player from '../../models/player'
 import { EmbeddedPlayer } from '../../types/player'
-import { FilterQuery, Types } from 'mongoose'
+import { Types } from 'mongoose'
 import { ApiError } from '../../types/error'
 import { calculateWinner, updateGameData } from '../../utils/game-stats'
 import AtomicTeam from '../../models/atomic-team'
@@ -13,9 +13,6 @@ import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, getInitialPlayerData, subtractPlayerData } from '../../utils/player-stats'
 import { idEquals } from '../../utils/utils'
 import AtomicConnection from '../../models/atomic-connection'
-import Connection from '../../models/connection'
-import { subtractConnectionData } from '../../utils/connection-stats'
-import { IConnection } from '../../types/connection'
 
 export const createGame = async (gameInput: GameInput) => {
     const prevGame = await Game.findById(gameInput._id)
@@ -286,26 +283,5 @@ const updatePlayersOnGameDelete = async (gameId: string, teamId: string) => {
 }
 
 const updateConnectionsOnGameDelete = async (gameId: string, teamId: string) => {
-    const atomicConnections = await AtomicConnection.find({ gameId, teamId })
-    const connectionIds = atomicConnections.map((c) => ({ throwerId: c.throwerId, receiverId: c.receiverId }))
-    const filter: FilterQuery<IConnection> = {}
-    if (connectionIds.length > 0) {
-        filter.$or = connectionIds
-    }
-    const connections = await Connection.find(filter)
-
-    const connectionPromises = []
-    for (const connection of connections) {
-        // TODO: can I improve this runtime? - just remove when refactor away from total stats
-        const atomicConnection = atomicConnections.find(
-            (ac) => idEquals(ac.throwerId, connection.throwerId) && idEquals(ac.receiverId, connection.receiverId),
-        )
-        if (atomicConnection) {
-            connection?.set({ ...subtractConnectionData(connection, atomicConnection) })
-            connectionPromises.push(connection?.save())
-        }
-    }
-
-    await Promise.all(connectionPromises)
     await AtomicConnection.deleteMany({ gameId, teamId })
 }

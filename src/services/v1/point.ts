@@ -4,7 +4,6 @@ import { Types } from 'mongoose'
 import { PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicPlayer from '../../models/atomic-player'
-import Connection from '../../models/connection'
 import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import { calculatePlayerData, getDecPlayerData, updatePlayerStatsByTeamStats } from '../../utils/player-stats'
@@ -152,7 +151,6 @@ const saveConnectionData = async (connections: IConnection[], gameId: Types.Obje
         if (!connectionHasValue(connection)) continue
 
         promises.push(saveAtomicConnection(connection, gameId, teamId))
-        promises.push(saveConnections(connection))
     }
     await Promise.all(promises)
 }
@@ -160,20 +158,6 @@ const saveConnectionData = async (connections: IConnection[], gameId: Types.Obje
 const saveAtomicConnection = async (connection: IConnection, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
     await AtomicConnection.findOneAndUpdate(
         { gameId, teamId, throwerId: connection.throwerId, receiverId: connection.receiverId },
-        {
-            $inc: {
-                catches: connection.catches,
-                drops: connection.drops,
-                scores: connection.scores,
-            },
-        },
-        { upsert: true },
-    )
-}
-
-const saveConnections = async (connection: IConnection) => {
-    await Connection.findOneAndUpdate(
-        { throwerId: connection.throwerId, receiverId: connection.receiverId },
         {
             $inc: {
                 catches: connection.catches,
@@ -250,10 +234,6 @@ export const updateSubtractedAtomicTeamStats = async (gameId: Types.ObjectId, te
 
 const removePointDataFromConnection = async (connection: IConnection, gameId: string) => {
     const values = getDecConnectionValues(connection)
-    await Connection.findOneAndUpdate(
-        { throwerId: connection.throwerId, receiverId: connection.receiverId },
-        { $inc: values },
-    )
 
     await AtomicConnection.findOneAndUpdate(
         { gameId, throwerId: connection.throwerId, receiverId: connection.receiverId },

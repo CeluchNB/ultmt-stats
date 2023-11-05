@@ -1,6 +1,13 @@
 import { model, Schema, SchemaTypes } from 'mongoose'
-import { connectionSchema } from './connection'
 import { IAtomicConnection } from '../types/atomic-stat'
+
+export const connectionSchema = {
+    throwerId: { type: SchemaTypes.ObjectId, required: true },
+    receiverId: { type: SchemaTypes.ObjectId, required: true },
+    catches: { type: Number, required: true, default: 0 },
+    drops: { type: Number, required: true, default: 0 },
+    scores: { type: Number, required: true, default: 0 },
+}
 
 const schema = new Schema<IAtomicConnection>({
     ...connectionSchema,
