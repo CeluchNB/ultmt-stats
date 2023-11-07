@@ -32,10 +32,15 @@ export const getPlayerById = async (playerId: string): Promise<IPlayer> => {
         return addPlayerData(prev, curr)
     }, getInitialPlayerData({}))
 
+    const games = players.map((p) => p.gameId)
+    const teams = players.map((p) => p.teamId)
+
     return {
         ...playerData,
         ...playerData.toJSON(),
         ...stats,
+        games,
+        teams,
         plusMinus: calculatePlusMinus(stats),
         catchingPercentage: calculateCatchingPercentage(stats),
         throwingPercentage: calculateThrowingPercentage(stats),
@@ -48,8 +53,6 @@ export const getPlayerById = async (playerId: string): Promise<IPlayer> => {
         winPercentage: calculateWinPercentage(stats),
         offensiveEfficiency: calculateOffensiveEfficiency(stats),
         defensiveEfficiency: calculateDefensiveEfficiency(stats),
-        games: [],
-        teams: [],
     }
 }
 

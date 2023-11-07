@@ -7,7 +7,6 @@ import { Types } from 'mongoose'
 import { ApiError } from '../../../../src/types/error'
 import AtomicTeam from '../../../../src/models/atomic-team'
 import AtomicPlayer from '../../../../src/models/atomic-player'
-import Player from '../../../../src/models/player'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -24,6 +23,9 @@ afterAll(async () => {
 describe('test get team by id', () => {
     it('with found team', async () => {
         const gameId = new Types.ObjectId()
+        const playerOne = getPlayer(1)
+        const playerTwo = getPlayer(2)
+
         await AtomicTeam.create({
             ...teamOne,
             gameId,
@@ -39,13 +41,13 @@ describe('test get team by id', () => {
                 breaks: 1,
             }),
         })
-        const player = await Player.create({
-            ...getPlayer(1),
-        })
+
         await AtomicPlayer.create({
             teamId: teamOne._id,
             gameId: new Types.ObjectId(),
-            playerId: player._id,
+            playerId: playerOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             goals: 1,
             assists: 2,
             blocks: 3,
@@ -54,6 +56,8 @@ describe('test get team by id', () => {
             teamId: teamOne._id,
             gameId: new Types.ObjectId(),
             playerId: new Types.ObjectId(),
+            ...playerTwo,
+            _id: new Types.ObjectId(0),
             goals: 99,
             assists: 99,
             blocks: 99,
@@ -77,25 +81,25 @@ describe('test get team by id', () => {
             offensiveConversion: 0.8,
             defensiveConversion: 0.2,
             goalsLeader: {
-                total: 1,
+                total: 99,
                 player: {
-                    firstName: player.firstName,
+                    firstName: playerTwo.firstName,
                 },
             },
             assistsLeader: {
-                total: 2,
+                total: 99,
                 player: {
-                    firstName: player.firstName,
+                    firstName: playerTwo.firstName,
                 },
             },
             blocksLeader: {
-                total: 3,
+                total: 99,
                 player: {
-                    firstName: player.firstName,
+                    firstName: playerTwo.firstName,
                 },
             },
         })
-        expect(team.players.length).toBe(1)
+        expect(team.players.length).toBe(2)
         expect(team.players[0]).toMatchObject({
             goals: 1,
             assists: 2,
@@ -140,13 +144,13 @@ describe('test filter team stats', () => {
             gameId: gameThreeId,
             ...getInitialTeamData({ goalsFor: 5, goalsAgainst: 4, wins: 1, losses: 0 }),
         })
-        const player = await Player.create({
-            ...getPlayer(1),
-        })
+        const playerOne = getPlayer(1)
         await AtomicPlayer.create({
             teamId: teamOne._id,
             gameId: gameOneId,
-            playerId: player._id,
+            playerId: playerOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             goals: 1,
             assists: 2,
             blocks: 3,
@@ -154,7 +158,9 @@ describe('test filter team stats', () => {
         await AtomicPlayer.create({
             teamId: teamOne._id,
             gameId: gameTwoId,
-            playerId: player._id,
+            playerId: playerOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             goals: 5,
             assists: 4,
             blocks: 3,
@@ -175,19 +181,19 @@ describe('test filter team stats', () => {
             goalsLeader: {
                 total: 6,
                 player: {
-                    firstName: player.firstName,
+                    firstName: playerOne.firstName,
                 },
             },
             assistsLeader: {
                 total: 6,
                 player: {
-                    firstName: player.firstName,
+                    firstName: playerOne.firstName,
                 },
             },
             blocksLeader: {
                 total: 6,
                 player: {
-                    firstName: player.firstName,
+                    firstName: playerOne.firstName,
                 },
             },
         })

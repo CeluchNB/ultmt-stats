@@ -4,7 +4,6 @@ import { Types } from 'mongoose'
 import { PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicPlayer from '../../models/atomic-player'
-// import Player from '../../models/player'
 import { TeamData } from '../../types/team'
 import { calculatePlayerData, getDecPlayerData, updatePlayerStatsByTeamStats } from '../../utils/player-stats'
 import { IPoint, IdentifiedTeamData } from '../../types/game'
@@ -43,8 +42,6 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const teamOneData = calculateTeamData(inputPoint, 'one', teamOneId)
     const teamTwoData = calculateTeamData(inputPoint, 'two', teamTwoId)
 
-    // await updateAddedTeamStats(teamOneData, teamOneId)
-    // await updateAddedTeamStats(teamTwoData, teamTwoId)
     await updateAddedAtomicTeamStats(teamOneData, game._id, teamOneId)
     await updateAddedAtomicTeamStats(teamTwoData, game._id, teamTwoId)
 
@@ -88,16 +85,10 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     )
 }
 
-const savePlayerData = async (
-    playerStats: PlayerDataId[],
-    gameId: Types.ObjectId,
-    // players: EmbeddedPlayer[],
-    teamId?: Types.ObjectId,
-) => {
+const savePlayerData = async (playerStats: PlayerDataId[], gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
     const promises = []
     for (const stats of playerStats) {
         promises.push(saveAtomicPlayer(stats, gameId, teamId))
-        // promises.push(savePlayerStats(stats))
     }
     await Promise.all(promises)
 }
@@ -114,16 +105,6 @@ const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, tea
         )
     }
 }
-
-// const savePlayerStats = async (stats: PlayerDataId) => {
-//     await Player.findOneAndUpdate(
-//         { _id: stats.playerId },
-//         {
-//             $inc: stats,
-//         },
-//         { upsert: true },
-//     )
-// }
 
 export const updateAddedAtomicTeamStats = async (
     teamData: TeamData,
@@ -184,7 +165,6 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     // subtract point stats from atomic stats
     const playerPromises = []
     for (const player of point.players) {
-        // playerPromises.push(Player.findOneAndUpdate({ _id: player._id }, { $inc: getDecPlayerData(player) }))
         playerPromises.push(
             AtomicPlayer.findOneAndUpdate(
                 { playerId: player._id, gameId: game._id },

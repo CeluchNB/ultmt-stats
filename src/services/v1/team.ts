@@ -11,7 +11,6 @@ import {
 import AtomicTeam from '../../models/atomic-team'
 import AtomicPlayer from '../../models/atomic-player'
 import { FilteredGamePlayer, GameData } from '../../types/game'
-// import Player from '../../models/player'
 import { updateGameData } from '../../utils/game-stats'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import { addPlayerData, calculatePlayerStats } from '../../utils/player-stats'
@@ -91,15 +90,11 @@ const calculatePlayerDataWithLeaders = async (
         pointsPlayedLeader: { total: 0, player: undefined },
         turnoversLeader: { total: 0, player: undefined },
     }
-    // const playerRecords = await Player.find({ _id: { $in: stats.map((s) => s.playerId) } })
+
     const playerMap = new Map<string, FilteredGamePlayer>()
     for (const stat of stats) {
-        // calculate leaders for single team
-        // const playerRecord = playerRecords.find((p) => idEquals(p._id, stat.playerId))
-
         const playerId = stat.playerId.toHexString()
-        const player = playerMap.get(playerId || '')
-        if (!playerId) continue
+        const player = playerMap.get(playerId)
 
         // generate player object
         if (player) {

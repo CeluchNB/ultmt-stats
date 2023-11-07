@@ -1,6 +1,5 @@
 import * as Constants from '../../../../src/utils/constants'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
-// import Player from '../../../../src/models/player'
 import { getPlayerById, filterPlayerStats } from '../../../../src/services/v1/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../../../src/types/error'
