@@ -36,11 +36,13 @@ export const getPlayerById = async (playerId: string): Promise<IPlayer> => {
     const teams = players.map((p) => p.teamId)
 
     return {
-        ...playerData,
-        ...playerData.toJSON(),
         ...stats,
         games,
         teams,
+        _id: playerData.playerId,
+        firstName: playerData.firstName,
+        lastName: playerData.lastName,
+        username: playerData.username,
         plusMinus: calculatePlusMinus(stats),
         catchingPercentage: calculateCatchingPercentage(stats),
         throwingPercentage: calculateThrowingPercentage(stats),

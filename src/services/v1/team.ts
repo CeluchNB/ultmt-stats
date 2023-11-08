@@ -33,13 +33,16 @@ export const getTeamById = async (teamId: string): Promise<FilteredTeamData> => 
     const { players, leaders } = await calculatePlayerDataWithLeaders(stats)
 
     return {
-        ...team,
-        ...team.toJSON(),
         ...data,
         ...leaders,
-        _id: team._id,
         players,
         games,
+        _id: team._id,
+        place: team.place,
+        name: team.name,
+        teamname: team.teamname,
+        seasonStart: team.seasonStart,
+        seasonEnd: team.seasonEnd,
         winPercentage: caclculateWinPercentage(data),
         defensiveConversion: calculateDefensiveConversion(data),
         offensiveConversion: calculateOffensiveConversion(data),
@@ -66,16 +69,19 @@ export const filterTeamStats = async (teamId: string, gameIds: string[]): Promis
     const games = atomicTeams.map((team) => team.gameId)
 
     return {
+        ...data,
+        ...leaders,
+        players,
+        games,
         _id: team.teamId,
         place: team.place,
         name: team.name,
-        players,
+        seasonStart: team.seasonStart,
+        seasonEnd: team.seasonEnd,
+
         winPercentage: caclculateWinPercentage(data),
         offensiveConversion: calculateOffensiveConversion(data),
         defensiveConversion: calculateDefensiveConversion(data),
-        games: games,
-        ...data,
-        ...leaders,
     }
 }
 

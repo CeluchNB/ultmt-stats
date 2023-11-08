@@ -31,7 +31,6 @@ describe('/GET team by id', () => {
         const response = await request(app).get(`/api/v1/stats/team/${teamOne._id}`).expect(200)
         const { team } = response.body
         expect(team).toMatchObject({
-            teamId: teamOne._id.toHexString(),
             name: teamOne.name,
             ...getInitialTeamData({ goalsFor: 1, goalsAgainst: 1, wins: 1 }),
         })
