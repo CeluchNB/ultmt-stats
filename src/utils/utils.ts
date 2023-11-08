@@ -1,6 +1,6 @@
 import { Types } from 'mongoose'
 
-export const createSafeFraction = (numerator: number, denominator: number): number => {
+export const safeFraction = (numerator: number, denominator: number): number => {
     if (denominator === 0) {
         return 0
     }

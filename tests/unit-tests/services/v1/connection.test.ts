@@ -2,7 +2,6 @@ import * as Constants from '../../../../src/utils/constants'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
 import { getConnection, filterConnectionStats } from '../../../../src/services/v1/connection'
 import { Types } from 'mongoose'
-import Connection from '../../../../src/models/connection'
 import AtomicConnection from '../../../../src/models/atomic-connection'
 
 beforeAll(async () => {
@@ -23,9 +22,21 @@ describe('connection services', () => {
         const receiverId = new Types.ObjectId()
 
         beforeEach(async () => {
-            await Connection.create({
+            await AtomicConnection.create({
                 throwerId,
                 receiverId,
+                gameId: new Types.ObjectId(),
+                teamId: new Types.ObjectId(),
+                catches: 10,
+                drops: 1,
+                scores: 1,
+            })
+
+            await AtomicConnection.create({
+                throwerId,
+                receiverId,
+                gameId: new Types.ObjectId(),
+                teamId: new Types.ObjectId(),
                 catches: 10,
                 drops: 1,
                 scores: 1,
@@ -35,9 +46,9 @@ describe('connection services', () => {
         it('returns found connection', async () => {
             const result = await getConnection(throwerId.toHexString(), receiverId.toHexString())
             expect(result).toMatchObject({
-                catches: 10,
-                drops: 1,
-                scores: 1,
+                catches: 20,
+                drops: 2,
+                scores: 2,
             })
         })
 

@@ -1,6 +1,5 @@
 import * as Constants from '../../../../src/utils/constants'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../../fixtures/setup-db'
-import Player from '../../../../src/models/player'
 import { getPlayerById, filterPlayerStats } from '../../../../src/services/v1/player'
 import { Types } from 'mongoose'
 import { ApiError } from '../../../../src/types/error'
@@ -29,8 +28,12 @@ describe('test getPlayerById', () => {
 
     it('with found player', async () => {
         const playerData = getPlayer(1)
-        await Player.create({
+        await AtomicPlayer.create({
             ...playerData,
+            playerId: playerData._id,
+            teamId: new Types.ObjectId(),
+            gameId: new Types.ObjectId(),
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({
                 goals: 1,
                 assists: 1,
@@ -97,6 +100,8 @@ describe('test playerFilter', () => {
             playerId: playerOne._id,
             gameId: gameOneId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ goals: 1, offensePoints: 5, holds: 3 }),
         })
 
@@ -104,6 +109,8 @@ describe('test playerFilter', () => {
             playerId: playerOne._id,
             gameId: gameTwoId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ assists: 1, offensePoints: 7, holds: 6 }),
         })
 
@@ -111,6 +118,8 @@ describe('test playerFilter', () => {
             playerId: playerOne._id,
             gameId: gameThreeId,
             teamId: teamOne._id,
+            ...playerOne,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ throwaways: 1, defensePoints: 8, breaks: 2 }),
         })
 
@@ -118,6 +127,8 @@ describe('test playerFilter', () => {
             playerId: playerTwo._id,
             gameId: gameTwoId,
             teamId: teamTwo._id,
+            ...playerTwo,
+            _id: new Types.ObjectId(),
             ...getInitialPlayerData({ blocks: 1 }),
         })
     })

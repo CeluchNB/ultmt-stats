@@ -10,7 +10,7 @@ import {
 } from './action'
 import { isCallahan } from './action'
 import { MomentumPoint } from '../types/game'
-import { removeElementsFromArray, idEquals } from './utils'
+import { removeElementsFromArray, idEquals, safeFraction } from './utils'
 
 export const calculateTeamData = (
     inputPoint: IngestedPoint,
@@ -183,24 +183,6 @@ export const getPushTeamData = (data: TeamData) => {
     }
 }
 
-export const subtractTeamData = (data1: TeamData, data2: TeamData): TeamData => {
-    return {
-        goalsFor: data1.goalsFor - data2.goalsFor,
-        goalsAgainst: data1.goalsAgainst - data2.goalsAgainst,
-        wins: data1.wins - data2.wins,
-        losses: data1.losses - data2.losses,
-        holds: data1.holds - data2.holds,
-        breaks: data1.breaks - data2.breaks,
-        turnoverFreeHolds: data1.turnoverFreeHolds - data2.turnoverFreeHolds,
-        turnovers: data1.turnovers - data2.turnovers,
-        turnoversForced: data1.turnoversForced - data2.turnoversForced,
-        offensePoints: data1.offensePoints - data2.offensePoints,
-        defensePoints: data1.defensePoints - data2.defensePoints,
-        completionsToScore: removeElementsFromArray(data1.completionsToScore, data2.completionsToScore),
-        completionsToTurnover: removeElementsFromArray(data1.completionsToTurnover, data2.completionsToTurnover),
-    }
-}
-
 export const getSubtractedTeamValues = (data1: TeamData, data2: TeamData) => {
     const completionsToScore = removeElementsFromArray(data1.completionsToScore, data2.completionsToScore)
     const completionsToTurnover = removeElementsFromArray(data1.completionsToTurnover, data2.completionsToTurnover)
@@ -245,4 +227,19 @@ export const isDefensivePoint = (inputPoint: IngestedPoint, teamId?: Types.Objec
 
 export const isOffensivePoint = (inputPoint: IngestedPoint, teamId?: Types.ObjectId) => {
     return idEquals(inputPoint.receivingTeam._id, teamId)
+}
+
+export const caclculateWinPercentage = (team: TeamData): number => {
+    const { wins, losses } = team
+    return safeFraction(wins, wins + losses)
+}
+
+export const calculateOffensiveConversion = (team: TeamData): number => {
+    const { holds, offensePoints } = team
+    return safeFraction(holds, offensePoints)
+}
+
+export const calculateDefensiveConversion = (team: TeamData): number => {
+    const { breaks, defensePoints } = team
+    return safeFraction(breaks, defensePoints)
 }

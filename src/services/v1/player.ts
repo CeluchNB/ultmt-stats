@@ -1,17 +1,59 @@
 import * as Constants from '../../utils/constants'
-import Player from '../../models/player'
 import { ApiError } from '../../types/error'
 import IPlayer from '../../types/player'
 import { IAtomicPlayer } from '../../types/atomic-stat'
 import AtomicPlayer from '../../models/atomic-player'
+import {
+    addPlayerData,
+    calculateCatchingPercentage,
+    calculateDefensiveEfficiency,
+    calculateOffensiveEfficiency,
+    calculatePlusMinus,
+    calculatePpAssists,
+    calculatePpBlocks,
+    calculatePpDrops,
+    calculatePpGoals,
+    calculatePpHockeyAssists,
+    calculatePpThrowaways,
+    calculateThrowingPercentage,
+    calculateWinPercentage,
+    getInitialPlayerData,
+} from '../../utils/player-stats'
 
 export const getPlayerById = async (playerId: string): Promise<IPlayer> => {
-    const player = await Player.findById(playerId)
-    if (!player) {
+    const players = await AtomicPlayer.find({ playerId })
+    if (players.length === 0) {
         throw new ApiError(Constants.PLAYER_NOT_FOUND, 404)
     }
 
-    return player
+    const playerData = players[players.length - 1]
+
+    const stats = players.reduce((prev, curr) => {
+        return addPlayerData(prev, curr)
+    }, getInitialPlayerData({}))
+
+    const games = players.map((p) => p.gameId)
+    const teams = players.map((p) => p.teamId)
+
+    return {
+        ...playerData,
+        ...playerData.toJSON(),
+        ...stats,
+        games,
+        teams,
+        plusMinus: calculatePlusMinus(stats),
+        catchingPercentage: calculateCatchingPercentage(stats),
+        throwingPercentage: calculateThrowingPercentage(stats),
+        ppGoals: calculatePpGoals(stats),
+        ppAssists: calculatePpAssists(stats),
+        ppHockeyAssists: calculatePpHockeyAssists(stats),
+        ppThrowaways: calculatePpThrowaways(stats),
+        ppDrops: calculatePpDrops(stats),
+        ppBlocks: calculatePpBlocks(stats),
+        winPercentage: calculateWinPercentage(stats),
+        offensiveEfficiency: calculateOffensiveEfficiency(stats),
+        defensiveEfficiency: calculateDefensiveEfficiency(stats),
+    }
 }
 
 export const filterPlayerStats = async (
