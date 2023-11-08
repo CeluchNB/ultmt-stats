@@ -65,11 +65,10 @@ export const connectionHasValue = (connection: IConnection): boolean => {
     return connection.catches + connection.drops + connection.scores > 0
 }
 
-export const subtractConnectionData = (data1: IConnection, data2: IConnection): IConnection => {
+export const getDecConnectionValues = (data: IConnection) => {
     return {
-        ...data1,
-        catches: data1.catches - data2.catches,
-        drops: data1.drops - data2.drops,
-        scores: data1.scores - data2.scores,
+        catches: -data.catches,
+        drops: -data.drops,
+        scores: -data.scores,
     }
 }
