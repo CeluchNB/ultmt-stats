@@ -1,9 +1,12 @@
 import { model, Schema, SchemaTypes } from 'mongoose'
 import { IAtomicPlayer } from '../types/atomic-stat'
-import { createSafeFraction } from '../utils/utils'
+import { safeFraction } from '../utils/utils'
 
 const schema = new Schema<IAtomicPlayer>(
     {
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
+        username: { type: String, required: true },
         goals: { type: Number, required: true, default: 0 },
         assists: { type: Number, required: true, default: 0 },
         hockeyAssists: { type: Number, required: true, default: 0 },
@@ -38,47 +41,47 @@ schema.virtual('plusMinus').get(function () {
 })
 
 schema.virtual('catchingPercentage').get(function () {
-    return createSafeFraction(this.catches, this.catches + this.drops)
+    return safeFraction(this.catches, this.catches + this.drops)
 })
 
 schema.virtual('throwingPercentage').get(function () {
-    return createSafeFraction(this.completedPasses, this.completedPasses + this.throwaways + this.droppedPasses)
+    return safeFraction(this.completedPasses, this.completedPasses + this.throwaways + this.droppedPasses)
 })
 
 schema.virtual('ppGoals').get(function () {
-    return createSafeFraction(this.goals, this.pointsPlayed)
+    return safeFraction(this.goals, this.pointsPlayed)
 })
 
 schema.virtual('ppAssists').get(function () {
-    return createSafeFraction(this.assists, this.pointsPlayed)
+    return safeFraction(this.assists, this.pointsPlayed)
 })
 
 schema.virtual('ppHockeyAssists').get(function () {
-    return createSafeFraction(this.hockeyAssists, this.pointsPlayed)
+    return safeFraction(this.hockeyAssists, this.pointsPlayed)
 })
 
 schema.virtual('ppThrowaways').get(function () {
-    return createSafeFraction(this.throwaways, this.pointsPlayed)
+    return safeFraction(this.throwaways, this.pointsPlayed)
 })
 
 schema.virtual('ppDrops').get(function () {
-    return createSafeFraction(this.drops, this.pointsPlayed)
+    return safeFraction(this.drops, this.pointsPlayed)
 })
 
 schema.virtual('ppBlocks').get(function () {
-    return createSafeFraction(this.blocks, this.pointsPlayed)
+    return safeFraction(this.blocks, this.pointsPlayed)
 })
 
 schema.virtual('winPercentage').get(function () {
-    return createSafeFraction(this.wins, this.wins + this.losses)
+    return safeFraction(this.wins, this.wins + this.losses)
 })
 
 schema.virtual('offensiveEfficiency').get(function () {
-    return createSafeFraction(this.holds, this.offensePoints)
+    return safeFraction(this.holds, this.offensePoints)
 })
 
 schema.virtual('defensiveEfficiency').get(function () {
-    return createSafeFraction(this.breaks, this.defensePoints)
+    return safeFraction(this.breaks, this.defensePoints)
 })
 
 const AtomicPlayer = model<IAtomicPlayer>('AtomicPlayer', schema)

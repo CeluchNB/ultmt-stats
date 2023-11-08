@@ -2,7 +2,7 @@ import { Types } from 'mongoose'
 import { CalculatedPlayerData, EmbeddedPlayer, PlayerData, PlayerDataId, PlayerDataKey } from '../types/player'
 import { Action, ActionType } from '../types/point'
 import { isCallahan, isCurrentTeamScore, isNotDiscMovementAction } from './action'
-import { createSafeFraction } from './utils'
+import { safeFraction } from './utils'
 import { IConnection } from '../types/connection'
 import { initializeConnectionMap, updateAtomicConnections } from './connection-stats'
 import { TeamData } from '../types/team'
@@ -170,51 +170,99 @@ export const addPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData 
     }
 }
 
-export const subtractPlayerData = (data1: PlayerData, data2: PlayerData): PlayerData => {
-    return {
-        goals: data1.goals - data2.goals,
-        assists: data1.assists - data2.assists,
-        hockeyAssists: data1.hockeyAssists - data2.hockeyAssists,
-        touches: data1.touches - data2.touches,
-        catches: data1.catches - data2.catches,
-        callahans: data1.callahans - data2.callahans,
-        throwaways: data1.throwaways - data2.throwaways,
-        blocks: data1.blocks - data2.blocks,
-        drops: data1.drops - data2.drops,
-        stalls: data1.stalls - data2.stalls,
-        completedPasses: data1.completedPasses - data2.completedPasses,
-        droppedPasses: data1.droppedPasses - data2.droppedPasses,
-        pointsPlayed: data1.pointsPlayed - data2.pointsPlayed,
-        pulls: data1.pulls - data2.pulls,
-        offensePoints: data1.offensePoints - data2.offensePoints,
-        defensePoints: data1.defensePoints - data2.defensePoints,
-        holds: data1.holds - data2.holds,
-        breaks: data1.breaks - data2.breaks,
-        wins: data1.wins - data2.wins,
-        losses: data1.losses - data2.losses,
-    }
-}
-
 export const calculatePlayerStats = (stats: PlayerData): CalculatedPlayerData => {
     const calcStats: CalculatedPlayerData = {
-        winPercentage: createSafeFraction(stats.wins, stats.wins + stats.losses),
+        winPercentage: safeFraction(stats.wins, stats.wins + stats.losses),
         plusMinus: stats.goals + stats.assists + stats.blocks - stats.throwaways - stats.drops,
-        catchingPercentage: createSafeFraction(stats.catches, stats.catches + stats.drops),
-        throwingPercentage: createSafeFraction(
+        catchingPercentage: safeFraction(stats.catches, stats.catches + stats.drops),
+        throwingPercentage: safeFraction(
             stats.completedPasses,
             stats.completedPasses + stats.throwaways + stats.droppedPasses,
         ),
-        ppGoals: createSafeFraction(stats.goals, stats.pointsPlayed),
-        ppAssists: createSafeFraction(stats.assists, stats.pointsPlayed),
-        ppHockeyAssists: createSafeFraction(stats.hockeyAssists, stats.pointsPlayed),
-        ppThrowaways: createSafeFraction(stats.throwaways, stats.pointsPlayed),
-        ppDrops: createSafeFraction(stats.drops, stats.pointsPlayed),
-        ppBlocks: createSafeFraction(stats.blocks, stats.pointsPlayed),
-        offensiveEfficiency: createSafeFraction(stats.holds, stats.offensePoints),
-        defensiveEfficiency: createSafeFraction(stats.breaks, stats.defensePoints),
+        ppGoals: safeFraction(stats.goals, stats.pointsPlayed),
+        ppAssists: safeFraction(stats.assists, stats.pointsPlayed),
+        ppHockeyAssists: safeFraction(stats.hockeyAssists, stats.pointsPlayed),
+        ppThrowaways: safeFraction(stats.throwaways, stats.pointsPlayed),
+        ppDrops: safeFraction(stats.drops, stats.pointsPlayed),
+        ppBlocks: safeFraction(stats.blocks, stats.pointsPlayed),
+        offensiveEfficiency: safeFraction(stats.holds, stats.offensePoints),
+        defensiveEfficiency: safeFraction(stats.breaks, stats.defensePoints),
     }
 
     return { ...stats, ...calcStats }
+}
+
+export const getDecPlayerData = (data: PlayerData): PlayerData => {
+    return {
+        goals: -data.goals,
+        assists: -data.assists,
+        hockeyAssists: -data.hockeyAssists,
+        touches: -data.touches,
+        catches: -data.catches,
+        callahans: -data.callahans,
+        throwaways: -data.throwaways,
+        blocks: -data.blocks,
+        drops: -data.drops,
+        stalls: -data.stalls,
+        completedPasses: -data.completedPasses,
+        droppedPasses: -data.droppedPasses,
+        pointsPlayed: -data.pointsPlayed,
+        pulls: -data.pulls,
+        offensePoints: -data.offensePoints,
+        defensePoints: -data.defensePoints,
+        holds: -data.holds,
+        breaks: -data.breaks,
+        wins: -data.wins,
+        losses: -data.losses,
+    }
+}
+
+export const calculatePlusMinus = (data: PlayerData): number => {
+    return data.goals + data.assists + data.blocks - data.throwaways - data.drops
+}
+
+export const calculateCatchingPercentage = (data: PlayerData): number => {
+    return safeFraction(data.catches, data.catches + data.drops)
+}
+
+export const calculateThrowingPercentage = (data: PlayerData): number => {
+    return safeFraction(data.completedPasses, data.completedPasses + data.throwaways + data.droppedPasses)
+}
+
+export const calculatePpGoals = (data: PlayerData): number => {
+    return safeFraction(data.goals, data.pointsPlayed)
+}
+
+export const calculatePpAssists = (data: PlayerData): number => {
+    return safeFraction(data.assists, data.pointsPlayed)
+}
+
+export const calculatePpHockeyAssists = (data: PlayerData): number => {
+    return safeFraction(data.hockeyAssists, data.pointsPlayed)
+}
+
+export const calculatePpThrowaways = (data: PlayerData): number => {
+    return safeFraction(data.throwaways, data.pointsPlayed)
+}
+
+export const calculatePpDrops = (data: PlayerData): number => {
+    return safeFraction(data.drops, data.pointsPlayed)
+}
+
+export const calculatePpBlocks = (data: PlayerData): number => {
+    return safeFraction(data.blocks, data.pointsPlayed)
+}
+
+export const calculateWinPercentage = (data: PlayerData): number => {
+    return safeFraction(data.wins, data.wins + data.losses)
+}
+
+export const calculateOffensiveEfficiency = (data: PlayerData): number => {
+    return safeFraction(data.holds, data.offensePoints)
+}
+
+export const calculateDefensiveEfficiency = (data: PlayerData): number => {
+    return safeFraction(data.breaks, data.defensePoints)
 }
 
 export const PLAYER_ONE_STAT_UPDATES: { [key in ActionType]: PlayerDataKey[] } = {

@@ -1,18 +1,33 @@
 import * as Constants from '../../utils/constants'
 import AtomicConnection from '../../models/atomic-connection'
-import Connection from '../../models/connection'
 import { IConnection } from '../../types/connection'
 import { ApiError } from '../../types/error'
 import { FilterQuery } from 'mongoose'
 import { IAtomicConnection } from '../../types/atomic-stat'
 
 export const getConnection = async (throwerId: string, receiverId: string): Promise<IConnection> => {
-    const connection = await Connection.findOne({ throwerId, receiverId })
-    if (!connection) {
+    const connections = await AtomicConnection.find({ throwerId, receiverId })
+    if (connections.length === 0) {
         throw new ApiError(Constants.CONNECTION_NOT_FOUND, 404)
     }
 
-    return connection
+    return connections.reduce(
+        (prev, curr) => {
+            return {
+                ...prev,
+                scores: prev.scores + curr.scores,
+                catches: prev.catches + curr.catches,
+                drops: prev.drops + curr.drops,
+            }
+        },
+        {
+            throwerId: connections[0].throwerId,
+            receiverId: connections[0].receiverId,
+            scores: 0,
+            catches: 0,
+            drops: 0,
+        },
+    )
 }
 
 export const filterConnectionStats = async (
