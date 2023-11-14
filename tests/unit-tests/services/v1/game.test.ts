@@ -94,7 +94,13 @@ describe('create game', () => {
         const atomicPlayers = await AtomicPlayer.find({})
         expect(atomicPlayers.length).toBe(2)
         expect(atomicPlayers[0].playerId.toHexString()).toBe(playerOne._id.toHexString())
+        expect(atomicPlayers[0].firstName).toBe(playerOne.firstName)
+        expect(atomicPlayers[0].lastName).toBe(playerOne.lastName)
+        expect(atomicPlayers[0].username).toBe(playerOne.username)
         expect(atomicPlayers[1].playerId.toHexString()).toBe(playerTwo._id.toHexString())
+        expect(atomicPlayers[1].firstName).toBe(playerTwo.firstName)
+        expect(atomicPlayers[1].lastName).toBe(playerTwo.lastName)
+        expect(atomicPlayers[1].username).toBe(playerTwo.username)
 
         const atomicTeams = await AtomicTeam.find({})
         expect(atomicTeams.length).toBe(2)
