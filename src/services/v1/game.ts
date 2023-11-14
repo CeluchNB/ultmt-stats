@@ -64,7 +64,11 @@ const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.Obj
     // cannot take this out b/c some players may not play in a point
     await AtomicPlayer.findOneAndUpdate(
         { playerId: player._id, teamId, gameId },
-        {},
+        {
+            firstName: player.firstName,
+            lastName: player.lastName,
+            username: player.username,
+        },
         {
             upsert: true,
         },
