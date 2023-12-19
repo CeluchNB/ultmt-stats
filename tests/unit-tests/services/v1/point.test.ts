@@ -8,6 +8,7 @@ import {
     ingestPoint,
     updateAddedAtomicTeamStats,
     updateSubtractedAtomicTeamStats,
+    savePlayerData,
 } from '../../../../src/services/v1/point'
 import { Action, ActionType } from '../../../../src/types/point'
 import { EmbeddedTeam } from '../../../../src/types/team'
@@ -1258,6 +1259,44 @@ describe('database utils', () => {
 
             const result = await AtomicTeam.findOne({ gameId, teamId })
             expect(result).not.toMatchObject({ goalsFor: 1, goalsAgainst: 2, turnovers: 0, completionsToScore: [1, 3] })
+        })
+    })
+
+    describe('save player data', () => {
+        it('handles found player case', async () => {
+            const gameId = new Types.ObjectId()
+            const playerId = new Types.ObjectId()
+            const teamId = new Types.ObjectId()
+            await savePlayerData(
+                [{ playerId, ...getInitialPlayerData({ pointsPlayed: 2 }) }],
+                gameId,
+                [{ _id: playerId, firstName: 'First 1', lastName: 'Last 1', username: 'firstlast1' }],
+                teamId,
+            )
+
+            const result = await AtomicPlayer.findOne({})
+            expect(result).toMatchObject({
+                firstName: 'First 1',
+                lastName: 'Last 1',
+                username: 'firstlast1',
+                playerId,
+                pointsPlayed: 2,
+            })
+        })
+
+        it('handles unfound player case', async () => {
+            const gameId = new Types.ObjectId()
+            const playerId = new Types.ObjectId()
+            const teamId = new Types.ObjectId()
+            await savePlayerData(
+                [{ playerId, ...getInitialPlayerData({ pointsPlayed: 2 }) }],
+                gameId,
+                [{ _id: new Types.ObjectId(), firstName: 'First 1', lastName: 'Last 1', username: 'firstlast1' }],
+                teamId,
+            )
+
+            const result = await AtomicPlayer.find()
+            expect(result.length).toBe(0)
         })
     })
 })

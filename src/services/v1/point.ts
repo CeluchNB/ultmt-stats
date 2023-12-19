@@ -1,7 +1,7 @@
 import * as Constants from '../../utils/constants'
 import { IngestedPoint } from '../../types/point'
 import { Types } from 'mongoose'
-import { PlayerDataId } from '../../types/player'
+import { EmbeddedPlayer, PlayerDataId } from '../../types/player'
 import Game from '../../models/game'
 import AtomicPlayer from '../../models/atomic-player'
 import { TeamData } from '../../types/team'
@@ -48,8 +48,8 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     updatePlayerStatsByTeamStats(teamOnePlayerStats, teamOneData)
     updatePlayerStatsByTeamStats(teamTwoPlayerStats, teamTwoData)
 
-    await savePlayerData(teamOnePlayerStats, gameId, teamOneId)
-    await savePlayerData(teamTwoPlayerStats, gameId, teamTwoId)
+    await savePlayerData(teamOnePlayerStats, gameId, inputPoint.teamOnePlayers, teamOneId)
+    await savePlayerData(teamTwoPlayerStats, gameId, inputPoint.teamTwoPlayers, teamTwoId)
 
     await saveConnectionData(teamOneConnections, gameId, teamOneId)
     await saveConnectionData(teamTwoConnections, gameId, teamTwoId)
@@ -85,22 +85,39 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     )
 }
 
-const savePlayerData = async (playerStats: PlayerDataId[], gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
+export const savePlayerData = async (
+    playerStats: PlayerDataId[],
+    gameId: Types.ObjectId,
+    players: EmbeddedPlayer[],
+    teamId?: Types.ObjectId,
+) => {
     const promises = []
     for (const stats of playerStats) {
-        promises.push(saveAtomicPlayer(stats, gameId, teamId))
+        const player = players.find((p) => idEquals(p._id, stats.playerId))
+        if (!player) continue
+
+        promises.push(saveAtomicPlayer(stats, gameId, player, teamId))
     }
     await Promise.all(promises)
 }
 
-const saveAtomicPlayer = async (stats: PlayerDataId, gameId: Types.ObjectId, teamId?: Types.ObjectId) => {
+const saveAtomicPlayer = async (
+    stats: PlayerDataId,
+    gameId: Types.ObjectId,
+    player: EmbeddedPlayer,
+    teamId?: Types.ObjectId,
+) => {
     if (teamId) {
         const tempStats = JSON.parse(JSON.stringify(stats))
         delete tempStats.playerId
 
         await AtomicPlayer.findOneAndUpdate(
             { playerId: stats.playerId, gameId, teamId },
-            { $inc: { ...tempStats } },
+            {
+                $inc: { ...tempStats },
+                // players will usually already exist, but guests may be created for the first time
+                $set: { firstName: player.firstName, lastName: player.lastName, username: player.username },
+            },
             { upsert: true },
         )
     }
