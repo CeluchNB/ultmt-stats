@@ -1,39 +1,39 @@
 {
-  "name": "ultmt-stats",
-  "version": "0.0.0",
-  "description": "Microservice for stats of The Ultmt App",
-  "main": "index.ts",
-  "repository": "https://github.com/CeluchNB/ultmt-stats.git",
-  "author": "Noah Celuch <noah.celuch@gmail.com>",
-  "license": "MIT",
-  "scripts": {
-    "start": "ts-node ./src/index.ts",
-    "test": "jest --runInBand --collectCoverage",
-    "dev": "nodemon ./src/index.ts",
-    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix"
-  },
-  "dependencies": {
-    "@types/express": "^4.17.17",
-    "@types/node": "^18.15.6",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "express-validator": "^6.15.0",
-    "mongoose": "^7.0.3",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.2"
-  },
-  "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "@types/supertest": "^2.0.12",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "eslint": "^8.36.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "jest": "^29.5.0",
-    "nodemon": "^2.0.21",
-    "prettier": "^2.8.7",
-    "supertest": "^6.3.3",
-    "ts-jest": "^29.1.0"
-  }
+    "name": "ultmt-stats",
+    "version": "0.0.0",
+    "description": "Microservice for stats of The Ultmt App",
+    "main": "index.ts",
+    "repository": "https://github.com/CeluchNB/ultmt-stats.git",
+    "author": "Noah Celuch <noah.celuch@gmail.com>",
+    "license": "MIT",
+    "scripts": {
+        "start": "ts-node --files --transpileOnly ./src/index.ts",
+        "test": "jest --runInBand --collectCoverage",
+        "dev": "nodemon ./src/index.ts",
+        "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix"
+    },
+    "dependencies": {
+        "@types/express": "^4.17.17",
+        "@types/node": "^18.15.6",
+        "dotenv": "^16.0.3",
+        "express": "^4.18.2",
+        "express-validator": "^6.15.0",
+        "mongoose": "^7.0.3",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.0.2"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.0",
+        "@types/supertest": "^2.0.12",
+        "@typescript-eslint/eslint-plugin": "^5.56.0",
+        "@typescript-eslint/parser": "^5.56.0",
+        "eslint": "^8.36.0",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "jest": "^29.5.0",
+        "nodemon": "^2.0.21",
+        "prettier": "^2.8.7",
+        "supertest": "^6.3.3",
+        "ts-jest": "^29.1.0"
+    }
 }
