@@ -1,9 +1,14 @@
 import express from 'express'
-import { router as v1Router } from './routes/v1'
+import { createLazyRouter } from 'express-lazy-router'
 
 const app = express()
 app.use(express.json())
-app.use('/api/v1/stats', v1Router)
+
+const lazyRouter = createLazyRouter()
+app.use(
+    '/api/v1/stats',
+    lazyRouter(() => import('./routes/v1')),
+)
 
 app.get('/ultmt-stats', (req, res) => {
     return res.json({ message: 'The statistics microservice of The Ultmt App' })
