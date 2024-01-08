@@ -596,16 +596,36 @@ describe('delete game', () => {
         })
     })
 
-    it('deletes data appropriately', async () => {
+    it('deletes data without deleting game', async () => {
         await deleteGame(gameId.toHexString(), teamOne._id!.toString())
 
         const atomicPlayers = await AtomicPlayer.find()
         const atomicTeams = await AtomicTeam.find()
         const atomicConnections = await AtomicConnection.find()
+        const games = await Game.find()
 
         expect(atomicPlayers.length).toBe(2)
         expect(atomicTeams.length).toBe(1)
         expect(atomicConnections.length).toBe(1)
+        expect(games.length).toBe(1)
+    })
+
+    it('deletes data with deleting game', async () => {
+        await AtomicTeam.deleteMany({ gameId, teamId: teamTwo._id })
+        await AtomicPlayer.deleteMany({ gameId, teamId: teamTwo._id })
+        await AtomicConnection.deleteMany({ gameId, teamId: teamTwo._id })
+
+        await deleteGame(gameId.toHexString(), teamOne._id!.toHexString())
+
+        const atomicPlayers = await AtomicPlayer.find()
+        const atomicTeams = await AtomicTeam.find()
+        const atomicConnections = await AtomicConnection.find()
+        const games = await Game.find()
+
+        expect(atomicPlayers.length).toBe(0)
+        expect(atomicTeams.length).toBe(0)
+        expect(atomicConnections.length).toBe(0)
+        expect(games.length).toBe(0)
     })
 
     it('handles unfound game error', async () => {
