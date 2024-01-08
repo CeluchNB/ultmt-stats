@@ -259,7 +259,13 @@ export const deleteGame = async (gameId: string, teamId: string) => {
     await updatePlayersOnGameDelete(gameId, teamId)
     await updateConnectionsOnGameDelete(gameId, teamId)
 
-    await game?.deleteOne()
+    // TODO: more robust way of determining if game can be fully deleted
+    const teamsLeft = await AtomicTeam.find({ gameId })
+    const playersLeft = await AtomicPlayer.find({ gameId })
+    const connectionsLeft = await AtomicConnection.find({ gameId })
+    if (teamsLeft.length === 0 && playersLeft.length === 0 && connectionsLeft.length === 0) {
+        await game.deleteOne()
+    }
 }
 
 const updateTeamOnGameDelete = async (gameId: string, teamId: string) => {
