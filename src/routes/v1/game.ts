@@ -8,7 +8,6 @@ import {
     rebuildAtomicPlayers,
 } from '../../services/v1/game'
 import { body, param, query } from 'express-validator'
-import { errorMiddleware } from '../../middleware/errors'
 
 export const gameRouter = Router()
 
@@ -70,5 +69,3 @@ gameRouter.put('/game/delete/:id', query('team').isString(), async (req: Request
         next(error)
     }
 })
-
-gameRouter.use(errorMiddleware)

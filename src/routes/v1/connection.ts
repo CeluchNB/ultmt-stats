@@ -1,6 +1,5 @@
 import { Request, Response, Router } from 'express'
 import { query } from 'express-validator'
-import { errorMiddleware } from '../../middleware/errors'
 import { getConnection, filterConnectionStats } from '../../services/v1/connection'
 
 export const connectionRouter = Router()
@@ -47,5 +46,3 @@ connectionRouter.get(
         }
     },
 )
-
-connectionRouter.use(errorMiddleware)

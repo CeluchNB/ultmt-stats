@@ -1,5 +1,4 @@
 import { Request, Response, Router } from 'express'
-import { errorMiddleware } from '../../middleware/errors'
 import { deletePoint, ingestPoint } from '../../services/v1/point'
 
 export const pointRouter = Router()
@@ -21,5 +20,3 @@ pointRouter.put('/point/:id/delete', async (req: Request, res: Response, next) =
         next(e)
     }
 })
-
-pointRouter.use(errorMiddleware)
