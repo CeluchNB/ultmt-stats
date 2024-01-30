@@ -1,6 +1,5 @@
 import { Request, Response, Router } from 'express'
 import { param } from 'express-validator'
-import { errorMiddleware } from '../../middleware/errors'
 import { getPlayerById, filterPlayerStats } from '../../services/v1/player'
 
 export const playerRouter = Router()
@@ -30,5 +29,3 @@ playerRouter.get('/filter/player/:id', param('id').isString(), async (req: Reque
         next(error)
     }
 })
-
-playerRouter.use(errorMiddleware)
