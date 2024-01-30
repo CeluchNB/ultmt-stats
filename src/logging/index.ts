@@ -10,7 +10,7 @@ interface UniqueRequest extends Request {
 
 export const Logger = () => {
     const projectId = process.env.GCP_PROJECT_ID
-    const serviceId = 'stall-one'
+    const serviceId = 'ultmt-stats'
     const loggingWinston = new LoggingWinston({
         projectId,
         logName: serviceId,
