@@ -36,7 +36,18 @@ export const createGame = async (gameInput: GameInput) => {
         const teamOnePlayerIds = gameInput.teamOnePlayers.map((player) => player._id)
         await AtomicTeam.findOneAndUpdate(
             { gameId: game._id, teamId: teamOneId },
-            { $inc: incValues, $push: pushValues, $set: { players: teamOnePlayerIds } },
+            {
+                $inc: incValues,
+                $push: {
+                    ...pushValues,
+                    name: gameInput.teamOne.name,
+                    place: gameInput.teamOne.place,
+                    teamname: gameInput.teamOne.teamname,
+                    seasonStart: gameInput.teamOne.seasonStart,
+                    seasonEnd: gameInput.teamOne.seasonEnd,
+                },
+                $set: { players: teamOnePlayerIds },
+            },
             { upsert: true },
         )
 
@@ -50,7 +61,18 @@ export const createGame = async (gameInput: GameInput) => {
         const teamTwoPlayerIds = gameInput.teamTwoPlayers.map((player) => player._id)
         await AtomicTeam.findOneAndUpdate(
             { gameId: game._id, teamId: teamTwoId },
-            { $inc: incValues, $push: pushValues, $set: { players: teamTwoPlayerIds } },
+            {
+                $inc: incValues,
+                $push: {
+                    ...pushValues,
+                    name: gameInput.teamTwo.name,
+                    place: gameInput.teamTwo.place,
+                    teamname: gameInput.teamTwo.teamname,
+                    seasonStart: gameInput.teamTwo.seasonStart,
+                    seasonEnd: gameInput.teamTwo.seasonEnd,
+                },
+                $set: { players: teamTwoPlayerIds },
+            },
             { upsert: true },
         )
 
