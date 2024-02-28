@@ -88,7 +88,6 @@ const reconcileGuestForGames = async (teamIds: string[], guestId: string, user: 
 const reconcileGuestForTeams = async (teamIds: string[], guestId: string, userId: string | Types.ObjectId) => {
     const teams = await AtomicTeam.find({ teamId: teamIds })
     for (const team of teams) {
-        // TODO: ensure real user is not already on team
         const guestUserIndex = team.players.findIndex((p) => idEquals(p, guestId))
         if (guestUserIndex < 0) continue
 
