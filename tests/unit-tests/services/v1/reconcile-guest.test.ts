@@ -134,6 +134,36 @@ describe('reconcile guest methods', () => {
 
         it('replaces player fields on atomic player', async () => {
             const gameId = new Types.ObjectId()
+            await Game.create({
+                _id: gameId,
+                teamOneId,
+                teamTwoId: new Types.ObjectId(),
+                points: [
+                    {
+                        players: [
+                            { _id: realUserId, breaks: 1, pointsPlayed: 1 },
+                            { _id: guestId, breaks: 1, pointsPlayed: 1 },
+                            { _id: userTwoId },
+                        ],
+                        connections: [
+                            { throwerId: guestId, receiverId: userOneId },
+                            { throwerId: userOneId, receiverId: userTwoId },
+                        ],
+                        teamOne: {},
+                        teamTwo: {},
+                    },
+                    {
+                        players: [{ _id: guestId, breaks: 1, pointsPlayed: 1 }, { _id: userTwoId }],
+                        connections: [
+                            { throwerId: guestId, receiverId: userOneId },
+                            { throwerId: userOneId, receiverId: userTwoId },
+                        ],
+                        teamOne: {},
+                        teamTwo: {},
+                    },
+                ],
+            })
+
             await AtomicPlayer.create({
                 playerId: guestId,
                 firstName: 'Guest',
@@ -150,6 +180,8 @@ describe('reconcile guest methods', () => {
                 teamId: teamOneId,
                 gameId,
                 catches: 1,
+                breaks: 2,
+                pointsPlayed: 2,
             })
             await AtomicPlayer.create({
                 playerId: userOneId,
@@ -167,6 +199,8 @@ describe('reconcile guest methods', () => {
                 teamId: teamOneId,
                 gameId,
                 catches: 1,
+                breaks: 1,
+                pointsPlayed: 1,
             })
 
             await reconcileGuest([teamOneId.toHexString(), teamTwoId.toHexString()], guestId.toHexString(), {
@@ -193,6 +227,8 @@ describe('reconcile guest methods', () => {
                         lastName: 'Real',
                         username: 'real',
                         catches: 2,
+                        breaks: 2,
+                        pointsPlayed: 2,
                     }),
                     expect.objectContaining({
                         playerId: userOneId,
@@ -243,7 +279,11 @@ describe('reconcile guest methods', () => {
                 teamTwoId: new Types.ObjectId(),
                 points: [
                     {
-                        players: [{ _id: realUserId, catches: 1 }, { _id: guestId, catches: 1 }, { _id: userTwoId }],
+                        players: [
+                            { _id: realUserId, catches: 1, holds: 1 },
+                            { _id: guestId, catches: 1, holds: 1 },
+                            { _id: userTwoId },
+                        ],
                         connections: [
                             { throwerId: guestId, receiverId: userOneId, catches: 1 },
                             { throwerId: userOneId, receiverId: userTwoId },
@@ -272,7 +312,7 @@ describe('reconcile guest methods', () => {
 
             const gameResult = await Game.findOne()
             expect(gameResult!.points[0].players).toEqual(
-                expect.arrayContaining([expect.objectContaining({ _id: realUserId, catches: 2 })]),
+                expect.arrayContaining([expect.objectContaining({ _id: realUserId, catches: 2, holds: 1 })]),
             )
             expect(gameResult!.points[0].connections.length).toBe(3)
             expect(gameResult!.points[0].connections).toEqual(

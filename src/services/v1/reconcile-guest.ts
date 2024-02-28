@@ -33,6 +33,13 @@ const reconcileGuestForGames = async (teamIds: string[], guestId: string, user: 
                 game.points[i].players[realUserIndex] = {
                     _id: user._id,
                     ...addPlayerData(game.points[i].players[realUserIndex], game.points[i].players[guestUserIndex]),
+                    holds: game.points[i].players[realUserIndex].holds,
+                    breaks: game.points[i].players[realUserIndex].breaks,
+                    pointsPlayed: game.points[i].players[realUserIndex].pointsPlayed,
+                    offensePoints: game.points[i].players[realUserIndex].offensePoints,
+                    defensePoints: game.points[i].players[realUserIndex].defensePoints,
+                    wins: game.points[i].players[realUserIndex].wins,
+                    losses: game.points[i].players[realUserIndex].losses,
                 }
             } else {
                 game.points[i].players[guestUserIndex]._id = user._id
@@ -109,7 +116,29 @@ const reconcileGuestForPlayers = async (guestId: string, user: EmbeddedPlayer) =
     for (const player of guestPlayers) {
         const realPlayer = realPlayers.find((p) => idEquals(p.gameId, player.gameId))
         if (realPlayer) {
-            await realPlayer.updateOne({ ...addPlayerData(realPlayer, player) })
+            const game = await Game.findOne({ _id: player.gameId })
+            const aggData = { holds: 0, breaks: 0, pointsPlayed: 0, offensePoints: 0, defensePoints: 0 }
+            if (game) {
+                for (const point of game.points) {
+                    // guest player has already been reconciled on game
+                    const idMap = point.players.map((p) => p._id)
+                    const realPlayerIndex = idMap.findIndex((id) => idEquals(id, realPlayer.playerId))
+
+                    if (realPlayerIndex >= 0) {
+                        aggData.holds += point.players[realPlayerIndex].holds
+                        aggData.breaks += point.players[realPlayerIndex].breaks
+                        aggData.pointsPlayed += point.players[realPlayerIndex].pointsPlayed
+                        aggData.offensePoints += point.players[realPlayerIndex].offensePoints
+                        aggData.defensePoints += point.players[realPlayerIndex].defensePoints
+                    }
+                }
+            }
+            await realPlayer.updateOne({
+                ...addPlayerData(realPlayer, player),
+                ...aggData,
+                wins: realPlayer.wins,
+                losses: realPlayer.losses,
+            })
             await player.deleteOne()
         } else {
             player.playerId = new Types.ObjectId(user._id)
