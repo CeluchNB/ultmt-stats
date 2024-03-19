@@ -97,7 +97,7 @@ const calculatePlayerDataWithLeaders = async (
         turnoversLeader: { total: 0, player: undefined },
     }
 
-    const playerMap = new Map<string, FilteredGamePlayer>()
+    const playerMap = new Map<string, IAtomicPlayer>()
     for (const stat of stats) {
         const playerId = stat.playerId.toHexString()
         const player = playerMap.get(playerId)
@@ -113,7 +113,7 @@ const calculatePlayerDataWithLeaders = async (
     const playerArray = Array.from(playerMap).map(([, player]) => player)
     const players: FilteredGamePlayer[] = []
     for (const player of playerArray) {
-        updateGameData(leaders, player, player)
+        updateGameData(leaders, player)
         players.push({ ...player, ...calculatePlayerStats(player) })
     }
 

@@ -214,12 +214,7 @@ const calculatePlayerDataWithLeaders = async (
     const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
         // calculate leaders for single team
-        updateGameData(leaders, stat, {
-            _id: stat.playerId,
-            firstName: stat.firstName,
-            lastName: stat.lastName,
-            username: stat.username,
-        })
+        updateGameData(leaders, stat)
 
         // generate player object
         players.push({ ...stat.toJSON() })
