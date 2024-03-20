@@ -75,6 +75,7 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     const momentumData = calculateMomentumData(
         inputPoint.teamOneActions,
         game.momentumData[game.momentumData.length - 1],
+        inputPoint.pointId,
     )
     game.momentumData.push(...momentumData)
     game.points.push(gamePoint)
@@ -201,7 +202,7 @@ export const deletePoint = async (gameId: string, pointId: string) => {
     await removePointDataFromTeams(point, game._id)
 
     await Game.findByIdAndUpdate(gameId, {
-        $pull: { points: { _id: pointId } },
+        $pull: { points: { _id: pointId }, momentumData: { pointId } },
     })
 }
 
