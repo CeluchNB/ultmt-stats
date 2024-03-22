@@ -14,6 +14,8 @@ export const errorResponse = (error: string): { message: string; code: number } 
         return { message: Constants.TEAM_NOT_FOUND, code: 404 }
     } else if (error.includes(Constants.CONNECTION_NOT_FOUND)) {
         return { message: Constants.CONNECTION_NOT_FOUND, code: 404 }
+    } else if (error.includes(Constants.POINT_ALREADY_EXISTS)) {
+        return { message: Constants.POINT_ALREADY_EXISTS, code: 400 }
     }
     return { message: Constants.GENERIC_ERROR, code: 500 }
 }

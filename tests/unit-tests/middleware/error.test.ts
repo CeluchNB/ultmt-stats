@@ -43,4 +43,10 @@ describe('error response for middleware', () => {
         expect(result.message).toBe(Constants.CONNECTION_NOT_FOUND)
         expect(result.code).toBe(404)
     })
+
+    it('with point already exists error', () => {
+        const result = errorResponse(Constants.POINT_ALREADY_EXISTS)
+        expect(result.message).toBe(Constants.POINT_ALREADY_EXISTS)
+        expect(result.code).toBe(400)
+    })
 })

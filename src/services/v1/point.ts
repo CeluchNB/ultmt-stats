@@ -26,6 +26,10 @@ export const ingestPoint = async (inputPoint: IngestedPoint) => {
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
+    const point = game.points.find((p) => idEquals(p._id, inputPoint.pointId))
+    if (point) {
+        throw new ApiError(Constants.POINT_ALREADY_EXISTS, 400)
+    }
 
     const { _id: gameId, teamOneId, teamTwoId } = game
     const { players: teamOnePlayerStats, connections: teamOneConnections } = calculatePlayerData(
