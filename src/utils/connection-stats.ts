@@ -72,3 +72,14 @@ export const getDecConnectionValues = (data: IConnection) => {
         scores: -data.scores,
     }
 }
+
+export const addConnectionData = (
+    connection1: IConnection,
+    connection2: IConnection,
+): Pick<IConnection, 'catches' | 'drops' | 'scores'> => {
+    return {
+        catches: connection1.catches + connection2.catches,
+        drops: connection1.drops + connection2.drops,
+        scores: connection1.scores + connection2.scores,
+    }
+}

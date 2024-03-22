@@ -833,7 +833,12 @@ describe('test delete point', () => {
             teamOneId: teamOne._id,
             teamTwoId,
             startTime,
-            momentumData: [],
+            momentumData: [
+                { x: 0, y: 0 },
+                { x: 1, y: 5, pointId },
+                { x: 2, y: 0, pointId },
+                { x: 3, y: 10, pointId: new Types.ObjectId() },
+            ],
         })
         await AtomicTeam.create({ gameId: game._id, teamId: teamOne._id, ...teamOne, ...getInitialTeamData({}) })
 
@@ -1065,6 +1070,7 @@ describe('test delete point', () => {
 
         const gameRecord = await Game.findById(gameId)
         expect(gameRecord?.points.length).toBe(0)
+        expect(gameRecord?.momentumData.length).toBe(2)
     })
 
     it('updates connections correctly', async () => {

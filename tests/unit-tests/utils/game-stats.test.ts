@@ -12,7 +12,7 @@ import { getInitialPlayerData } from '../../../src/utils/player-stats'
 import { getInitialTeamData } from '../../../src/utils/team-stats'
 import { getPlayer } from '../../fixtures/data'
 import { resetDatabase, setUpDatabase, tearDownDatabase } from '../../fixtures/setup-db'
-import { PlayerData } from '../../../src/types/player'
+import { IAtomicPlayer } from '../../../src/types/atomic-stat'
 
 beforeAll(async () => {
     await setUpDatabase()
@@ -140,7 +140,7 @@ describe('getGamePlayerData', () => {
 describe('updateGameData', () => {
     it('makes no update with missing player', () => {
         const gameData = { goalsLeader: { total: 0 } }
-        expect(updateGameData(gameData as GameData, { goals: 1 } as PlayerData, undefined))
+        expect(updateGameData(gameData as GameData))
         expect(gameData.goalsLeader.total).toBe(0)
     })
 
@@ -154,12 +154,13 @@ describe('updateGameData', () => {
             pointsPlayedLeader: { total: 0 },
         }
         expect(
-            updateGameData(gameData, { goals: 1 } as PlayerData, {
-                _id: new Types.ObjectId(),
+            updateGameData(gameData, {
+                goals: 1,
+                playerId: new Types.ObjectId(),
                 firstName: 'First',
                 lastName: 'Last',
                 username: 'user',
-            }),
+            } as IAtomicPlayer),
         )
         expect(gameData.goalsLeader.total).toBe(1)
     })

@@ -36,7 +36,18 @@ export const createGame = async (gameInput: GameInput) => {
         const teamOnePlayerIds = gameInput.teamOnePlayers.map((player) => player._id)
         await AtomicTeam.findOneAndUpdate(
             { gameId: game._id, teamId: teamOneId },
-            { $inc: incValues, $push: pushValues, $set: { players: teamOnePlayerIds } },
+            {
+                $inc: incValues,
+                $push: pushValues,
+                $set: {
+                    players: teamOnePlayerIds,
+                    name: gameInput.teamOne.name,
+                    place: gameInput.teamOne.place,
+                    teamname: gameInput.teamOne.teamname,
+                    seasonStart: gameInput.teamOne.seasonStart,
+                    seasonEnd: gameInput.teamOne.seasonEnd,
+                },
+            },
             { upsert: true },
         )
 
@@ -50,7 +61,18 @@ export const createGame = async (gameInput: GameInput) => {
         const teamTwoPlayerIds = gameInput.teamTwoPlayers.map((player) => player._id)
         await AtomicTeam.findOneAndUpdate(
             { gameId: game._id, teamId: teamTwoId },
-            { $inc: incValues, $push: pushValues, $set: { players: teamTwoPlayerIds } },
+            {
+                $inc: incValues,
+                $push: pushValues,
+                $set: {
+                    players: teamTwoPlayerIds,
+                    name: gameInput.teamTwo.name,
+                    place: gameInput.teamTwo.place,
+                    teamname: gameInput.teamTwo.teamname,
+                    seasonStart: gameInput.teamTwo.seasonStart,
+                    seasonEnd: gameInput.teamTwo.seasonEnd,
+                },
+            },
             { upsert: true },
         )
 
@@ -192,12 +214,7 @@ const calculatePlayerDataWithLeaders = async (
     const players: FilteredGamePlayer[] = []
     for (const stat of stats) {
         // calculate leaders for single team
-        updateGameData(leaders, stat, {
-            _id: stat.playerId,
-            firstName: stat.firstName,
-            lastName: stat.lastName,
-            username: stat.username,
-        })
+        updateGameData(leaders, stat)
 
         // generate player object
         players.push({ ...stat.toJSON() })
