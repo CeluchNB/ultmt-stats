@@ -352,20 +352,22 @@ describe('calculateMomentumData', () => {
         const result = calculateMomentumData(
             [{ actionNumber: 2, actionType: ActionType.TEAM_ONE_SCORE, team: {} as EmbeddedTeam }],
             { x: 0, y: 0 },
+            new Types.ObjectId(),
         )
 
         expect(result.length).toBe(1)
-        expect(result).toEqual([{ x: 1, y: 10 }])
+        expect(result).toMatchObject([{ x: 1, y: 10 }])
     })
 
     it('handles team two score', () => {
         const result = calculateMomentumData(
             [{ actionNumber: 2, actionType: ActionType.TEAM_TWO_SCORE, team: {} as EmbeddedTeam }],
             { x: 0, y: 0 },
+            new Types.ObjectId(),
         )
 
         expect(result.length).toBe(1)
-        expect(result).toEqual([{ x: 1, y: -10 }])
+        expect(result).toMatchObject([{ x: 1, y: -10 }])
     })
 
     it('handles team one turnover', () => {
@@ -375,10 +377,11 @@ describe('calculateMomentumData', () => {
                 { actionNumber: 2, actionType: ActionType.THROWAWAY, team: {} as EmbeddedTeam },
             ],
             { x: 0, y: 0 },
+            new Types.ObjectId(),
         )
 
         expect(result.length).toBe(1)
-        expect(result).toEqual([{ x: 1, y: -5 }])
+        expect(result).toMatchObject([{ x: 1, y: -5 }])
     })
 
     it('handles team two turnover', () => {
@@ -388,10 +391,11 @@ describe('calculateMomentumData', () => {
                 { actionNumber: 2, actionType: ActionType.BLOCK, team: {} as EmbeddedTeam },
             ],
             { x: 0, y: 0 },
+            new Types.ObjectId(),
         )
 
         expect(result.length).toBe(1)
-        expect(result).toEqual([{ x: 1, y: 5 }])
+        expect(result).toMatchObject([{ x: 1, y: 5 }])
     })
 
     it('handles team one break', () => {
@@ -405,9 +409,11 @@ describe('calculateMomentumData', () => {
                 { actionNumber: 6, actionType: ActionType.TEAM_ONE_SCORE, team: {} as EmbeddedTeam },
             ],
             { x: 0, y: 0 },
+            new Types.ObjectId(),
         )
+
         expect(result.length).toBe(2)
-        expect(result).toEqual([
+        expect(result).toMatchObject([
             { x: 1, y: 5 },
             { x: 2, y: 15 },
         ])
@@ -426,9 +432,10 @@ describe('calculateMomentumData', () => {
                 { actionNumber: 6, actionType: ActionType.TEAM_TWO_SCORE, team: {} as EmbeddedTeam },
             ],
             { x: 0, y: 0 },
+            new Types.ObjectId(),
         )
         expect(result.length).toBe(4)
-        expect(result).toEqual([
+        expect(result).toMatchObject([
             { x: 1, y: -5 },
             { x: 2, y: 0 },
             { x: 3, y: -5 },

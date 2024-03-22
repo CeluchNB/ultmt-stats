@@ -107,9 +107,11 @@ describe('create game', () => {
         expect(atomicTeams[0].teamId.toHexString()).toBe(teamOne._id!.toHexString())
         expect(atomicTeams[0].gameId.toHexString()).toBe(game?._id.toHexString())
         expect(atomicTeams[0].players[0].toHexString()).toBe(playerOne._id.toHexString())
+        expect(atomicTeams[0].teamname).toBe(teamOne.teamname)
         expect(atomicTeams[1].teamId.toHexString()).toBe(teamTwo._id!.toHexString())
         expect(atomicTeams[1].gameId.toHexString()).toBe(game?._id.toHexString())
         expect(atomicTeams[1].players[0].toHexString()).toBe(playerTwo._id.toHexString())
+        expect(atomicTeams[1].teamname).toBe(teamTwo.teamname)
     })
 
     it('with team two players but no team two', async () => {

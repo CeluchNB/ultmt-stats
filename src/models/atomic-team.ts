@@ -20,9 +20,9 @@ export const teamDataSchema = {
 const schema = new Schema<IAtomicTeam>({
     teamId: { type: SchemaTypes.ObjectId, required: true },
     gameId: { type: SchemaTypes.ObjectId, required: true },
-    place: { type: String, required: true },
-    name: { type: String, required: true },
-    teamname: { type: String, required: true },
+    place: { type: String, required: false },
+    name: { type: String, required: false },
+    teamname: { type: String, required: false },
     seasonStart: { type: Date, required: false },
     seasonEnd: { type: Date, required: false },
     players: [SchemaTypes.ObjectId],

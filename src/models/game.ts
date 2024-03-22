@@ -3,6 +3,15 @@ import IGame, { IPoint, MomentumPoint } from '../types/game'
 import { teamDataSchema } from './atomic-team'
 import { connectionSchema } from './atomic-connection'
 
+const momentumDataSchema = new Schema<MomentumPoint>(
+    {
+        x: { type: Number, required: true },
+        y: { type: Number, required: true },
+        pointId: { type: SchemaTypes.ObjectId, required: false },
+    },
+    { _id: false },
+)
+
 const pointSchema = new Schema<IPoint>({
     players: [
         {
@@ -40,14 +49,6 @@ const pointSchema = new Schema<IPoint>({
         required: true,
     },
 })
-
-const momentumDataSchema = new Schema<MomentumPoint>(
-    {
-        x: { type: Number, required: true },
-        y: { type: Number, required: true },
-    },
-    { _id: false },
-)
 
 const schema = new Schema<IGame>({
     startTime: Date,

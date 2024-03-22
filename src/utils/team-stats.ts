@@ -191,7 +191,11 @@ export const getSubtractedTeamValues = (data1: TeamData, data2: TeamData) => {
     return { values: decValues, completionsToScore, completionsToTurnover }
 }
 
-export const calculateMomentumData = (teamOneActions: Action[], lastPoint: MomentumPoint): MomentumPoint[] => {
+export const calculateMomentumData = (
+    teamOneActions: Action[],
+    lastPoint: MomentumPoint,
+    pointId: Types.ObjectId,
+): MomentumPoint[] => {
     const data: MomentumPoint[] = []
     let xCounter = lastPoint.x
     let yCounter = lastPoint.y
@@ -201,20 +205,20 @@ export const calculateMomentumData = (teamOneActions: Action[], lastPoint: Momen
             if (action.actionType === ActionType.TEAM_ONE_SCORE) {
                 xCounter += 1
                 yCounter += 10
-                data.push({ x: xCounter, y: yCounter })
+                data.push({ x: xCounter, y: yCounter, pointId })
             } else if (action.actionType === ActionType.TEAM_TWO_SCORE) {
                 xCounter += 1
                 yCounter -= 10
-                data.push({ x: xCounter, y: yCounter })
+                data.push({ x: xCounter, y: yCounter, pointId })
             } else if (index > 0) {
                 if (isCurrentTeamTurnover(action)) {
                     xCounter += 1
                     yCounter -= 5
-                    data.push({ x: xCounter, y: yCounter })
+                    data.push({ x: xCounter, y: yCounter, pointId })
                 } else if (isOpposingTeamTurnover(action, teamOneActions[index - 1])) {
                     xCounter += 1
                     yCounter += 5
-                    data.push({ x: xCounter, y: yCounter })
+                    data.push({ x: xCounter, y: yCounter, pointId })
                 }
             }
         })

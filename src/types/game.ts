@@ -31,7 +31,9 @@ export interface GameData {
 export interface MomentumPoint {
     x: number
     y: number
+    pointId?: Types.ObjectId
 }
+
 interface IGame {
     _id: Types.ObjectId
     startTime: Date
