@@ -614,6 +614,28 @@ describe('test ingest point', () => {
         ).rejects.toThrow()
     })
 
+    it('with previously existing point', async () => {
+        const game = await Game.findOne()
+        game?.points.push({ _id: pointId, players: [], connections: [], teamOne: {}, teamTwo: {} } as unknown as IPoint)
+        await game?.save()
+
+        await expect(
+            ingestPoint({
+                pointId,
+                gameId: gameId,
+                teamOneActions: [],
+                teamTwoActions: [],
+                pullingTeam: teamTwo,
+                receivingTeam: teamOne,
+                scoringTeam: teamOne,
+                teamOnePlayers: [playerOne, playerTwo, playerThree],
+                teamTwoPlayers: [],
+                teamOneScore: 1,
+                teamTwoScore: 0,
+            }),
+        ).rejects.toThrow(Constants.POINT_ALREADY_EXISTS)
+    })
+
     it('handles multiple points', async () => {
         const teamOneActions1: Action[] = [
             {
