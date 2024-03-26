@@ -3,9 +3,8 @@ import AtomicPlayer from '../../models/atomic-player'
 import AtomicTeam from '../../models/atomic-team'
 import Game from '../../models/game'
 import { ApiError } from '../../types/error'
-import axios from 'axios'
 import sgMail from '@sendgrid/mail'
-import fs from 'fs'
+import { getGame, getUser } from '../../utils/services'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const xl = require('excel4node')
@@ -37,40 +36,43 @@ const xl = require('excel4node')
 // }
 
 export const exportGameStats = async (userId: string, gameId: string) => {
-    // build excel doc
-    const workbook = new xl.Workbook()
+    // get user from user service
+    const userResponse = await getUser(userId)
+    const user = userResponse.data
+    if (!user) {
+        throw new ApiError(Constants.PLAYER_NOT_FOUND, 404)
+    }
 
-    const game = await Game.findById(gameId)
+    // get game from game service
+    const gameResponse = await getGame(gameId)
+    const { game } = gameResponse.data
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
     }
 
-    const gameResponse = await getGame(gameId)
-    const { game: gameData } = gameResponse.data
-
-    const date = new Date(gameData.startTime).toDateString()
-    const name = `${gameData.teamOne.name} vs. ${gameData.teamTwo.name} - ${date}`
-
-    await generateGameSheet(gameId, game.teamOneId.toHexString(), workbook)
-    if (game.teamTwoId) {
-        await generateGameSheet(gameId, game.teamTwoId.toHexString(), workbook)
+    // generate worksheet
+    const workbook = new xl.Workbook()
+    await generateGameSheet(gameId, game.teamOne._id, workbook)
+    if (game.teamTwo?._id) {
+        await generateGameSheet(gameId, game.teamTwo._id, workbook)
     }
 
-    console.log('about to write')
-    workbook.writeToBuffer().then((buffer: any) => {
-        console.log('writing buffer', buffer)
-        sgMail.send({
-            to: 'noah.celuch@gmail.com',
-            from: 'developer@theultmtapp.com',
-            subject: 'Excel Sheet',
-            text: 'Game statistics',
-            attachments: [
-                {
-                    content: buffer.toString('base64'),
-                    filename: `${name}.xlsx`,
-                },
-            ],
-        })
+    const date = new Date(game.startTime).toDateString()
+    const fileName = `${game.teamOne.name} vs. ${game.teamTwo.name} - ${date}`
+
+    // send email
+    const buffer = await workbook.writeToBuffer()
+    sgMail.send({
+        to: user.email,
+        from: 'developer@theultmtapp.com',
+        subject: `${fileName} Export`,
+        text: 'This export was requested from The Ultmt App. If you did not request this file, feel free to email developer@theultmtapp.com to prevent further exports.',
+        attachments: [
+            {
+                content: buffer.toString('base64'),
+                filename: `${fileName}.xlsx`,
+            },
+        ],
     })
 }
 
@@ -236,12 +238,4 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
     ws.cell(teamTotalsValueIndex, 9).number(team.turnovers)
     ws.cell(teamTotalsHeaderIndex, 10).string('Turnovers Forced').style(headerStyle)
     ws.cell(teamTotalsValueIndex, 10).number(team.turnoversForced)
-}
-
-const getGame = async (gameId: string) => {
-    return await axios.get(`${process.env.API_URL}/api/v1/game/${gameId}`, {
-        headers: {
-            'X-API-Key': process.env.API_KEY,
-        },
-    })
 }
