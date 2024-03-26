@@ -5,6 +5,28 @@ import Game from '../../models/game'
 import { ApiError } from '../../types/error'
 import sgMail from '@sendgrid/mail'
 import { getGame, getUser } from '../../utils/services'
+import {
+    addTeamData,
+    calculateDefensiveConversion,
+    calculateOffensiveConversion,
+    getInitialTeamData,
+} from '../../utils/team-stats'
+import { IAtomicPlayer, IAtomicTeam } from '../../types/atomic-stat'
+import {
+    addPlayerData,
+    calculateCatchingPercentage,
+    calculateDefensiveEfficiency,
+    calculateOffensiveEfficiency,
+    calculatePpAssists,
+    calculatePpBlocks,
+    calculatePpDrops,
+    calculatePpGoals,
+    calculatePpHockeyAssists,
+    calculatePpThrowaways,
+    calculateThrowingPercentage,
+} from '../../utils/player-stats'
+import { calculatePlayerPlusMinus } from '../../utils/game-stats'
+import { idEquals } from '../../utils/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const xl = require('excel4node')
@@ -14,26 +36,59 @@ const xl = require('excel4node')
  * @param managerId manager for team
  * @param teamId team for stats
  */
-// export const exportTeamStats = async (managerId: string, teamId: string) => {
-//     const games: string[] = []
+export const exportTeamStats = async (userId: string, teamId: string) => {
+    // get user from user service
+    const userResponse = await getUser(userId)
+    const user = userResponse.data
+    if (!user) {
+        throw new ApiError(Constants.PLAYER_NOT_FOUND, 404)
+    }
 
-//     // build excel doc
-//     const workbook = new xl.Workbook()
+    const atomicTeam = await AtomicTeam.findOne({ teamId })
+    if (!atomicTeam) {
+        throw new ApiError(Constants.TEAM_NOT_FOUND, 404)
+    }
 
-//     for (const gameId of games) {
-//         // const { game: gameData } = gameResponse.data
-//         const team: any = {}
-//         const game: any = {}
-//     }
+    const games = await Game.find({ $or: [{ teamOneId: teamId }, { teamTwoId: teamId }] })
 
-//     workbook.write('Team-Season.xlsx', function (err: any, stats: any) {
-//         if (err) {
-//             console.error(err)
-//         } else {
-//             console.log(stats) // Prints out an instance of a node.js fs.Stats object
-//         }
-//     })
-// }
+    // build excel doc
+    const workbook = new xl.Workbook()
+
+    // create sheet for aggregated team stats
+    await generateTeamSheet(teamId, workbook)
+
+    // create sheet for each game
+    for (const game of games) {
+        // get game and determine opponent's name
+        const gameResponse = await getGame(game._id.toHexString())
+        const { game: gameData } = gameResponse.data
+
+        let name = ''
+        if (idEquals(gameData.teamOne._id, teamId)) {
+            name = `vs. ${gameData.teamTwo?.name}`
+        } else {
+            name = `vs. ${gameData.teamOne.name}`
+        }
+        await generateGameSheet(game._id.toHexString(), teamId, workbook, name)
+    }
+
+    // send email
+    const fileName = `${atomicTeam.place} ${atomicTeam.name} ${atomicTeam.seasonStart?.getFullYear() ?? ''}`
+    workbook.write(`${fileName}.xlsx`)
+    // const buffer = await xl.writeToBuffer()
+    // sgMail.send({
+    //     to: user.email,
+    //     from: 'developer@theultmtapp.com',
+    //     subject: `${fileName} Export`,
+    //     text: 'This export was requested from The Ultmt App. If you did not request this file, feel free to email developer@theultmtapp.com to prevent further exports.',
+    //     attachments: [
+    //         {
+    //             content: buffer.toString('base64'),
+    //             filename: `${fileName}.xlsx`,
+    //         },
+    //     ],
+    // })
+}
 
 export const exportGameStats = async (userId: string, gameId: string) => {
     // get user from user service
@@ -76,12 +131,7 @@ export const exportGameStats = async (userId: string, gameId: string) => {
     })
 }
 
-const generateGameSheet = async (gameId: string, teamId: string, workbook: any) => {
-    const game = await Game.findById(gameId)
-    if (!game) {
-        throw new ApiError(Constants.GAME_NOT_FOUND, 404)
-    }
-
+const generateGameSheet = async (gameId: string, teamId: string, workbook: any, name?: string) => {
     const team = await AtomicTeam.findOne({ gameId, teamId })
     if (!team) {
         throw new ApiError(Constants.TEAM_NOT_FOUND, 404)
@@ -89,6 +139,39 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
 
     const players = await AtomicPlayer.find({ gameId, teamId })
 
+    generateSheet(workbook, team, players, name)
+}
+
+export const generateTeamSheet = async (teamId: string, workbook: any) => {
+    const atomicTeams = await AtomicTeam.find({ teamId })
+
+    const teamData = atomicTeams.reduce<IAtomicTeam>(
+        (prev, curr) => ({ ...prev, ...addTeamData(prev, curr.toJSON()) }),
+        {
+            ...atomicTeams[0].toJSON(),
+            ...getInitialTeamData({}),
+        },
+    )
+
+    const atomicPlayers = await AtomicPlayer.find({ teamId })
+
+    const playerMap = new Map<string, IAtomicPlayer>()
+    for (const atomicPlayer of atomicPlayers) {
+        const player = playerMap.get(atomicPlayer.playerId.toHexString())
+        if (player) {
+            playerMap.set(atomicPlayer.playerId.toHexString(), {
+                ...player,
+                ...addPlayerData(player, atomicPlayer.toJSON()),
+            })
+        } else {
+            playerMap.set(atomicPlayer.playerId.toHexString(), atomicPlayer.toJSON())
+        }
+    }
+
+    generateSheet(workbook, teamData, Array.from(playerMap.values()))
+}
+
+const generateSheet = async (workbook: any, team: IAtomicTeam, players: IAtomicPlayer[], name?: string) => {
     const headerStyle = workbook.createStyle({
         font: {
             bold: true,
@@ -103,7 +186,7 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
         numberFormat: '#,##0.0000;(#,##0.0000)',
     })
 
-    const ws = workbook.addWorksheet(team.name)
+    const ws = workbook.addWorksheet(name ?? team.name)
 
     ws.cell(2, 2).string('Name').style(headerStyle)
     ws.column(2).setWidth(20)
@@ -144,6 +227,10 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
     ws.column(24).setWidth(20)
     ws.cell(2, 25).string('Blocks per point').style(headerStyle)
     ws.column(25).setWidth(20)
+    ws.cell(2, 26).string('Defensive Efficiency').style(headerStyle)
+    ws.column(26).setWidth(20)
+    ws.cell(2, 27).string('Offensive Efficiency').style(headerStyle)
+    ws.column(27).setWidth(20)
 
     for (let i = 1; i <= players.length; i++) {
         const player = players[i - 1]
@@ -164,30 +251,36 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
         ws.cell(i + 2, 14).number(player.callahans)
         ws.cell(i + 2, 15).number(player.pointsPlayed)
         ws.cell(i + 2, 16).number(player.pulls)
-        ws.cell(i + 2, 17).number(player.plusMinus)
+        ws.cell(i + 2, 17).number(player.plusMinus ?? calculatePlayerPlusMinus(player))
         ws.cell(i + 2, 18)
-            .number(player.catchingPercentage)
+            .number(player.catchingPercentage ?? calculateCatchingPercentage(player))
             .style(decimalStyle)
         ws.cell(i + 2, 19)
-            .number(player.throwingPercentage)
+            .number(player.throwingPercentage ?? calculateThrowingPercentage(player))
             .style(decimalStyle)
         ws.cell(i + 2, 20)
-            .number(player.ppGoals)
+            .number(player.ppGoals ?? calculatePpGoals(player))
             .style(decimalStyle)
         ws.cell(i + 2, 21)
-            .number(player.ppAssists)
+            .number(player.ppAssists ?? calculatePpAssists(player))
             .style(decimalStyle)
         ws.cell(i + 2, 22)
-            .number(player.ppHockeyAssists)
+            .number(player.ppHockeyAssists ?? calculatePpHockeyAssists(player))
             .style(decimalStyle)
         ws.cell(i + 2, 23)
-            .number(player.ppThrowaways)
+            .number(player.ppThrowaways ?? calculatePpThrowaways(player))
             .style(decimalStyle)
         ws.cell(i + 2, 24)
-            .number(player.ppDrops)
+            .number(player.ppDrops ?? calculatePpDrops(player))
             .style(decimalStyle)
         ws.cell(i + 2, 25)
-            .number(player.ppBlocks)
+            .number(player.ppBlocks ?? calculatePpBlocks(player))
+            .style(decimalStyle)
+        ws.cell(i + 2, 26)
+            .number(player.defensiveEfficiency ?? calculateDefensiveEfficiency(player))
+            .style(decimalStyle)
+        ws.cell(i + 2, 27)
+            .number(player.offensiveEfficiency ?? calculateOffensiveEfficiency(player))
             .style(decimalStyle)
     }
 
@@ -217,6 +310,8 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
     ws.cell(playerTotalRow, 23).formula(`AVERAGE(W2:W${lastPlayerRow})`).style(decimalStyle)
     ws.cell(playerTotalRow, 24).formula(`AVERAGE(X2:X${lastPlayerRow})`).style(decimalStyle)
     ws.cell(playerTotalRow, 25).formula(`AVERAGE(Y2:Y${lastPlayerRow})`).style(decimalStyle)
+    ws.cell(playerTotalRow, 26).formula(`AVERAGE(Z2:Z${lastPlayerRow})`).style(decimalStyle)
+    ws.cell(playerTotalRow, 27).formula(`AVERAGE(AA2:AA${lastPlayerRow})`).style(decimalStyle)
 
     const teamTotalsHeaderIndex = players.length + 5
     const teamTotalsValueIndex = players.length + 6
@@ -234,8 +329,12 @@ const generateGameSheet = async (gameId: string, teamId: string, workbook: any) 
     ws.cell(teamTotalsValueIndex, 7).number(team.offensePoints)
     ws.cell(teamTotalsHeaderIndex, 8).string('Defensive Points').style(headerStyle)
     ws.cell(teamTotalsValueIndex, 8).number(team.defensePoints)
-    ws.cell(teamTotalsHeaderIndex, 9).string('Turnovers').style(headerStyle)
-    ws.cell(teamTotalsValueIndex, 9).number(team.turnovers)
-    ws.cell(teamTotalsHeaderIndex, 10).string('Turnovers Forced').style(headerStyle)
-    ws.cell(teamTotalsValueIndex, 10).number(team.turnoversForced)
+    ws.cell(teamTotalsHeaderIndex, 9).string('Offensive Conversion').style(headerStyle)
+    ws.cell(teamTotalsValueIndex, 9).number(calculateOffensiveConversion(team))
+    ws.cell(teamTotalsHeaderIndex, 10).string('Defensive Conversion').style(headerStyle)
+    ws.cell(teamTotalsValueIndex, 10).number(calculateDefensiveConversion(team))
+    ws.cell(teamTotalsHeaderIndex, 11).string('Turnovers').style(headerStyle)
+    ws.cell(teamTotalsValueIndex, 11).number(team.turnovers)
+    ws.cell(teamTotalsHeaderIndex, 12).string('Turnovers Forced').style(headerStyle)
+    ws.cell(teamTotalsValueIndex, 12).number(team.turnoversForced)
 }
