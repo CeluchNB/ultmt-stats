@@ -16,6 +16,8 @@ export const errorResponse = (error: string): { message: string; code: number } 
         return { message: Constants.CONNECTION_NOT_FOUND, code: 404 }
     } else if (error.includes(Constants.POINT_ALREADY_EXISTS)) {
         return { message: Constants.POINT_ALREADY_EXISTS, code: 400 }
+    } else if (error.includes(Constants.ALL_POINTS_NOT_RECEIVED)) {
+        return { message: Constants.ALL_POINTS_NOT_RECEIVED, code: 400 }
     }
     return { message: Constants.GENERIC_ERROR, code: 500 }
 }

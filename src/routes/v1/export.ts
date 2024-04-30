@@ -18,7 +18,6 @@ exportRouter.get('/export/team/:id', query('user').escape(), async (req: Request
         await exportTeamStats(req.query.user as string, req.params.id)
         res.send()
     } catch (error) {
-        console.log('error', error)
         next(error)
     }
 })

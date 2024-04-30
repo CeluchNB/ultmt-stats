@@ -97,10 +97,16 @@ const createPlayerStatRecords = async (player: EmbeddedPlayer, gameId: Types.Obj
     )
 }
 
-export const finishGame = async (gameId: string) => {
+export const finishGame = async (gameId: string, pointNumber = 0) => {
     const game = await Game.findById(gameId)
     if (!game) {
         throw new ApiError(Constants.GAME_NOT_FOUND, 404)
+    }
+    if (game.points.length < pointNumber) {
+        // This case is for when the finish game endpoint is called before a point has been ingested
+        // this is rare but could happen anytime a game is finished or an offline game is created in the stall-one service
+        // because of exponential back off retries, the request should stay in the queue and finish later
+        throw new ApiError(Constants.ALL_POINTS_NOT_RECEIVED, 400)
     }
 
     const prevWinner = game.winningTeam
