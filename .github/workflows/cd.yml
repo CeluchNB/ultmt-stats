@@ -89,3 +89,6 @@ jobs:
                   region: us-east4
                   secrets: |
                       MONGOOSE_URL=ULTMT_STATS_MONGOOSE_URL:latest
+                      API_URL=GATEWAY_URL:latest
+                      API_KEY=GATEWAY_API_KEY:latest
+                      SENDGRID_API_KEY=SENDGRID_API_KEY:latest
