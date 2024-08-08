@@ -218,7 +218,7 @@ describe('finish game', () => {
         game?.points.push(...points)
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 2)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 1, losses: 0 })
@@ -277,7 +277,7 @@ describe('finish game', () => {
         game!.winningTeam = 'one'
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 3)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 1, losses: 0 })
@@ -334,7 +334,7 @@ describe('finish game', () => {
         game!.winningTeam = 'two'
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 2)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 1, losses: 0 })
@@ -367,7 +367,7 @@ describe('finish game', () => {
         game?.points.push(...points)
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 3)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
@@ -422,7 +422,7 @@ describe('finish game', () => {
         game?.points.push(...points)
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 2)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
@@ -479,7 +479,7 @@ describe('finish game', () => {
         game?.points.push(...points)
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 2)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
@@ -512,7 +512,7 @@ describe('finish game', () => {
         game!.teamTwoId = undefined
         await game?.save()
 
-        await finishGame(gameId.toHexString())
+        await finishGame(gameId.toHexString(), 2)
 
         const atomicTeamOneRecord = await AtomicTeam.findOne({ teamId: teamOne._id, gameId })
         expect(atomicTeamOneRecord).toMatchObject({ wins: 0, losses: 1 })
@@ -535,6 +535,20 @@ describe('finish game', () => {
 
     it('with unfound gamd', async () => {
         await expect(finishGame(new Types.ObjectId().toHexString())).rejects.toThrowError(Constants.GAME_NOT_FOUND)
+    })
+
+    it('with missing points', async () => {
+        const game = await Game.findOne({})
+        const [idPlayerOne, idPlayerTwo] = getIdPlayers()
+
+        const points = [
+            createPoint([idPlayerOne, idPlayerTwo], { goalsAgainst: 1 }, { goalsFor: 1 }),
+            createPoint([idPlayerOne, idPlayerTwo], { goalsAgainst: 1 }, { goalsFor: 1 }),
+        ]
+        game?.points.push(...points)
+        await game?.save()
+
+        await expect(finishGame(gameId.toHexString(), 3)).rejects.toThrow(Constants.ALL_POINTS_NOT_RECEIVED)
     })
 })
 

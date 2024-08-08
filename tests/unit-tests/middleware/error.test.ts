@@ -49,4 +49,10 @@ describe('error response for middleware', () => {
         expect(result.message).toBe(Constants.POINT_ALREADY_EXISTS)
         expect(result.code).toBe(400)
     })
+
+    it('with points not received error', () => {
+        const result = errorResponse(Constants.ALL_POINTS_NOT_RECEIVED)
+        expect(result.message).toBe(Constants.ALL_POINTS_NOT_RECEIVED)
+        expect(result.code).toBe(400)
+    })
 })
